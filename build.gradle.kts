@@ -25,6 +25,6 @@ tasks.test {
 
 spotless {
     kotlin {
-        ktfmt('0.44').dropboxStyle()
+        ktfmt("0.44").dropboxStyle()
     }
 }
