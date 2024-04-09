@@ -17,11 +17,9 @@ class BuilderTest {
             .withFromIDFunction { _ -> byteArrayOf(0, 1, 2, 3) }
             .withFromDataFunction { b -> byteArrayOf(b) }
 
-    private inline fun <reified C, reified R> getValueFromClass(target: C, field: String): R = C::class
-        .members
-        .find { m -> m.name == field }!!
-        .apply { isAccessible = true }
-        .call(target) as R
+    private inline fun <reified C, reified R> getValueFromClass(target: C, field: String): R =
+        C::class.members.find { m -> m.name == field }!!.apply { isAccessible = true }.call(target)
+            as R
 
     @Test
     fun missingAllFunc() {
@@ -117,12 +115,13 @@ class BuilderTest {
     fun correctNumberOfFilters() {
         val f = correct()
         f.addFilterFunction { _ -> true }
-        var l = getValueFromClass<FatClass<Int, Byte>, List<(Int) -> Boolean>>(f.build(), "filterID")
+        var l =
+            getValueFromClass<FatClass<Int, Byte>, List<(Int) -> Boolean>>(f.build(), "filterID")
         assertEquals(l.size, 1)
-        f.addFilterFunction{i -> i <= 100}
+        f.addFilterFunction { i -> i <= 100 }
         l = getValueFromClass<FatClass<Int, Byte>, List<(Int) -> Boolean>>(f.build(), "filterID")
         assertEquals(l.size, 2)
-        f.addFilterFunction({i -> i >= 10}, {i -> i and 1 == 1})
+        f.addFilterFunction({ i -> i >= 10 }, { i -> i and 1 == 1 })
         l = getValueFromClass<FatClass<Int, Byte>, List<(Int) -> Boolean>>(f.build(), "filterID")
         assert(l.all { fn -> fn(21) })
         assertFalse(l.all { fn -> fn(9) })
@@ -143,6 +142,4 @@ class BuilderTest {
         assert(l.isRight())
         assertEquals(l.getRight()!!(), 90)
     }
-
-    
 }

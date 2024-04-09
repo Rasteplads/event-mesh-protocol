@@ -2,8 +2,6 @@ package org.example.api
 
 import org.example.util.Either
 
-
-
 /**
  * Default value for the size of a message's data/content (when converted to buffer).
  *
@@ -28,7 +26,8 @@ private const val ID_MAX_SIZE = 4u
 final class FatClass<ID, Data>
 private constructor(
     private val callback: (ID, Data) -> Unit,
-    private val intoID: (ByteArray) -> ID, // Should we make custom structs for the Binary IDs and Datas?
+    private val intoID:
+        (ByteArray) -> ID, // Should we make custom structs for the Binary IDs and Datas?
     private val intoData: (ByteArray) -> Data,
     private val fromID: (ID) -> ByteArray,
     private val fromData: (Data) -> ByteArray,
@@ -36,34 +35,22 @@ private constructor(
     private val msgId: () -> ID,
     private val filterID: List<(ID) -> Boolean>
 ) {
-    /**
-     * Time a message is stored in the cache. Defined in seconds.
-     */
+    /** Time a message is stored in the cache. Defined in seconds. */
     private var msgDelete: UInt = 600u
 
-    /**
-     * Time TO Live (TTL) for the messages.
-     */
+    /** Time TO Live (TTL) for the messages. */
     private var msgTTL: UInt = 32u
 
-    /**
-     * The interval the messages from [msgData] will be sent. Defined in seconds.
-     */
+    /** The interval the messages from [msgData] will be sent. Defined in seconds. */
     private var msgSendInterval: UInt = 32u
 
-    /**
-     * The duration the messages from [msgData] will be sent. Defined in seconds.
-     */
+    /** The duration the messages from [msgData] will be sent. Defined in seconds. */
     private var msgSendDuration: UInt = 32u
 
-    /**
-     * The interval incoming messages will be scanned for. Defined in seconds.
-     */
+    /** The interval incoming messages will be scanned for. Defined in seconds. */
     private var msgScanInterval: UInt = 32u
 
-    /**
-     * The duration incoming messages will be scanned for. Defined in seconds.
-     */
+    /** The duration incoming messages will be scanned for. Defined in seconds. */
     private var msgScanDuration: UInt = 32u
 
     // TODO: MESSAGE CACHE
