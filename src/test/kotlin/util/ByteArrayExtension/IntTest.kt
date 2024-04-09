@@ -7,10 +7,10 @@ import org.rasteplads.util.*
 
 class IntTest {
 
-    fun testEq(v: Int): Unit = assertEquals(v, v.toByteArray().toInt())
+    private fun testEq(v: Int): Unit = assertEquals(v, v.toByteArray().toInt())
 
-    fun testEq(v: ByteArray): Unit =
-        assertEquals(v.map { it.toByte() }, v.toInt().toByteArray().map { it.toByte() })
+    private fun testEq(v: ByteArray): Unit =
+        assertEquals(v.toList(), v.toInt().toByteArray().toList())
 
     @Test
     fun signedReflexive() {
@@ -60,6 +60,21 @@ class IntTest {
         val i = Int.SIZE_BYTES
         (0..i).forEach { num ->
             if (num != Int.SIZE_BYTES) assertFails { generateRands(num).toByteArray().toInt() }
+        }
+    }
+
+    @Test
+    fun redundancyInArraysIsIgnored() {
+        val i = 1000
+        (0..i).forEach { _ ->
+            val arr = generateRands(Int.SIZE_BYTES * 2).toByteArray()
+            val arr2 = arr.copyOf(Int.SIZE_BYTES)
+
+            val res1 = arr.toInt()
+            val res2 = arr2.toInt()
+
+            assertEquals(res1, res2)
+            assertEquals(res1.toByteArray().toList(), res2.toByteArray().toList())
         }
     }
 }

@@ -6,10 +6,10 @@ import org.junit.jupiter.api.Test
 import org.rasteplads.util.*
 
 class ShortTest {
-    fun testEq(v: Short): Unit = assertEquals(v, v.toByteArray().toShort())
+    private fun testEq(v: Short): Unit = assertEquals(v, v.toByteArray().toShort())
 
-    fun testEq(v: ByteArray): Unit =
-        assertEquals(v.map { it.toByte() }, v.toShort().toByteArray().map { it.toByte() })
+    private fun testEq(v: ByteArray): Unit =
+        assertEquals(v.toList(), v.toShort().toByteArray().toList())
 
     @Test
     fun signedReflexive() {
@@ -59,6 +59,21 @@ class ShortTest {
         val i = Short.SIZE_BYTES
         (0..i).forEach { num ->
             if (num != Short.SIZE_BYTES) assertFails { generateRands(num).toByteArray().toShort() }
+        }
+    }
+
+    @Test
+    fun redundancyInArraysIsIgnored() {
+        val i = 1000
+        (0..i).forEach { _ ->
+            val arr = generateRands(Short.SIZE_BYTES * 2).toByteArray()
+            val arr2 = arr.copyOf(Short.SIZE_BYTES)
+
+            val res1 = arr.toShort()
+            val res2 = arr2.toShort()
+
+            assertEquals(res1, res2)
+            assertEquals(res1.toByteArray().toList(), res2.toByteArray().toList())
         }
     }
 }

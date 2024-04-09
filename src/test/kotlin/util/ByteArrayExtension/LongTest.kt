@@ -6,10 +6,10 @@ import org.junit.jupiter.api.Test
 import org.rasteplads.util.*
 
 class LongTest {
-    fun testEq(v: Long) = assertEquals(v, v.toByteArray().toLong())
+    private fun testEq(v: Long) = assertEquals(v, v.toByteArray().toLong())
 
-    fun testEq(v: ByteArray): Unit =
-        assertEquals(v.map { it.toByte() }, v.toLong().toByteArray().map { it.toByte() })
+    private fun testEq(v: ByteArray): Unit =
+        assertEquals(v.toList(), v.toLong().toByteArray().toList())
 
     @Test
     fun fromLongReflexive() {
@@ -49,6 +49,21 @@ class LongTest {
         val i = Long.SIZE_BYTES
         (0..i).forEach { num ->
             if (num != Long.SIZE_BYTES) assertFails { generateRands(num).toByteArray().toLong() }
+        }
+    }
+
+    @Test
+    fun redundancyInArraysIsIgnored() {
+        val i = 1000
+        (0..i).forEach { _ ->
+            val arr = generateRands(Long.SIZE_BYTES * 2).toByteArray()
+            val arr2 = arr.copyOf(Long.SIZE_BYTES)
+
+            val res1 = arr.toLong()
+            val res2 = arr2.toLong()
+
+            assertEquals(res1, res2)
+            assertEquals(res1.toByteArray().toList(), res2.toByteArray().toList())
         }
     }
 }

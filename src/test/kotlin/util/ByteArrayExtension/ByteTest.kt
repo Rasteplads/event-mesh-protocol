@@ -6,10 +6,10 @@ import org.junit.jupiter.api.Test
 import org.rasteplads.util.*
 
 class ByteTest {
-    fun testEq(v: Byte): Unit = assertEquals(v, v.toByteArray().toByte())
+    private fun testEq(v: Byte): Unit = assertEquals(v, v.toByteArray().toByte())
 
-    fun testEq(v: ByteArray): Unit =
-        assertEquals(v.map { it.toByte() }, v.toByte().toByteArray().map { it.toByte() })
+    private fun testEq(v: ByteArray): Unit =
+        assertEquals(v.toList(), v.toByte().toByteArray().toList())
 
     @Test
     fun fromByteReflexive() {
@@ -59,6 +59,21 @@ class ByteTest {
         val i = Byte.SIZE_BYTES
         (0..i).forEach { num ->
             if (num != Byte.SIZE_BYTES) assertFails { generateRands(num).toByteArray().toByte() }
+        }
+    }
+
+    @Test
+    fun redundancyInArraysIsIgnored() {
+        val i = 1000
+        (0..i).forEach { _ ->
+            val arr = generateRands(Byte.SIZE_BYTES * 2).toByteArray()
+            val arr2 = arr.copyOf(Byte.SIZE_BYTES)
+
+            val res1 = arr.toByte()
+            val res2 = arr2.toByte()
+
+            assertEquals(res1, res2)
+            assertEquals(res1.toByteArray().toList(), res2.toByteArray().toList())
         }
     }
 }
