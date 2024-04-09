@@ -53,6 +53,9 @@ private constructor(
     /** The duration incoming messages will be scanned for. Defined in seconds. */
     private var msgScanDuration: UInt = 32u
 
+    /** The maximum number of elements stored in the cache */
+    private var msgCacheLimit: UInt = 32u
+
     // TODO: MESSAGE CACHE
 
     private constructor(
@@ -72,6 +75,7 @@ private constructor(
         builder.msgSendDuration?.let { msgSendDuration = it }
         builder.msgScanInterval?.let { msgScanInterval = it }
         builder.msgScanDuration?.let { msgScanDuration = it }
+        builder.msgCacheLimit?.let { msgCacheLimit = it }
     }
 
     /** Executes (lol) */
@@ -265,6 +269,7 @@ private constructor(
              * @return The modified [Builder]
              */
             fun withMsgScanInterval(t: UInt): Builder<ID, Data>
+
             /**
              * Sets the scanning duration (in seconds)
              *
@@ -272,6 +277,15 @@ private constructor(
              * @return The modified [Builder]
              */
             fun withMsgScanDuration(t: UInt): Builder<ID, Data>
+
+            /**
+             * @param l Limit
+             * @return The modified [Builder]
+             *
+             * TODO: LINK TO MESSAGE CACHE TYPE Sets the limit of elements saved in the message
+             *   cache
+             */
+            fun withMsgCacheLimit(l: UInt): Builder<ID, Data>
 
             /**
              * Builds the [Builder]
@@ -300,6 +314,7 @@ private constructor(
             var msgSendDuration: UInt? = null
             var msgScanInterval: UInt? = null
             var msgScanDuration: UInt? = null
+            var msgCacheLimit: UInt? = null
 
             override fun build(): EventMesh<ID, Data> {
                 check(::callback.isInitialized) { "Function for callbacks is necessary" }
@@ -402,6 +417,11 @@ private constructor(
 
             override fun withMsgScanDuration(t: UInt): Builder<ID, Data> {
                 msgScanDuration = t
+                return this
+            }
+
+            override fun withMsgCacheLimit(l: UInt): Builder<ID, Data> {
+                msgCacheLimit = l
                 return this
             }
         }

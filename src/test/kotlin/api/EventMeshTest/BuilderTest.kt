@@ -144,4 +144,6 @@ class BuilderTest {
         assert(l.isRight())
         assertEquals(l.getRight()!!(), 90)
     }
+
+    //TODO: OPTIONAL FUNCS PLS
 }
