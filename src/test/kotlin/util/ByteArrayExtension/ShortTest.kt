@@ -1,9 +1,9 @@
 package util.ByteArrayExtension
 
 import kotlin.test.assertFails
-import org.example.util.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import org.rasteplads.util.*
 
 class ShortTest {
     fun testEq(v: Short): Unit = assertEquals(v, v.toByteArray().toShort())

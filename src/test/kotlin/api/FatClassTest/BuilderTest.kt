@@ -1,11 +1,11 @@
 package api.FatClassTest
 
 import kotlin.reflect.jvm.isAccessible
-import org.example.api.FatClass
-import org.example.util.Either
+import kotlin.test.assertFails
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import kotlin.test.assertFails
+import org.rasteplads.api.FatClass
+import org.rasteplads.util.Either
 
 class BuilderTest {
     private fun correct(): FatClass.Companion.Builder<Int, Byte> =

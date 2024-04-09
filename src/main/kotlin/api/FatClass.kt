@@ -1,6 +1,6 @@
-package org.example.api
+package org.rasteplads.api
 
-import org.example.util.Either
+import org.rasteplads.util.Either
 
 /**
  * Default value for the size of a message's data/content (when converted to buffer).
@@ -110,7 +110,7 @@ private constructor(
              *
              * where `f` is the function set here, and `g` is the function set in
              * [setFromIDFunction] Some functions have been made that may be of use, see
-             * [org.example.util]
+             * [org.rasteplads.util]
              *
              * @param f The function
              * @return The modified [Builder]
@@ -129,7 +129,7 @@ private constructor(
              *
              * where `f` is the function set here, and `g` is the function set in
              * [setFromDataFunction] Some functions have been made that may be of use, see
-             * [org.example.util]
+             * [org.rasteplads.util]
              *
              * @param f The function
              * @return The modified [Builder]
@@ -147,7 +147,7 @@ private constructor(
              *
              * where `f` is the function set here, and `g` is the function set in
              * [setIntoIDFunction] Some functions have been made that may be of use, see
-             * [org.example.util]
+             * [org.rasteplads.util]
              *
              * @param f The function
              * @return The modified [Builder]
@@ -166,7 +166,7 @@ private constructor(
              *
              * where `f` is the function set here, and `g` is the function set in
              * [setIntoDataFunction] Some functions have been made that may be of use, see
-             * [org.example.util]
+             * [org.rasteplads.util]
              *
              * @param f The function
              * @return The modified [Builder]

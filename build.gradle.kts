@@ -7,7 +7,7 @@ plugins {
     id("com.diffplug.spotless") version "6.19.0"
 }
 
-group = "org.example"
+group = "org.rasteplads"
 version = "1.0-SNAPSHOT"
 
 repositories {

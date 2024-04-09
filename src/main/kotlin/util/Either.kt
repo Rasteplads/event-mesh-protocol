@@ -1,4 +1,4 @@
-package org.example.util
+package org.rasteplads.util
 
 final class Either<L, R>
 private constructor(private val left: L?, private val right: R?, private val which: LR) {

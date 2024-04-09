@@ -1,9 +1,9 @@
 package util.ByteArrayExtension
 
 import kotlin.test.assertFails
-import org.example.util.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import org.rasteplads.util.*
 
 class LongTest {
     fun testEq(v: Long) = assertEquals(v, v.toByteArray().toLong())
@@ -41,7 +41,7 @@ class LongTest {
         (0..num).forEach { _ ->
             generateRands(Long.SIZE_BYTES).permutations().forEach { testEq(it.toByteArray()) }
         }
-        //(Long.MIN_VALUE..Long.MAX_VALUE).forEach { n -> testEq(n) }
+        // (Long.MIN_VALUE..Long.MAX_VALUE).forEach { n -> testEq(n) }
     }
 
     @Test
