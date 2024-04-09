@@ -7,8 +7,7 @@ import org.junit.jupiter.api.Test
 class IntTest {
 
     fun testEq(v: Int) = assertEquals(v, v.toByteArray().toInt())
-    //fun testEq(v: UInt) = assertEquals(v, v.toUByteArray().toUInt())
-
+    // fun testEq(v: UInt) = assertEquals(v, v.toUByteArray().toUInt())
 
     @Test
     fun signedReflexive() {
@@ -25,15 +24,15 @@ class IntTest {
         testEq(Int.MAX_VALUE)
         testEq(Int.MIN_VALUE)
     }
-/*
-    @Test
-    fun usignedReflexive() {
+    /*
+       @Test
+       fun usignedReflexive() {
 
-        testEq(1u)
-        testEq(1000u)
-        testEq(99999u)
-        testEq(UInt.MAX_VALUE)
-        testEq(UInt.MIN_VALUE)
-    }
- */
+           testEq(1u)
+           testEq(1000u)
+           testEq(99999u)
+           testEq(UInt.MAX_VALUE)
+           testEq(UInt.MIN_VALUE)
+       }
+    */
 }

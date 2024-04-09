@@ -1,4 +1,4 @@
-package util.ByteArrayExtension;
+package util.ByteArrayExtension
 
 import org.example.util.*
 import org.junit.jupiter.api.Assertions.*
@@ -6,8 +6,7 @@ import org.junit.jupiter.api.Test
 
 class LongTest {
     fun testEq(v: Long) = assertEquals(v, v.toByteArray().toLong())
-    //fun testEq(v: ULong) = assertEquals(v, v.toUByteArray().toULong())
-
+    // fun testEq(v: ULong) = assertEquals(v, v.toUByteArray().toULong())
 
     @Test
     fun signedReflexive() {
@@ -24,15 +23,15 @@ class LongTest {
         testEq(Long.MAX_VALUE)
         testEq(Long.MIN_VALUE)
     }
-/*
-    @Test
-    fun usignedReflexive() {
+    /*
+       @Test
+       fun usignedReflexive() {
 
-        testEq(1u)
-        testEq(1000u)
-        testEq(99999u)
-        testEq(ULong.MAX_VALUE)
-        testEq(ULong.MIN_VALUE)
-    }
- */
+           testEq(1u)
+           testEq(1000u)
+           testEq(99999u)
+           testEq(ULong.MAX_VALUE)
+           testEq(ULong.MIN_VALUE)
+       }
+    */
 }

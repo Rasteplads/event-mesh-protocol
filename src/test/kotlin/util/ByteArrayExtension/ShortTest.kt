@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 
 class ShortTest {
     fun testEq(v: Short) = assertEquals(v, v.toByteArray().toShort())
-    //fun testEq(v: UShort) = assertEquals(v, v.toUByteArray().toUShort())
+    // fun testEq(v: UShort) = assertEquals(v, v.toUByteArray().toUShort())
 
     @Test
     fun signedReflexive() {
