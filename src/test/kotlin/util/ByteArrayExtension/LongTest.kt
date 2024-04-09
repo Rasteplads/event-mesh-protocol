@@ -41,7 +41,7 @@ class LongTest {
         (0..num).forEach { _ ->
             generateRands(Long.SIZE_BYTES).permutations().forEach { testEq(it.toByteArray()) }
         }
-        // (Long.MIN_VALUE..Long.MAX_VALUE).forEach { n -> testEq(n) }
+        // (Long.MIN_VALUE..Long.MAX_VALUE).step(1000000).forEach { n -> testEq(n) }
     }
 
     @Test

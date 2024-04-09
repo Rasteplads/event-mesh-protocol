@@ -23,7 +23,7 @@ private const val ID_MAX_SIZE = 4u
  *
  * TODO: WRITE
  */
-final class FatClass<ID, Data>
+final class EventMesh<ID, Data>
 private constructor(
     private val callback: (ID, Data) -> Unit,
     private val intoID:
@@ -81,7 +81,7 @@ private constructor(
 
     companion object {
         /**
-         * Creates a [Builder] for [FatClass]
+         * Creates a [Builder] for [EventMesh]
          *
          * @param ID The messages' ID
          * @param Data The messages' content
@@ -175,7 +175,7 @@ private constructor(
 
             /**
              * Sets a constant message that will be sent out from the device at every interval (see
-             * [setMsgSendInterval]). This function overrides any value set through
+             * [withMsgSendInterval]). This function overrides any value set through
              * [setDataGenerator].
              *
              * @param c The data to be sent
@@ -184,7 +184,7 @@ private constructor(
             fun setDataConstant(c: Data): Builder<ID, Data>
 
             /**
-             * Sets a function for generating the messages that will be sent out from the devic at
+             * Sets a function for generating the messages that will be sent out from the device at
              * every interval (see [withMsgSendInterval]). This function overrides any value set
              * through [setDataConstant].
              *
@@ -206,7 +206,7 @@ private constructor(
             /**
              * Adds a filtering function. These functions filter messages by their ID. Only IDs that
              * return `true` from the filters will be sent called with the handle function (See
-             * [setHandleCallback]). The filters are applied in the order they are set.
+             * [setHandleMessage]). The filters are applied in the order they are set.
              *
              * @param f The filter-function
              * @return The modified [Builder]
@@ -216,7 +216,7 @@ private constructor(
             /**
              * Adds multiple filtering functions. These functions filter messages by their ID. Only
              * IDs that return `true` from the filters will be sent called with the handle function
-             * (See [setHandleCallback]). The filters are applied in the order they are set.
+             * (See [setHandleMessage]). The filters are applied in the order they are set.
              *
              * @param fs The filter-functions
              * @return The modified [Builder]
@@ -276,10 +276,10 @@ private constructor(
             /**
              * Builds the [Builder]
              *
-             * @return [FatClass] with the needed properties
+             * @return [EventMesh] with the needed properties
              * @throws IllegalStateException If the needed variables hasn't been set
              */
-            fun build(): FatClass<ID, Data>
+            fun build(): EventMesh<ID, Data>
         }
 
         private class BuilderImpl<ID, Data> : Builder<ID, Data> {
@@ -301,7 +301,7 @@ private constructor(
             var msgScanInterval: UInt? = null
             var msgScanDuration: UInt? = null
 
-            override fun build(): FatClass<ID, Data> {
+            override fun build(): EventMesh<ID, Data> {
                 check(::callback.isInitialized) { "Function for callbacks is necessary" }
                 check(::intoID.isInitialized) {
                     "Function to convert binary data into `ID` is necessary"
@@ -322,7 +322,7 @@ private constructor(
                     "Either a constant or a generator function for the advertising `ID` must be set"
                 }
 
-                return FatClass(this)
+                return EventMesh(this)
             }
 
             override fun setIntoIDFunction(f: (ByteArray) -> ID): Builder<ID, Data> {

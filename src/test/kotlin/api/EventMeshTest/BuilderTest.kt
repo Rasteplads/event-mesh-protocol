@@ -1,15 +1,15 @@
-package api.FatClassTest
+package api.EventMeshTest
 
 import kotlin.reflect.jvm.isAccessible
 import kotlin.test.assertFails
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import org.rasteplads.api.FatClass
+import org.rasteplads.api.EventMesh
 import org.rasteplads.util.Either
 
 class BuilderTest {
-    private fun correct(): FatClass.Companion.Builder<Int, Byte> =
-        FatClass.builder<Int, Byte>()
+    private fun correct(): EventMesh.Companion.Builder<Int, Byte> =
+        EventMesh.builder<Int, Byte>()
             .setDataConstant(0)
             .setIDGenerator { -> 10 }
             .setHandleMessage { _, _ -> }
@@ -24,13 +24,13 @@ class BuilderTest {
 
     @Test
     fun missingAllFunc() {
-        assertFails { FatClass.builder<Int, Byte>().build() }
+        assertFails { EventMesh.builder<Int, Byte>().build() }
     }
 
     @Test
     fun missingOneFunc() {
         assertFails {
-            FatClass.builder<Int, Byte>()
+            EventMesh.builder<Int, Byte>()
                 .setIDGenerator { -> 10 }
                 .setHandleMessage { i, b -> }
                 .setIntoIDFunction { _ -> 9 }
@@ -41,7 +41,7 @@ class BuilderTest {
         }
 
         assertFails {
-            FatClass.builder<Int, Byte>()
+            EventMesh.builder<Int, Byte>()
                 .setDataConstant(0)
                 .setHandleMessage { i, b -> }
                 .setIntoIDFunction { _ -> 9 }
@@ -51,7 +51,7 @@ class BuilderTest {
                 .build()
         }
         assertFails {
-            FatClass.builder<Int, Byte>()
+            EventMesh.builder<Int, Byte>()
                 .setDataConstant(0)
                 .setIDGenerator { -> 10 }
                 .setIntoIDFunction { _ -> 9 }
@@ -61,7 +61,7 @@ class BuilderTest {
                 .build()
         }
         assertFails {
-            FatClass.builder<Int, Byte>()
+            EventMesh.builder<Int, Byte>()
                 .setDataConstant(0)
                 .setIDGenerator { -> 10 }
                 .setIntoIDFunction { _ -> 9 }
@@ -71,7 +71,7 @@ class BuilderTest {
                 .build()
         }
         assertFails {
-            FatClass.builder<Int, Byte>()
+            EventMesh.builder<Int, Byte>()
                 .setDataConstant(0)
                 .setIDGenerator { -> 10 }
                 .setHandleMessage { i, b -> }
@@ -81,7 +81,7 @@ class BuilderTest {
                 .build()
         }
         assertFails {
-            FatClass.builder<Int, Byte>()
+            EventMesh.builder<Int, Byte>()
                 .setDataConstant(0)
                 .setIDGenerator { -> 10 }
                 .setHandleMessage { i, b -> }
@@ -91,7 +91,7 @@ class BuilderTest {
                 .build()
         }
         assertFails {
-            FatClass.builder<Int, Byte>()
+            EventMesh.builder<Int, Byte>()
                 .setDataConstant(0)
                 .setIDGenerator { -> 10 }
                 .setHandleMessage { i, b -> }
@@ -101,7 +101,7 @@ class BuilderTest {
                 .build()
         }
         assertFails {
-            FatClass.builder<Int, Byte>()
+            EventMesh.builder<Int, Byte>()
                 .setDataConstant(0)
                 .setIDGenerator { -> 10 }
                 .setHandleMessage { i, b -> }
@@ -117,13 +117,13 @@ class BuilderTest {
         val f = correct()
         f.addFilterFunction { _ -> true }
         var l =
-            getValueFromClass<FatClass<Int, Byte>, List<(Int) -> Boolean>>(f.build(), "filterID")
+            getValueFromClass<EventMesh<Int, Byte>, List<(Int) -> Boolean>>(f.build(), "filterID")
         assertEquals(l.size, 1)
         f.addFilterFunction { i -> i <= 100 }
-        l = getValueFromClass<FatClass<Int, Byte>, List<(Int) -> Boolean>>(f.build(), "filterID")
+        l = getValueFromClass<EventMesh<Int, Byte>, List<(Int) -> Boolean>>(f.build(), "filterID")
         assertEquals(l.size, 2)
         f.addFilterFunction({ i -> i >= 10 }, { i -> i and 1 == 1 })
-        l = getValueFromClass<FatClass<Int, Byte>, List<(Int) -> Boolean>>(f.build(), "filterID")
+        l = getValueFromClass<EventMesh<Int, Byte>, List<(Int) -> Boolean>>(f.build(), "filterID")
         assert(l.all { fn -> fn(21) })
         assertFalse(l.all { fn -> fn(9) })
         assertFalse(l.all { fn -> fn(101) })
@@ -134,12 +134,13 @@ class BuilderTest {
     fun switchingData() {
         val f = correct()
         f.setDataConstant(9)
-        var l = getValueFromClass<FatClass<Int, Byte>, Either<Int, () -> Int>>(f.build(), "msgData")
+        var l =
+            getValueFromClass<EventMesh<Int, Byte>, Either<Int, () -> Int>>(f.build(), "msgData")
         assert(l.isLeft())
         assertEquals(l.getLeft()!!, 9)
 
         f.setDataGenerator { 90 }
-        l = getValueFromClass<FatClass<Int, Byte>, Either<Int, () -> Int>>(f.build(), "msgData")
+        l = getValueFromClass<EventMesh<Int, Byte>, Either<Int, () -> Int>>(f.build(), "msgData")
         assert(l.isRight())
         assertEquals(l.getRight()!!(), 90)
     }
