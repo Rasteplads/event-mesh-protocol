@@ -1,15 +1,18 @@
 package util.ByteArrayExtension
 
+import kotlin.test.assertFails
 import org.example.util.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
 class LongTest {
     fun testEq(v: Long) = assertEquals(v, v.toByteArray().toLong())
-    // fun testEq(v: ULong) = assertEquals(v, v.toUByteArray().toULong())
+
+    fun testEq(v: ByteArray): Unit =
+        assertEquals(v.map { it.toByte() }, v.toLong().toByteArray().map { it.toByte() })
 
     @Test
-    fun signedReflexive() {
+    fun fromLongReflexive() {
         testEq(-1)
         testEq(0)
         testEq(1)
@@ -23,15 +26,29 @@ class LongTest {
         testEq(Long.MAX_VALUE)
         testEq(Long.MIN_VALUE)
     }
-    /*
-       @Test
-       fun usignedReflexive() {
 
-           testEq(1u)
-           testEq(1000u)
-           testEq(99999u)
-           testEq(ULong.MAX_VALUE)
-           testEq(ULong.MIN_VALUE)
-       }
-    */
+    @Test
+    fun fromByteArrayReflexive() {
+        for (a in cartesianProduct(Long.SIZE_BYTES)) {
+            assertEquals(a.size, Long.SIZE_BYTES)
+            testEq(a.toByteArray())
+        }
+    }
+
+    @Test
+    fun generatedTestsReflexive() {
+        val num = 100
+        (0..num).forEach { _ ->
+            generateRands(Long.SIZE_BYTES).permutations().forEach { testEq(it.toByteArray()) }
+        }
+        //(Long.MIN_VALUE..Long.MAX_VALUE).forEach { n -> testEq(n) }
+    }
+
+    @Test
+    fun throwsOnSmallArray() {
+        val i = Long.SIZE_BYTES
+        (0..i).forEach { num ->
+            if (num != Long.SIZE_BYTES) assertFails { generateRands(num).toByteArray().toLong() }
+        }
+    }
 }

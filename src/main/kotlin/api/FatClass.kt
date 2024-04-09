@@ -97,25 +97,25 @@ private constructor(
              * @param f The function
              * @return the modified [Builder]]
              */
-            fun withHandleMessage(f: (ID, Data) -> Unit): Builder<ID, Data>
+            fun setHandleMessage(f: (ID, Data) -> Unit): Builder<ID, Data>
 
             /**
              * Sets a function that converts a binary representation into an `ID`. This is what is
              * read from the other nodes. The array will always have the length [ID_MAX_SIZE],
              * otherwise an exception will be thrown. This function should uphold have the same
-             * identity when using the function set in [withFromIDFunction], meaning:
+             * identity when using the function set in [setFromIDFunction], meaning:
              * ```
              * x = g(f(x))
              * ```
              *
              * where `f` is the function set here, and `g` is the function set in
-             * [withFromIDFunction] Some functions have been made that may be of use, see
+             * [setFromIDFunction] Some functions have been made that may be of use, see
              * [org.example.util]
              *
              * @param f The function
              * @return The modified [Builder]
              */
-            fun withIntoIDFunction(f: (ByteArray) -> ID): Builder<ID, Data>
+            fun setIntoIDFunction(f: (ByteArray) -> ID): Builder<ID, Data>
 
             // TODO: MAKE SURE THE LENGTH IS CORRECT
             /**
@@ -128,70 +128,70 @@ private constructor(
              * ```
              *
              * where `f` is the function set here, and `g` is the function set in
-             * [withFromDataFunction] Some functions have been made that may be of use, see
+             * [setFromDataFunction] Some functions have been made that may be of use, see
              * [org.example.util]
              *
              * @param f The function
              * @return The modified [Builder]
              */
-            fun withIntoDataFunction(f: (ByteArray) -> Data): Builder<ID, Data>
+            fun setIntoDataFunction(f: (ByteArray) -> Data): Builder<ID, Data>
 
             /**
              * Sets a function that converts the `ID` into a binary representation. This is needed
              * for transmitting the data. The array returned should have length [ID_MAX_SIZE],
              * otherwise an exception will be thrown. This function should uphold have the same
-             * identity when using the function set in [withIntoIDFunction], meaning:
+             * identity when using the function set in [setIntoIDFunction], meaning:
              * ```
              * x = g(f(x))
              * ```
              *
              * where `f` is the function set here, and `g` is the function set in
-             * [withIntoIDFunction] Some functions have been made that may be of use, see
+             * [setIntoIDFunction] Some functions have been made that may be of use, see
              * [org.example.util]
              *
              * @param f The function
              * @return The modified [Builder]
              */
-            fun withFromIDFunction(f: (ID) -> ByteArray): Builder<ID, Data>
+            fun setFromIDFunction(f: (ID) -> ByteArray): Builder<ID, Data>
 
             // TODO: MAKE SURE THE LENGTH IS CORRECT
             /**
              * Sets a function that converts the `Data` into a binary representation. This is needed
              * for transmitting the data. The array returned should have length [DATA_MAX_SIZE],
              * otherwise an exception will be thrown. This function should uphold have the same
-             * identity when using the function set in [withIntoDataFunction], meaning:
+             * identity when using the function set in [setIntoDataFunction], meaning:
              * ```
              * x = g(f(x))
              * ```
              *
              * where `f` is the function set here, and `g` is the function set in
-             * [withIntoDataFunction] Some functions have been made that may be of use, see
+             * [setIntoDataFunction] Some functions have been made that may be of use, see
              * [org.example.util]
              *
              * @param f The function
              * @return The modified [Builder]
              */
-            fun withFromDataFunction(f: (Data) -> ByteArray): Builder<ID, Data>
+            fun setFromDataFunction(f: (Data) -> ByteArray): Builder<ID, Data>
 
             /**
              * Sets a constant message that will be sent out from the device at every interval (see
-             * [withMsgSendInterval]). This function overrides any value set through
-             * [withDataGenerator].
+             * [setMsgSendInterval]). This function overrides any value set through
+             * [setDataGenerator].
              *
              * @param c The data to be sent
              * @return The modified [Builder]
              */
-            fun withDataConstant(c: Data): Builder<ID, Data>
+            fun setDataConstant(c: Data): Builder<ID, Data>
 
             /**
              * Sets a function for generating the messages that will be sent out from the devic at
              * every interval (see [withMsgSendInterval]). This function overrides any value set
-             * through [withDataConstant].
+             * through [setDataConstant].
              *
              * @param f The generator-function
              * @return The modified [Builder]
              */
-            fun withDataGenerator(f: () -> Data): Builder<ID, Data>
+            fun setDataGenerator(f: () -> Data): Builder<ID, Data>
 
             /**
              * Sets a function for generating `ID`s. This function acts as the ID for each message,
@@ -201,12 +201,12 @@ private constructor(
              * @param f The generator-function
              * @return The modified [Builder]
              */
-            fun withIDGenerator(f: () -> ID): Builder<ID, Data>
+            fun setIDGenerator(f: () -> ID): Builder<ID, Data>
 
             /**
              * Adds a filtering function. These functions filter messages by their ID. Only IDs that
              * return `true` from the filters will be sent called with the handle function (See
-             * [withHandleCallback]). The filters are applied in the order they are set.
+             * [setHandleCallback]). The filters are applied in the order they are set.
              *
              * @param f The filter-function
              * @return The modified [Builder]
@@ -216,7 +216,7 @@ private constructor(
             /**
              * Adds multiple filtering functions. These functions filter messages by their ID. Only
              * IDs that return `true` from the filters will be sent called with the handle function
-             * (See [withHandleCallback]). The filters are applied in the order they are set.
+             * (See [setHandleCallback]). The filters are applied in the order they are set.
              *
              * @param fs The filter-functions
              * @return The modified [Builder]
@@ -251,7 +251,7 @@ private constructor(
 
             /**
              * Sets the sending duration (in seconds). This is the time duration the message defined
-             * in either [withDataConstant] or [withDataGenerator] will be transmitted
+             * in either [setDataConstant] or [setDataGenerator] will be transmitted
              *
              * @param t Sending time
              * @return The modified [Builder]
@@ -325,32 +325,32 @@ private constructor(
                 return FatClass(this)
             }
 
-            override fun withIntoIDFunction(f: (ByteArray) -> ID): Builder<ID, Data> {
+            override fun setIntoIDFunction(f: (ByteArray) -> ID): Builder<ID, Data> {
                 intoID = f
                 return this
             }
 
-            override fun withIntoDataFunction(f: (ByteArray) -> Data): Builder<ID, Data> {
+            override fun setIntoDataFunction(f: (ByteArray) -> Data): Builder<ID, Data> {
                 intoData = f
                 return this
             }
 
-            override fun withFromIDFunction(f: (ID) -> ByteArray): Builder<ID, Data> {
+            override fun setFromIDFunction(f: (ID) -> ByteArray): Builder<ID, Data> {
                 fromID = f
                 return this
             }
 
-            override fun withFromDataFunction(f: (Data) -> ByteArray): Builder<ID, Data> {
+            override fun setFromDataFunction(f: (Data) -> ByteArray): Builder<ID, Data> {
                 fromData = f
                 return this
             }
 
-            override fun withDataConstant(c: Data): Builder<ID, Data> {
+            override fun setDataConstant(c: Data): Builder<ID, Data> {
                 msgData = Either.left(c)
                 return this
             }
 
-            override fun withDataGenerator(f: () -> Data): Builder<ID, Data> {
+            override fun setDataGenerator(f: () -> Data): Builder<ID, Data> {
                 msgData = Either.right(f)
                 return this
             }
@@ -365,12 +365,12 @@ private constructor(
                 return this
             }
 
-            override fun withIDGenerator(f: () -> ID): Builder<ID, Data> {
+            override fun setIDGenerator(f: () -> ID): Builder<ID, Data> {
                 msgID = f
                 return this
             }
 
-            override fun withHandleMessage(f: (ID, Data) -> Unit): Builder<ID, Data> {
+            override fun setHandleMessage(f: (ID, Data) -> Unit): Builder<ID, Data> {
                 callback = f
                 return this
             }

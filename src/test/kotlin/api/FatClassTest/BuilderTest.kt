@@ -5,17 +5,18 @@ import org.example.api.FatClass
 import org.example.util.Either
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import kotlin.test.assertFails
 
 class BuilderTest {
     private fun correct(): FatClass.Companion.Builder<Int, Byte> =
         FatClass.builder<Int, Byte>()
-            .withDataConstant(0)
-            .withIDGenerator { -> 10 }
-            .withHandleMessage { _, _ -> }
-            .withIntoIDFunction { _ -> 9 }
-            .withIntoDataFunction { _ -> 0 }
-            .withFromIDFunction { _ -> byteArrayOf(0, 1, 2, 3) }
-            .withFromDataFunction { b -> byteArrayOf(b) }
+            .setDataConstant(0)
+            .setIDGenerator { -> 10 }
+            .setHandleMessage { _, _ -> }
+            .setIntoIDFunction { _ -> 9 }
+            .setIntoDataFunction { _ -> 0 }
+            .setFromIDFunction { _ -> byteArrayOf(0, 1, 2, 3) }
+            .setFromDataFunction { b -> byteArrayOf(b) }
 
     private inline fun <reified C, reified R> getValueFromClass(target: C, field: String): R =
         C::class.members.find { m -> m.name == field }!!.apply { isAccessible = true }.call(target)
@@ -23,90 +24,90 @@ class BuilderTest {
 
     @Test
     fun missingAllFunc() {
-        assertThrows(Exception::class.java) { FatClass.builder<Int, Byte>().build() }
+        assertFails { FatClass.builder<Int, Byte>().build() }
     }
 
     @Test
     fun missingOneFunc() {
-        assertThrows(Exception::class.java) {
+        assertFails {
             FatClass.builder<Int, Byte>()
-                .withIDGenerator { -> 10 }
-                .withHandleMessage { i, b -> }
-                .withIntoIDFunction { _ -> 9 }
-                .withIntoDataFunction { _ -> 0 }
-                .withFromIDFunction { i -> byteArrayOf(0, 1, 2, 3) }
-                .withFromDataFunction { b -> byteArrayOf(b) }
+                .setIDGenerator { -> 10 }
+                .setHandleMessage { i, b -> }
+                .setIntoIDFunction { _ -> 9 }
+                .setIntoDataFunction { _ -> 0 }
+                .setFromIDFunction { i -> byteArrayOf(0, 1, 2, 3) }
+                .setFromDataFunction { b -> byteArrayOf(b) }
                 .build()
         }
 
-        assertThrows(Exception::class.java) {
+        assertFails {
             FatClass.builder<Int, Byte>()
-                .withDataConstant(0)
-                .withHandleMessage { i, b -> }
-                .withIntoIDFunction { _ -> 9 }
-                .withIntoDataFunction { _ -> 0 }
-                .withFromIDFunction { i -> byteArrayOf(0, 1, 2, 3) }
-                .withFromDataFunction { b -> byteArrayOf(b) }
+                .setDataConstant(0)
+                .setHandleMessage { i, b -> }
+                .setIntoIDFunction { _ -> 9 }
+                .setIntoDataFunction { _ -> 0 }
+                .setFromIDFunction { i -> byteArrayOf(0, 1, 2, 3) }
+                .setFromDataFunction { b -> byteArrayOf(b) }
                 .build()
         }
-        assertThrows(Exception::class.java) {
+        assertFails {
             FatClass.builder<Int, Byte>()
-                .withDataConstant(0)
-                .withIDGenerator { -> 10 }
-                .withIntoIDFunction { _ -> 9 }
-                .withIntoDataFunction { _ -> 0 }
-                .withFromIDFunction { i -> byteArrayOf(0, 1, 2, 3) }
-                .withFromDataFunction { b -> byteArrayOf(b) }
+                .setDataConstant(0)
+                .setIDGenerator { -> 10 }
+                .setIntoIDFunction { _ -> 9 }
+                .setIntoDataFunction { _ -> 0 }
+                .setFromIDFunction { i -> byteArrayOf(0, 1, 2, 3) }
+                .setFromDataFunction { b -> byteArrayOf(b) }
                 .build()
         }
-        assertThrows(Exception::class.java) {
+        assertFails {
             FatClass.builder<Int, Byte>()
-                .withDataConstant(0)
-                .withIDGenerator { -> 10 }
-                .withIntoIDFunction { _ -> 9 }
-                .withIntoDataFunction { _ -> 0 }
-                .withFromIDFunction { i -> byteArrayOf(0, 1, 2, 3) }
-                .withFromDataFunction { b -> byteArrayOf(b) }
+                .setDataConstant(0)
+                .setIDGenerator { -> 10 }
+                .setIntoIDFunction { _ -> 9 }
+                .setIntoDataFunction { _ -> 0 }
+                .setFromIDFunction { i -> byteArrayOf(0, 1, 2, 3) }
+                .setFromDataFunction { b -> byteArrayOf(b) }
                 .build()
         }
-        assertThrows(Exception::class.java) {
+        assertFails {
             FatClass.builder<Int, Byte>()
-                .withDataConstant(0)
-                .withIDGenerator { -> 10 }
-                .withHandleMessage { i, b -> }
-                .withIntoDataFunction { _ -> 0 }
-                .withFromIDFunction { i -> byteArrayOf(0, 1, 2, 3) }
-                .withFromDataFunction { b -> byteArrayOf(b) }
+                .setDataConstant(0)
+                .setIDGenerator { -> 10 }
+                .setHandleMessage { i, b -> }
+                .setIntoDataFunction { _ -> 0 }
+                .setFromIDFunction { i -> byteArrayOf(0, 1, 2, 3) }
+                .setFromDataFunction { b -> byteArrayOf(b) }
                 .build()
         }
-        assertThrows(Exception::class.java) {
+        assertFails {
             FatClass.builder<Int, Byte>()
-                .withDataConstant(0)
-                .withIDGenerator { -> 10 }
-                .withHandleMessage { i, b -> }
-                .withIntoIDFunction { _ -> 9 }
-                .withFromIDFunction { i -> byteArrayOf(0, 1, 2, 3) }
-                .withFromDataFunction { b -> byteArrayOf(b) }
+                .setDataConstant(0)
+                .setIDGenerator { -> 10 }
+                .setHandleMessage { i, b -> }
+                .setIntoIDFunction { _ -> 9 }
+                .setFromIDFunction { i -> byteArrayOf(0, 1, 2, 3) }
+                .setFromDataFunction { b -> byteArrayOf(b) }
                 .build()
         }
-        assertThrows(Exception::class.java) {
+        assertFails {
             FatClass.builder<Int, Byte>()
-                .withDataConstant(0)
-                .withIDGenerator { -> 10 }
-                .withHandleMessage { i, b -> }
-                .withIntoIDFunction { _ -> 9 }
-                .withIntoDataFunction { _ -> 0 }
-                .withFromDataFunction { b -> byteArrayOf(b) }
+                .setDataConstant(0)
+                .setIDGenerator { -> 10 }
+                .setHandleMessage { i, b -> }
+                .setIntoIDFunction { _ -> 9 }
+                .setIntoDataFunction { _ -> 0 }
+                .setFromDataFunction { b -> byteArrayOf(b) }
                 .build()
         }
-        assertThrows(Exception::class.java) {
+        assertFails {
             FatClass.builder<Int, Byte>()
-                .withDataConstant(0)
-                .withIDGenerator { -> 10 }
-                .withHandleMessage { i, b -> }
-                .withIntoIDFunction { _ -> 9 }
-                .withIntoDataFunction { _ -> 0 }
-                .withFromIDFunction { i -> byteArrayOf(0, 1, 2, 3) }
+                .setDataConstant(0)
+                .setIDGenerator { -> 10 }
+                .setHandleMessage { i, b -> }
+                .setIntoIDFunction { _ -> 9 }
+                .setIntoDataFunction { _ -> 0 }
+                .setFromIDFunction { i -> byteArrayOf(0, 1, 2, 3) }
                 .build()
         }
     }
@@ -132,12 +133,12 @@ class BuilderTest {
     @Test
     fun switchingData() {
         val f = correct()
-        f.withDataConstant(9)
+        f.setDataConstant(9)
         var l = getValueFromClass<FatClass<Int, Byte>, Either<Int, () -> Int>>(f.build(), "msgData")
         assert(l.isLeft())
         assertEquals(l.getLeft()!!, 9)
 
-        f.withDataGenerator { 90 }
+        f.setDataGenerator { 90 }
         l = getValueFromClass<FatClass<Int, Byte>, Either<Int, () -> Int>>(f.build(), "msgData")
         assert(l.isRight())
         assertEquals(l.getRight()!!(), 90)
