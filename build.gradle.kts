@@ -3,6 +3,8 @@ val kotlinVersion: String = "1.9.23"
 plugins {
     kotlin("jvm") version "1.9.23"
     kotlin("plugin.serialization") version "1.9.23"
+
+    id("com.diffplug.spotless") version "6.19.0"
 }
 
 group = "org.example"
@@ -28,4 +30,11 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+
+spotless {
+    kotlin {
+        ktfmt("0.44").dropboxStyle()
+    }
 }

@@ -7,4 +7,5 @@ fun main() {
         .withDataConstant(0)
         //.setFromIDFunction { i -> i.toBUyteArray() }
         .build()
+    println("Hello World!")
 }
