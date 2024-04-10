@@ -1,14 +1,14 @@
-package api.EventMeshTest
+package rasteplads.api.eventmesh_test
 
-import api.EventMesh
 import kotlin.reflect.jvm.isAccessible
 import kotlin.test.assertFails
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import util.Either
+import rasteplads.api.EventMesh
+import rasteplads.util.Either
 
 class BuilderTest {
-    private fun correct() =
+    private fun correct(): EventMesh.Companion.Builder<Int, Byte> =
         EventMesh.builder<Int, Byte>()
             .setDataConstant(0)
             .setIDGenerator { -> 10 }

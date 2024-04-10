@@ -1,4 +1,4 @@
-package rasteplads.util.ByteArrayExtension
+package rasteplads.util.byte_array_extension
 
 import kotlin.test.assertFails
 import org.junit.jupiter.api.Assertions.*
