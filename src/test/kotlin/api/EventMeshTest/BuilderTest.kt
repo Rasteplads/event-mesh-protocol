@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 import util.Either
 
 class BuilderTest {
-    private fun correct(): EventMesh.Companion.Builder<Int, Byte> =
+    private fun correct() =
         EventMesh.builder<Int, Byte>()
             .setDataConstant(0)
             .setIDGenerator { -> 10 }
