@@ -20,14 +20,23 @@ private const val ID_MAX_SIZE = 4u
 // buffer.copyOf(position)
 
 /**
- * @author t-lohse
+ * This class handles communicating messages to the dynamic mesh network.
  *
- * TODO: WRITE
+ * `ID` represents the IDs for each message, `Data` represents the message itself, and `MC` is the
+ * message cache for storing already known messages.
+ *
+ * If the default message cache is used, `ID` must af [equals] overridden.
+ *
+ * To use, use the one of the [builder] functions (or [builderWithoutMC] if no message cache is
+ * needed), that returns a [Builder], which needs some values to work (more or less all methods
+ * following the 'set*' naming scheme). After this, you can simply run [start], that runs everything
+ * in the background.
+ *
+ * @author t-lohse
  */
-final class EventMesh<ID, Data, MC : MessageCache<ID>> // TODO: cache derive
+final class EventMesh<ID, Data, MC : MessageCache<ID>>
 private constructor(
     private val callback: (ID, Data) -> Unit,
-    // Should we make custom structs for the Binary ID and Data? (replace ByteArray)
     private val intoID: (ByteArray) -> ID,
     private val intoData: (ByteArray) -> Data,
     private val fromID: (ID) -> ByteArray,
@@ -35,7 +44,7 @@ private constructor(
     private val msgData: Either<Data, () -> Data>,
     private val msgId: Either<ID, () -> ID>,
     private val filterID: List<(ID) -> Boolean>,
-    private val messageCache: MC
+    private val messageCache: MC?
 ) {
 
     // TODO: set correct default values
@@ -91,15 +100,29 @@ private constructor(
 
     companion object {
         /**
-         * Creates a [Builder] for [EventMesh]
+         * Creates a [Builder] for [EventMesh] with the default message cache ([MessageCache])
          *
          * @param ID The messages' ID
          * @param Data The messages' content
          */
         fun <ID, Data> builder(): Builder<ID, Data, MessageCache<ID>> = BuilderImpl(MessageCache())
 
+        /**
+         * Creates a [Builder] for [EventMesh] with a provided message cache
+         *
+         * @param ID The messages' ID
+         * @param Data The messages' content
+         */
         fun <ID, Data, MC : MessageCache<ID>> builder(mc: MC): Builder<ID, Data, MC> =
             BuilderImpl(mc)
+
+        /**
+         * Creates a [Builder] for [EventMesh] without a message cache
+         *
+         * @param ID The messages' ID
+         * @param Data The messages' content
+         */
+        fun <ID, Data> builderWithoutMC(): Builder<ID, Data, *> = BuilderImpl(null)
 
         interface Builder<ID, Data, MC : MessageCache<ID>> {
 
@@ -123,7 +146,7 @@ private constructor(
              *
              * where `f` is the function set here, and `g` is the function set in
              * [setFromIDFunction] Some functions have been made that may be of use, see
-             * [org.rasteplads.util]
+             * [rasteplads.util]
              *
              * @param f The function
              * @return The modified [Builder]
@@ -142,7 +165,7 @@ private constructor(
              *
              * where `f` is the function set here, and `g` is the function set in
              * [setFromDataFunction] Some functions have been made that may be of use, see
-             * [org.rasteplads.util]
+             * [rasteplads.util]
              *
              * @param f The function
              * @return The modified [Builder]
@@ -160,7 +183,7 @@ private constructor(
              *
              * where `f` is the function set here, and `g` is the function set in
              * [setIntoIDFunction] Some functions have been made that may be of use, see
-             * [org.rasteplads.util]
+             * [rasteplads.util]
              *
              * @param f The function
              * @return The modified [Builder]
@@ -179,7 +202,7 @@ private constructor(
              *
              * where `f` is the function set here, and `g` is the function set in
              * [setIntoDataFunction] Some functions have been made that may be of use, see
-             * [org.rasteplads.util]
+             * [rasteplads.util]
              *
              * @param f The function
              * @return The modified [Builder]
@@ -299,11 +322,18 @@ private constructor(
             fun withMsgScanDuration(t: UInt): Builder<ID, Data, MC>
 
             /**
+             * Sets a message cache. If `null`, it disables the message cache
+             *
+             * @param b Boolean enabling/disabling the message cache
+             * @return The modified [Builder]
+             */
+            fun withMsgCache(b: MC?): Builder<ID, Data, MC>
+
+            /**
+             * Sets the limit of elements saved in the message cache
+             *
              * @param l Limit
              * @return The modified [Builder]
-             *
-             * TODO: LINK TO MESSAGE CACHE TYPE Sets the limit of elements saved in the message
-             *   cache
              */
             fun withMsgCacheLimit(l: UInt): Builder<ID, Data, MC>
 
@@ -316,8 +346,7 @@ private constructor(
             fun build(): EventMesh<ID, Data, MC>
         }
 
-        // TODO: Do default MC
-        private class BuilderImpl<ID, Data, MC : MessageCache<ID>>(val msgCache: MC) :
+        private class BuilderImpl<ID, Data, MC : MessageCache<ID>>(var msgCache: MC?) :
             Builder<ID, Data, MC> {
             lateinit var callback: (ID, Data) -> Unit
             lateinit var intoID: (ByteArray) -> ID
@@ -337,6 +366,7 @@ private constructor(
             var msgScanInterval: UInt? = null
             var msgScanDuration: UInt? = null
             var msgCacheLimit: UInt? = null
+            var msgCacheEnabled: Boolean = true
 
             override fun build(): EventMesh<ID, Data, MC> {
                 check(::callback.isInitialized) { "Function for callbacks is necessary" }
@@ -444,6 +474,11 @@ private constructor(
 
             override fun withMsgScanDuration(t: UInt): Builder<ID, Data, MC> {
                 msgScanDuration = t
+                return this
+            }
+
+            override fun withMsgCache(mc: MC?): Builder<ID, Data, MC> {
+                this.msgCache = mc
                 return this
             }
 
