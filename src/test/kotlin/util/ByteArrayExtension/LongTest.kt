@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 import org.rasteplads.util.*
 
 class LongTest {
-    private fun testEq(v: Long) = assertEquals(v, v.toByteArray().toLong())
+    private fun testEq(v: Long): Unit = assertEquals(v, v.toByteArray().toLong())
 
     private fun testEq(v: ByteArray): Unit =
         assertEquals(v.toList(), v.toLong().toByteArray().toList())

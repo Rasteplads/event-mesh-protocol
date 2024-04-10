@@ -1,4 +1,4 @@
-package org.rasteplads.api
+package api
 
 import org.rasteplads.util.Either
 
@@ -23,11 +23,11 @@ private const val ID_MAX_SIZE = 4u
  *
  * TODO: WRITE
  */
-final class EventMesh<ID, Data>
+final class EventMesh<ID, Data> // TODO: cache derive
 private constructor(
     private val callback: (ID, Data) -> Unit,
-    private val intoID:
-        (ByteArray) -> ID, // Should we make custom structs for the Binary IDs and Datas?
+    // Should we make custom structs for the Binary IDs and Datas? (replace ByteArray)
+    private val intoID: (ByteArray) -> ID,
     private val intoData: (ByteArray) -> Data,
     private val fromID: (ID) -> ByteArray,
     private val fromData: (Data) -> ByteArray,
@@ -57,6 +57,7 @@ private constructor(
     private var msgCacheLimit: UInt = 32u
 
     // TODO: MESSAGE CACHE
+    // private var msgCache: MsgCache
 
     private constructor(
         builder: BuilderImpl<ID, Data>
@@ -79,7 +80,7 @@ private constructor(
     }
 
     /** Executes (lol) */
-    suspend fun execute() {
+    suspend fun start() {
         // TODO: EXEC IN BG
     }
 

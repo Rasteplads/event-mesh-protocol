@@ -1,10 +1,10 @@
 package api.EventMeshTest
 
+import api.EventMesh
 import kotlin.reflect.jvm.isAccessible
 import kotlin.test.assertFails
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import org.rasteplads.api.EventMesh
 import org.rasteplads.util.Either
 
 class BuilderTest {
@@ -131,7 +131,7 @@ class BuilderTest {
     }
 
     @Test
-    fun switchingData() {
+    fun overridingData() {
         val f = correct()
         f.setDataConstant(9)
         var l =
@@ -145,5 +145,55 @@ class BuilderTest {
         assertEquals(l.getRight()!!(), 90)
     }
 
-    //TODO: OPTIONAL FUNCS PLS
+    @Test
+    fun testingOptionalFields() {
+        val f = correct()
+        var name = "msgDelete"
+        var default = getValueFromClass<EventMesh<Int, Byte>, UInt>(f.build(), name)
+        var modded =
+            getValueFromClass<EventMesh<Int, Byte>, UInt>(
+                f.withMsgCacheDelete(default + 10u).build(), name)
+        assertNotEquals(modded, default)
+
+        name = "msgTTL"
+        default = getValueFromClass<EventMesh<Int, Byte>, UInt>(f.build(), name)
+        modded =
+            getValueFromClass<EventMesh<Int, Byte>, UInt>(f.withMsgTTL(default + 10u).build(), name)
+        assertNotEquals(modded, default)
+
+        name = "msgSendInterval"
+        default = getValueFromClass<EventMesh<Int, Byte>, UInt>(f.build(), name)
+        modded =
+            getValueFromClass<EventMesh<Int, Byte>, UInt>(
+                f.withMsgSendInterval(default + 10u).build(), name)
+        assertNotEquals(modded, default)
+
+        name = "msgSendDuration"
+        default = getValueFromClass<EventMesh<Int, Byte>, UInt>(f.build(), name)
+        modded =
+            getValueFromClass<EventMesh<Int, Byte>, UInt>(
+                f.withMsgSendDuration(default + 10u).build(), name)
+        assertNotEquals(modded, default)
+
+        name = "msgScanInterval"
+        default = getValueFromClass<EventMesh<Int, Byte>, UInt>(f.build(), name)
+        modded =
+            getValueFromClass<EventMesh<Int, Byte>, UInt>(
+                f.withMsgScanInterval(default + 10u).build(), name)
+        assertNotEquals(modded, default)
+
+        name = "msgScanDuration"
+        default = getValueFromClass<EventMesh<Int, Byte>, UInt>(f.build(), name)
+        modded =
+            getValueFromClass<EventMesh<Int, Byte>, UInt>(
+                f.withMsgScanDuration(default + 10u).build(), name)
+        assertNotEquals(modded, default)
+
+        name = "msgCacheLimit"
+        default = getValueFromClass<EventMesh<Int, Byte>, UInt>(f.build(), name)
+        modded =
+            getValueFromClass<EventMesh<Int, Byte>, UInt>(
+                f.withMsgCacheLimit(default + 10u).build(), name)
+        assertNotEquals(modded, default)
+    }
 }
