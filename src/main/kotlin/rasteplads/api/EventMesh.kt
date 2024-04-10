@@ -3,20 +3,6 @@ package rasteplads.api
 import rasteplads.messageCache.MessageCache
 import rasteplads.util.Either
 
-/**
- * Default value for the size of a message's data/content (when converted to buffer).
- *
- * The default value is 29.
- */
-private const val DATA_MAX_SIZE = 29u
-
-/**
- * Default value for the size of a message's ID (when converted to buffer).
- *
- * The default value is 4.
- */
-private const val ID_MAX_SIZE = 4u
-
 // buffer.copyOf(position)
 
 /**
@@ -99,6 +85,20 @@ private constructor(
     }
 
     companion object {
+        /**
+         * Default value for the size of a message's data/content (when converted to buffer).
+         *
+         * The default value is 29.
+         */
+        val DATA_MAX_SIZE = 29u
+
+        /**
+         * Default value for the size of a message's ID (when converted to buffer).
+         *
+         * The default value is 4.
+         */
+        val ID_MAX_SIZE = 4u
+
         /**
          * Creates a [Builder] for [EventMesh] with the default message cache ([MessageCache])
          *
