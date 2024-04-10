@@ -25,7 +25,6 @@ tasks.test {
     useJUnitPlatform()
 }
 
-
 spotless {
     kotlin {
         ktfmt("0.44").dropboxStyle()

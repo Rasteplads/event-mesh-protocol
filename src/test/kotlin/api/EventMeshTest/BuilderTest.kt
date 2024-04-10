@@ -135,14 +135,24 @@ class BuilderTest {
         val f = correct()
         f.setDataConstant(9)
         var l =
-            getValueFromClass<EventMesh<Int, Byte>, Either<Int, () -> Int>>(f.build(), "msgData")
+            getValueFromClass<EventMesh<Int, Byte>, Either<Byte, () -> Byte>>(f.build(), "msgData")
         assert(l.isLeft())
         assertEquals(l.getLeft()!!, 9)
 
         f.setDataGenerator { 90 }
-        l = getValueFromClass<EventMesh<Int, Byte>, Either<Int, () -> Int>>(f.build(), "msgData")
+        l = getValueFromClass<EventMesh<Int, Byte>, Either<Byte, () -> Byte>>(f.build(), "msgData")
         assert(l.isRight())
         assertEquals(l.getRight()!!(), 90)
+
+        f.setIDConstant(9)
+        var k = getValueFromClass<EventMesh<Int, Byte>, Either<Int, () -> Int>>(f.build(), "msgId")
+        assert(k.isLeft())
+        assertEquals(k.getLeft()!!, 9)
+
+        f.setIDGenerator { 90 }
+        k = getValueFromClass<EventMesh<Int, Byte>, Either<Int, () -> Int>>(f.build(), "msgId")
+        assert(k.isRight())
+        assertEquals(k.getRight()!!(), 90)
     }
 
     @Test

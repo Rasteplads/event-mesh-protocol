@@ -32,7 +32,7 @@ private constructor(
     private val fromID: (ID) -> ByteArray,
     private val fromData: (Data) -> ByteArray,
     private val msgData: Either<Data, () -> Data>,
-    private val msgId: () -> ID,
+    private val msgId: Either<ID, () -> ID>,
     private val filterID: List<(ID) -> Boolean>
 ) {
 
@@ -201,9 +201,20 @@ private constructor(
             fun setDataGenerator(f: () -> Data): Builder<ID, Data>
 
             /**
-             * Sets a function for generating `ID`s. This function acts as the ID for each message,
-             * and will be stored by every node for some time (See [withMsgCacheDelete]). The ID
-             * should be unique for at least the duration which it can be saved.
+             * Sets a constant `ID`. This `ID` will be used as the `ID` for each message, and will
+             * be stored by every node for some time (See [withMsgCacheDelete]). This overrides any
+             * value specified with [setIDGenerator].
+             *
+             * @param i `ID`
+             * @return The modified [Builder]
+             */
+            fun setIDConstant(i: ID): Builder<ID, Data>
+
+            /**
+             * Sets a function for generating `ID`s. This function acts as the `ID` for each
+             * message, and will be stored by every node for some time (See [withMsgCacheDelete]).
+             * The `ID` should be unique for at least the duration which it can be saved. This
+             * overrides any value specified with [setIDConstant].
              *
              * @param f The generator-function
              * @return The modified [Builder]
@@ -306,7 +317,7 @@ private constructor(
             lateinit var fromID: (ID) -> ByteArray
             lateinit var fromData: (Data) -> ByteArray
             lateinit var msgData: Either<Data, () -> Data>
-            lateinit var msgID: () -> ID
+            lateinit var msgID: Either<ID, () -> ID>
 
             val filterID: MutableList<(ID) -> Boolean> = mutableListOf()
 
@@ -384,12 +395,17 @@ private constructor(
             }
 
             override fun setIDGenerator(f: () -> ID): Builder<ID, Data> {
-                msgID = f
+                msgID = Either.right(f)
                 return this
             }
 
             override fun setHandleMessage(f: (ID, Data) -> Unit): Builder<ID, Data> {
                 callback = f
+                return this
+            }
+
+            override fun setIDConstant(i: ID): Builder<ID, Data> {
+                msgID = Either.left(i)
                 return this
             }
 
