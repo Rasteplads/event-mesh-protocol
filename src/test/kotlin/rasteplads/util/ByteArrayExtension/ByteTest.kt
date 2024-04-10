@@ -1,11 +1,9 @@
-package util.ByteArrayExtension
+package rasteplads.util.ByteArrayExtension
 
 import kotlin.test.assertFails
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import org.rasteplads.util.*
-import util.toByte
-import util.toByteArray
+import rasteplads.util.*
 
 class ByteTest {
     private fun testEq(v: Byte): Unit = assertEquals(v, v.toByteArray().toByte())

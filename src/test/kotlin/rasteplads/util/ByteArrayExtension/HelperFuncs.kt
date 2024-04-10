@@ -1,4 +1,4 @@
-package util.ByteArrayExtension
+package rasteplads.util.ByteArrayExtension
 
 import java.util.Collections
 
