@@ -1,4 +1,4 @@
-package org.rasteplads.util
+package util
 
 import java.nio.ByteBuffer
 

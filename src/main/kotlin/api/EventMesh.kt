@@ -1,6 +1,6 @@
 package api
 
-import org.rasteplads.util.Either
+import util.Either
 
 /**
  * Default value for the size of a message's data/content (when converted to buffer).
@@ -26,7 +26,7 @@ private const val ID_MAX_SIZE = 4u
 final class EventMesh<ID, Data> // TODO: cache derive
 private constructor(
     private val callback: (ID, Data) -> Unit,
-    // Should we make custom structs for the Binary IDs and Datas? (replace ByteArray)
+    // Should we make custom structs for the Binary ID and Data? (replace ByteArray)
     private val intoID: (ByteArray) -> ID,
     private val intoData: (ByteArray) -> Data,
     private val fromID: (ID) -> ByteArray,
@@ -35,6 +35,8 @@ private constructor(
     private val msgId: () -> ID,
     private val filterID: List<(ID) -> Boolean>
 ) {
+
+    // TODO: set correct default values
     /** Time a message is stored in the cache. Defined in seconds. */
     private var msgDelete: UInt = 600u
 
@@ -335,7 +337,7 @@ private constructor(
                     "Either a constant or a generator function for the advertising `Data` must be set"
                 }
                 check(::msgID.isInitialized) {
-                    "Either a constant or a generator function for the advertising `ID` must be set"
+                    "A generator function for the advertising `ID` must be set"
                 }
 
                 return EventMesh(this)

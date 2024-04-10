@@ -5,7 +5,7 @@ import kotlin.reflect.jvm.isAccessible
 import kotlin.test.assertFails
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import org.rasteplads.util.Either
+import util.Either
 
 class BuilderTest {
     private fun correct(): EventMesh.Companion.Builder<Int, Byte> =

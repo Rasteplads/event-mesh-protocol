@@ -4,6 +4,8 @@ import kotlin.test.assertFails
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.rasteplads.util.*
+import util.toByteArray
+import util.toShort
 
 class ShortTest {
     private fun testEq(v: Short): Unit = assertEquals(v, v.toByteArray().toShort())
