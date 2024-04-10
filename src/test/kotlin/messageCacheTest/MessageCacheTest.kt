@@ -1,4 +1,4 @@
-package cacheTest
+package messageCacheTest
 
 class MessageCacheTest {
 
