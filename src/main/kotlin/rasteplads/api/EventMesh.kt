@@ -1,6 +1,6 @@
-package api
+package rasteplads.api
 
-import util.Either
+import rasteplads.util.Either
 
 /**
  * Default value for the size of a message's data/content (when converted to buffer).
