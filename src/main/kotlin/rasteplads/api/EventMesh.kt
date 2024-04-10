@@ -1,5 +1,6 @@
 package rasteplads.api
 
+import rasteplads.messageCache.MessageCache
 import rasteplads.util.Either
 
 /**
@@ -23,7 +24,7 @@ private const val ID_MAX_SIZE = 4u
  *
  * TODO: WRITE
  */
-final class EventMesh<ID, Data, MC> // TODO: cache derive
+final class EventMesh<ID, Data, MC : MessageCache<ID>> // TODO: cache derive
 private constructor(
     private val callback: (ID, Data) -> Unit,
     // Should we make custom structs for the Binary ID and Data? (replace ByteArray)
@@ -95,11 +96,12 @@ private constructor(
          * @param ID The messages' ID
          * @param Data The messages' content
          */
-        fun <ID, Data> builder(): Builder<ID, Data, Int> = BuilderImpl(7) // TODO: Default Class
+        fun <ID, Data> builder(): Builder<ID, Data, MessageCache<ID>> = BuilderImpl(MessageCache())
 
-        fun <ID, Data, MC> builder(mc: MC): Builder<ID, Data, MC> = BuilderImpl(mc)
+        fun <ID, Data, MC : MessageCache<ID>> builder(mc: MC): Builder<ID, Data, MC> =
+            BuilderImpl(mc)
 
-        interface Builder<ID, Data, MC> {
+        interface Builder<ID, Data, MC : MessageCache<ID>> {
 
             /**
              * Sets a function that will be called on every message that is not filtered (See
@@ -315,7 +317,8 @@ private constructor(
         }
 
         // TODO: Do default MC
-        private class BuilderImpl<ID, Data, MC>(val msgCache: MC) : Builder<ID, Data, MC> {
+        private class BuilderImpl<ID, Data, MC : MessageCache<ID>>(val msgCache: MC) :
+            Builder<ID, Data, MC> {
             lateinit var callback: (ID, Data) -> Unit
             lateinit var intoID: (ByteArray) -> ID
             lateinit var intoData: (ByteArray) -> Data

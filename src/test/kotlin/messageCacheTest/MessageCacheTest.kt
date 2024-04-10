@@ -1,5 +1,0 @@
-package messageCacheTest
-
-class MessageCacheTest {
-
-}
