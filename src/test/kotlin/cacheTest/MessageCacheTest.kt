@@ -1,0 +1,5 @@
+package cacheTest
+
+class MessageCacheTest {
+
+}
