@@ -1,5 +1,6 @@
 package rasteplads.api
 
+import kotlinx.coroutines.*
 import rasteplads.messageCache.MessageCache
 import rasteplads.util.Either
 
@@ -80,9 +81,15 @@ private constructor(
     }
 
     /** Executes (lol) */
-    suspend fun start() {
+    fun start() = runBlocking {
+        launch {
+            b()
+            println("hvad")
+        }
         // TODO: EXEC IN BG
     }
+
+    suspend fun b() {}
 
     companion object {
         /**

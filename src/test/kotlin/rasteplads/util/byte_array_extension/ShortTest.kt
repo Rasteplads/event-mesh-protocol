@@ -8,11 +8,13 @@ import rasteplads.util.*
 class ShortTest {
     private fun testEq(v: Short): Unit = assertEquals(v, v.toByteArray().toShort())
 
+    private fun testEq(v: UShort): Unit = assertEquals(v, v.toByteArray().toUShort())
+
     private fun testEq(v: ByteArray): Unit =
         assertEquals(v.toList(), v.toShort().toByteArray().toList())
 
     @Test
-    fun signedReflexive() {
+    fun fromShortReflexive() {
         testEq(0)
         testEq(1)
         testEq(-1)
@@ -25,6 +27,19 @@ class ShortTest {
 
         testEq(Short.MAX_VALUE)
         testEq(Short.MIN_VALUE)
+    }
+
+    @Test
+    fun fromUShortReflexive() {
+        testEq(0u)
+        testEq(1u)
+
+        testEq(1000u)
+
+        testEq(9999u)
+
+        testEq(UShort.MAX_VALUE)
+        testEq(UShort.MIN_VALUE)
     }
 
     @Test
@@ -52,13 +67,17 @@ class ShortTest {
             generateRands(Short.SIZE_BYTES).permutations().forEach { testEq(it.toByteArray()) }
         }
         (Short.MIN_VALUE..Short.MAX_VALUE).forEach { n -> testEq(n.toShort()) }
+        (UShort.MIN_VALUE..UShort.MAX_VALUE).forEach { n -> testEq(n.toShort()) }
     }
 
     @Test
     fun throwsOnSmallArray() {
         val i = Short.SIZE_BYTES
         (0..i).forEach { num ->
-            if (num != Short.SIZE_BYTES) assertFails { generateRands(num).toByteArray().toShort() }
+            if (num != Short.SIZE_BYTES) {
+                assertFails { generateRands(num).toByteArray().toShort() }
+                assertFails { generateRands(num).toByteArray().toUShort() }
+            }
         }
     }
 
