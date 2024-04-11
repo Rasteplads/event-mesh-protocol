@@ -8,7 +8,7 @@ import rasteplads.util.Either
 
 // buffer.copyOf(position)
 
-fun main() = runBlocking {
+fun main() {
     println("start")
 
     val f =
@@ -22,14 +22,13 @@ fun main() = runBlocking {
             .setFromDataFunction { byteArrayOf(it) }
             .build()
     println("f")
-    // val b = runBlocking {f.start()}
-    // val s = launch {f.start()}
     f.start()
-    delay(1000)
+    println("MAIN")
+
+    // delay(1000)
     println("I want it to stop")
     f.stop()
-    // b.cancelAndJoin()
-    // delay(1000)
+
     println("works I guess")
 }
 
@@ -72,7 +71,7 @@ private constructor(
     private var msgSendInterval: Duration = Duration.ofSeconds(60)
 
     /** The duration the messages from [msgData] will be sent. Defined in seconds. */
-    private var msgSendDuration: Duration = Duration.ofSeconds(60)
+    private var msgSendDurationCap: Duration = Duration.ofSeconds(60)
 
     /** The interval incoming messages will be scanned for. Defined in seconds. */
     private var msgScanInterval: Duration = Duration.ofSeconds(60)
@@ -85,9 +84,6 @@ private constructor(
 
     private lateinit var btScanner: Job
     private lateinit var btSender: Job
-
-    // TODO: MESSAGE CACHE
-    // private var msgCache: MsgCache
 
     private constructor(
         builder: BuilderImpl<ID, Data, Device, MC>
@@ -106,7 +102,7 @@ private constructor(
         builder.msgDelete?.let { msgDelete = it }
         builder.msgTTL?.let { msgTTL = it }
         builder.msgSendInterval?.let { msgSendInterval = it }
-        builder.msgSendDuration?.let { msgSendDuration = it }
+        builder.msgSendDurationCap?.let { msgSendDurationCap = it }
         builder.msgScanInterval?.let { msgScanInterval = it }
         builder.msgScanDuration?.let { msgScanDuration = it }
         builder.msgCacheLimit?.let { msgCacheLimit = it }
@@ -140,6 +136,8 @@ private constructor(
                     println("STOP HW (IF LOCAL)")
                 }
             }
+        delay(3000)
+        println("FUNC")
     }
 
     /** TODO */
@@ -389,13 +387,14 @@ private constructor(
             fun withMsgSendInterval(d: Duration): Builder<ID, Data, Device, MC>
 
             /**
-             * Sets the sending duration. This is the time duration the message defined in either
-             * [setDataConstant] or [setDataGenerator] will be transmitted.
+             * Sets the sending duration cap. This is the max time duration the message defined in
+             * either [setDataConstant] or [setDataGenerator] will be transmitted. It will transmit
+             * in this time, or until echo.
              *
              * @param d Sending time
              * @return The modified [Builder]
              */
-            fun withMsgSendDuration(d: Duration): Builder<ID, Data, Device, MC>
+            fun withMsgSendDurationCap(d: Duration): Builder<ID, Data, Device, MC>
 
             /**
              * Sets the scanning interval.
@@ -466,7 +465,7 @@ private constructor(
             var msgTTL: Long? = null
 
             var msgSendInterval: Duration? = null
-            var msgSendDuration: Duration? = null
+            var msgSendDurationCap: Duration? = null
             var msgScanInterval: Duration? = null
             var msgScanDuration: Duration? = null
             var msgCacheLimit: Long? = null
@@ -572,8 +571,8 @@ private constructor(
                 return this
             }
 
-            override fun withMsgSendDuration(d: Duration): Builder<ID, Data, Device, MC> {
-                msgSendDuration = d
+            override fun withMsgSendDurationCap(d: Duration): Builder<ID, Data, Device, MC> {
+                msgSendDurationCap = d
                 return this
             }
 
