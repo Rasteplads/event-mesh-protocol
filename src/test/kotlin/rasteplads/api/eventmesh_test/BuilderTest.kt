@@ -180,20 +180,28 @@ class BuilderTest {
                 f.withMsgCacheDelete(default.plusMinutes(10)).build(), name)
         assertNotEquals(modded, default)
 
+        name = "msgSendSessionInterval"
+        default =
+            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Duration>(f.build(), name)
+        modded =
+            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Duration>(
+                f.withMsgSendSessionInterval(default.plusMinutes(10)).build(), name)
+        assertNotEquals(modded, default)
+
         name = "msgSendInterval"
         default =
             getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Duration>(f.build(), name)
         modded =
             getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Duration>(
-                f.withMsgSendInterval(default.plusMinutes(10)).build(), name)
+                f.withMsgSendInterval(default.plusMillis(10)).build(), name)
         assertNotEquals(modded, default)
 
-        name = "msgSendDurationCap"
+        name = "msgSendTimeout"
         default =
             getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Duration>(f.build(), name)
         modded =
             getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Duration>(
-                f.withMsgSendDurationCap(default.plusMinutes(10)).build(), name)
+                f.withMsgSendTimeout(default.plusMinutes(10)).build(), name)
         assertNotEquals(modded, default)
 
         name = "msgScanInterval"

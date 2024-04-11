@@ -62,22 +62,32 @@ private constructor(
 
     // TODO: set correct default values
     /** Time a message is stored in the cache */
-    private var msgDelete: Duration = Duration.ofHours(1)
+    private var msgDelete: Duration = Duration.ofSeconds(30)
 
     /** Time TO Live (TTL) for the messages. */
-    private var msgTTL: Long = 32
+    private var msgTTL: Long = 10
 
-    /** The interval the messages from [msgData] will be sent. Defined in seconds. */
-    private var msgSendInterval: Duration = Duration.ofSeconds(60)
+    /**
+     * The interval the messages from [msgData] will be sent. This corresponds to 'Advertising
+     * Interval' in Bluetooth
+     */
+    private var msgSendInterval: Duration = Duration.ofMillis(100)
 
-    /** The duration the messages from [msgData] will be sent. Defined in seconds. */
-    private var msgSendDurationCap: Duration = Duration.ofSeconds(60)
+    /** The interval the between a message session. */
+    private var msgSendSessionInterval: Duration = Duration.ofSeconds(10)
 
-    /** The interval incoming messages will be scanned for. Defined in seconds. */
-    private var msgScanInterval: Duration = Duration.ofSeconds(60)
+    /**
+     * The duration the messages from [msgData] will be sent. A message session will only be this
+     * lon, or until an echo. If `Duration.ZERO`, then there is no cap. This corresponds to
+     * 'Advertising Timeout' in Bluetooth
+     */
+    private var msgSendTimeout: Duration = Duration.ofSeconds(1)
 
-    /** The duration incoming messages will be scanned for. Defined in seconds. */
-    private var msgScanDuration: Duration = Duration.ofSeconds(60)
+    /** The interval incoming messages will be scanned for. */
+    private var msgScanInterval: Duration = Duration.ofSeconds(5)
+
+    /** The duration incoming messages will be scanned for. */
+    private var msgScanDuration: Duration = Duration.ofSeconds(1)
 
     /** The maximum number of elements stored in the cache */
     private var msgCacheLimit: Long = 32
@@ -101,10 +111,18 @@ private constructor(
     ) {
         builder.msgDelete?.let { msgDelete = it }
         builder.msgTTL?.let { msgTTL = it }
+
+        builder.msgSendSessionInterval?.let { msgSendSessionInterval = it }
         builder.msgSendInterval?.let { msgSendInterval = it }
-        builder.msgSendDurationCap?.let { msgSendDurationCap = it }
+        builder.msgSendTimeout?.let { msgSendTimeout = it }
+
+        check(msgSendTimeout.isZero || msgSendTimeout >= msgSendInterval) {
+            "non-zero message duration cap cannot be less than the sending interval"
+        }
+
         builder.msgScanInterval?.let { msgScanInterval = it }
         builder.msgScanDuration?.let { msgScanDuration = it }
+
         builder.msgCacheLimit?.let { msgCacheLimit = it }
     }
 
@@ -379,6 +397,14 @@ private constructor(
             fun withMsgTTL(t: Long): Builder<ID, Data, Device, MC>
 
             /**
+             * Sets the interval between message sending sessions
+             *
+             * @param d Waiting time
+             * @return The modified [Builder]
+             */
+            fun withMsgSendSessionInterval(d: Duration): Builder<ID, Data, Device, MC>
+
+            /**
              * Sets the message sending interval
              *
              * @param d Waiting time
@@ -387,14 +413,14 @@ private constructor(
             fun withMsgSendInterval(d: Duration): Builder<ID, Data, Device, MC>
 
             /**
-             * Sets the sending duration cap. This is the max time duration the message defined in
-             * either [setDataConstant] or [setDataGenerator] will be transmitted. It will transmit
-             * in this time, or until echo.
+             * Sets the sending duration timeout (cap). This is the max time duration the message
+             * defined in either [setDataConstant] or [setDataGenerator] will be transmitted. It
+             * will transmit in this time, or until echo.
              *
              * @param d Sending time
              * @return The modified [Builder]
              */
-            fun withMsgSendDurationCap(d: Duration): Builder<ID, Data, Device, MC>
+            fun withMsgSendTimeout(d: Duration): Builder<ID, Data, Device, MC>
 
             /**
              * Sets the scanning interval.
@@ -464,8 +490,9 @@ private constructor(
             var msgDelete: Duration? = null
             var msgTTL: Long? = null
 
+            var msgSendSessionInterval: Duration? = null
             var msgSendInterval: Duration? = null
-            var msgSendDurationCap: Duration? = null
+            var msgSendTimeout: Duration? = null
             var msgScanInterval: Duration? = null
             var msgScanDuration: Duration? = null
             var msgCacheLimit: Long? = null
@@ -566,13 +593,18 @@ private constructor(
                 return this
             }
 
+            override fun withMsgSendSessionInterval(d: Duration): Builder<ID, Data, Device, MC> {
+                msgSendSessionInterval = d
+                return this
+            }
+
             override fun withMsgSendInterval(d: Duration): Builder<ID, Data, Device, MC> {
                 msgSendInterval = d
                 return this
             }
 
-            override fun withMsgSendDurationCap(d: Duration): Builder<ID, Data, Device, MC> {
-                msgSendDurationCap = d
+            override fun withMsgSendTimeout(d: Duration): Builder<ID, Data, Device, MC> {
+                msgSendTimeout = d
                 return this
             }
 
