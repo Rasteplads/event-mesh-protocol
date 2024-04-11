@@ -117,7 +117,6 @@ private constructor(
     /** TODO */
     fun start() = runBlocking {
         // TODO: SETUP BT TO HANDLE MESSAGES (CONVERT, FILTER, CALLBACK)
-        builder<Byte, Int>()
         println("START HW (IF GLOBAL)")
         btSender =
             GlobalScope.launch(Dispatchers.Default) {
@@ -183,16 +182,20 @@ private constructor(
          *
          * @param ID The messages' ID
          * @param Data The messages' content
+         * @param MC The message cache
+         * @param mc The instance of the [MC] (set to `null` to disable)
          */
         fun <ID, Data, MC : MessageCache<ID>> builder(mc: MC?): Builder<ID, Data, Int, MC> =
             BuilderImpl(7, mc) // TODO: REAL TYPE AND INITIALISATION
 
         /**
          * Creates a [Builder] for [EventMesh] with a provided [EventMeshDevice]. Uses the default
-         * message cache.
+         * message cache ([MessageCache]).
          *
          * @param ID The messages' ID
          * @param Data The messages' content
+         * @param Device The [EventMeshDevice]
+         * @param device The instance of the [Device]
          */
         fun <ID, Data, Device> builder(
             device: Device
@@ -205,6 +208,10 @@ private constructor(
          *
          * @param ID The messages' ID
          * @param Data The messages' content
+         * @param Device The [EventMeshDevice]
+         * @param device The instance of the [Device]
+         * @param MC The message cache
+         * @param mc The instance of the [MC] (set to `null` to disable)
          */
         fun <ID, Data, Device, MC : MessageCache<ID>> builder(
             device: Device,
