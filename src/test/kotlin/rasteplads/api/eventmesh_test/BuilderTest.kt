@@ -260,6 +260,7 @@ class BuilderTest {
             .setIntoDataFunction { _ -> 0 }
             .setFromIDFunction { _ -> byteArrayOf(0, 1, 2, 3) }
             .setFromDataFunction { b -> byteArrayOf(b) }
+            .build()
 
         var m = EventMesh.builder<Int, Byte>(null)
         assertFails { m.build() }
@@ -270,6 +271,7 @@ class BuilderTest {
             .setIntoDataFunction { _ -> 0 }
             .setFromIDFunction { _ -> byteArrayOf(0, 1, 2, 3) }
             .setFromDataFunction { b -> byteArrayOf(b) }
+            .build()
         m = EventMesh.builder(MessageCache())
         assertFails { m.build() }
         m.setDataConstant(0)
@@ -279,6 +281,7 @@ class BuilderTest {
             .setIntoDataFunction { _ -> 0 }
             .setFromIDFunction { _ -> byteArrayOf(0, 1, 2, 3) }
             .setFromDataFunction { b -> byteArrayOf(b) }
+            .build()
 
         // TODO: Check with Device when type is ready
     }

@@ -194,7 +194,7 @@ private constructor(
         callback(id, intoData(dataB))
     }
 
-    fun relay(msg: ByteArray) {
+    private fun relay(msg: ByteArray) {
         /*
         val out = msg.copyOf()
         println(out.toList())
