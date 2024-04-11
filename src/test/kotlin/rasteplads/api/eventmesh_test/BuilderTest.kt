@@ -1,5 +1,6 @@
 package rasteplads.api.eventmesh_test
 
+import java.time.Duration
 import kotlin.reflect.jvm.isAccessible
 import kotlin.test.assertFails
 import org.junit.jupiter.api.Assertions.*
@@ -173,53 +174,57 @@ class BuilderTest {
         val f = correct()
         var name = "msgDelete"
         var default =
-            getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Long>(f.build(), name)
+            getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Duration>(f.build(), name)
         var modded =
-            getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Long>(
-                f.withMsgCacheDelete(default + 10).build(), name)
-        assertNotEquals(modded, default)
-
-        name = "msgTTL"
-        default = getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Long>(f.build(), name)
-        modded =
-            getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Long>(
-                f.withMsgTTL(default + 10).build(), name)
+            getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Duration>(
+                f.withMsgCacheDelete(default.plusMinutes(10)).build(), name)
         assertNotEquals(modded, default)
 
         name = "msgSendInterval"
-        default = getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Long>(f.build(), name)
+        default =
+            getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Duration>(f.build(), name)
         modded =
-            getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Long>(
-                f.withMsgSendInterval(default + 10).build(), name)
+            getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Duration>(
+                f.withMsgSendInterval(default.plusMinutes(10)).build(), name)
         assertNotEquals(modded, default)
 
         name = "msgSendDuration"
-        default = getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Long>(f.build(), name)
+        default =
+            getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Duration>(f.build(), name)
         modded =
-            getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Long>(
-                f.withMsgSendDuration(default + 10).build(), name)
+            getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Duration>(
+                f.withMsgSendDuration(default.plusMinutes(10)).build(), name)
         assertNotEquals(modded, default)
 
         name = "msgScanInterval"
-        default = getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Long>(f.build(), name)
+        default =
+            getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Duration>(f.build(), name)
         modded =
-            getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Long>(
-                f.withMsgScanInterval(default + 10).build(), name)
+            getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Duration>(
+                f.withMsgScanInterval(default.plusMinutes(10)).build(), name)
         assertNotEquals(modded, default)
 
         name = "msgScanDuration"
-        default = getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Long>(f.build(), name)
+        default =
+            getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Duration>(f.build(), name)
         modded =
-            getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Long>(
-                f.withMsgScanDuration(default + 10).build(), name)
+            getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Duration>(
+                f.withMsgScanDuration(default.plusMinutes(10)).build(), name)
         assertNotEquals(modded, default)
 
         name = "msgCacheLimit"
-        default = getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Long>(f.build(), name)
-        modded =
+        var def = getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Long>(f.build(), name)
+        var mod =
             getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Long>(
-                f.withMsgCacheLimit(default + 10).build(), name)
-        assertNotEquals(modded, default)
+                f.withMsgCacheLimit(def + 10).build(), name)
+        assertNotEquals(mod, def)
+
+        name = "msgTTL"
+        def = getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Long>(f.build(), name)
+        mod =
+            getValueFromClass<EventMesh<Int, Byte, MessageCache<Int>>, Long>(
+                f.withMsgTTL(def + 10).build(), name)
+        assertNotEquals(mod, def)
     }
 
     @Test
