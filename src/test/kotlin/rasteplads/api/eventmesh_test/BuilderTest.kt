@@ -263,4 +263,38 @@ class BuilderTest {
             getValueFromClass<EventMesh<Int, Byte, *, *>, MessageCache<*>?>(
                 g.withMsgCache(null).build(), name))
     }
+
+    @Test
+    fun differentBuilders() {
+        val b = EventMesh.builder<Int, Byte>()
+        assertFails { b.build() }
+        b.setDataConstant(0)
+            .setIDGenerator { 10 }
+            .setHandleMessage { _, _ -> }
+            .setIntoIDFunction { _ -> 9 }
+            .setIntoDataFunction { _ -> 0 }
+            .setFromIDFunction { _ -> byteArrayOf(0, 1, 2, 3) }
+            .setFromDataFunction { b -> byteArrayOf(b) }
+
+        var m = EventMesh.builder<Int, Byte, MessageCache<Int>>(null)
+        assertFails { m.build() }
+        m.setDataConstant(0)
+            .setIDGenerator { 10 }
+            .setHandleMessage { _, _ -> }
+            .setIntoIDFunction { _ -> 9 }
+            .setIntoDataFunction { _ -> 0 }
+            .setFromIDFunction { _ -> byteArrayOf(0, 1, 2, 3) }
+            .setFromDataFunction { b -> byteArrayOf(b) }
+        m = EventMesh.builder(MessageCache())
+        assertFails { m.build() }
+        m.setDataConstant(0)
+            .setIDGenerator { 10 }
+            .setHandleMessage { _, _ -> }
+            .setIntoIDFunction { _ -> 9 }
+            .setIntoDataFunction { _ -> 0 }
+            .setFromIDFunction { _ -> byteArrayOf(0, 1, 2, 3) }
+            .setFromDataFunction { b -> byteArrayOf(b) }
+
+        // TODO: Check with Device when type is ready
+    }
 }

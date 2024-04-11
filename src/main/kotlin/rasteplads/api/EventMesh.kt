@@ -2,8 +2,6 @@ package rasteplads.api
 
 // import kotlin.time.Duration
 import java.time.Duration
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.*
 import rasteplads.messageCache.MessageCache
 import rasteplads.util.Either
@@ -61,7 +59,7 @@ private constructor(
     private val msgData: Either<Data, () -> Data>,
     private val msgId: Either<ID, () -> ID>,
     private val filterID: List<(ID) -> Boolean>,
-) : CoroutineScope {
+) {
 
     // TODO: set correct default values
     /** Time a message is stored in the cache */
@@ -608,7 +606,4 @@ private constructor(
              */
         }
     }
-
-    override val coroutineContext: CoroutineContext
-        get() = EmptyCoroutineContext
 }
