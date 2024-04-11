@@ -119,18 +119,13 @@ class BuilderTest {
         val f = correct()
         f.addFilterFunction { _ -> true }
         var l =
-            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, List<(Int) -> Boolean>>(
-                f.build(), "filterID")
+            getValueFromClass<EventMesh<Int, Byte>, List<(Int) -> Boolean>>(f.build(), "filterID")
         assertEquals(l.size, 1)
         f.addFilterFunction { i -> i <= 100 }
-        l =
-            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, List<(Int) -> Boolean>>(
-                f.build(), "filterID")
+        l = getValueFromClass<EventMesh<Int, Byte>, List<(Int) -> Boolean>>(f.build(), "filterID")
         assertEquals(l.size, 2)
         f.addFilterFunction({ i -> i >= 10 }, { i -> i and 1 == 1 })
-        l =
-            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, List<(Int) -> Boolean>>(
-                f.build(), "filterID")
+        l = getValueFromClass<EventMesh<Int, Byte>, List<(Int) -> Boolean>>(f.build(), "filterID")
         assert(l.all { fn -> fn(21) })
         assertFalse(l.all { fn -> fn(9) })
         assertFalse(l.all { fn -> fn(101) })
@@ -142,29 +137,22 @@ class BuilderTest {
         val f = correct()
         f.setDataConstant(9)
         var l =
-            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Either<Byte, () -> Byte>>(
-                f.build(), "msgData")
+            getValueFromClass<EventMesh<Int, Byte>, Either<Byte, () -> Byte>>(f.build(), "msgData")
         assert(l.isLeft())
         assertEquals(l.getLeft()!!, 9)
 
         f.setDataGenerator { 90 }
-        l =
-            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Either<Byte, () -> Byte>>(
-                f.build(), "msgData")
+        l = getValueFromClass<EventMesh<Int, Byte>, Either<Byte, () -> Byte>>(f.build(), "msgData")
         assert(l.isRight())
         assertEquals(l.getRight()!!(), 90)
 
         f.setIDConstant(9)
-        var k =
-            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Either<Int, () -> Int>>(
-                f.build(), "msgId")
+        var k = getValueFromClass<EventMesh<Int, Byte>, Either<Int, () -> Int>>(f.build(), "msgId")
         assert(k.isLeft())
         assertEquals(k.getLeft()!!, 9)
 
         f.setIDGenerator { 90 }
-        k =
-            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Either<Int, () -> Int>>(
-                f.build(), "msgId")
+        k = getValueFromClass<EventMesh<Int, Byte>, Either<Int, () -> Int>>(f.build(), "msgId")
         assert(k.isRight())
         assertEquals(k.getRight()!!(), 90)
     }
@@ -173,66 +161,57 @@ class BuilderTest {
     fun testingOptionalFields() {
         val f = correct()
         var name = "msgDelete"
-        var default =
-            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Duration>(f.build(), name)
+        var default = getValueFromClass<EventMesh<Int, Byte>, Duration>(f.build(), name)
         var modded =
-            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Duration>(
+            getValueFromClass<EventMesh<Int, Byte>, Duration>(
                 f.withMsgCacheDelete(default.plusMinutes(10)).build(), name)
         assertNotEquals(modded, default)
 
         name = "msgSendSessionInterval"
-        default =
-            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Duration>(f.build(), name)
+        default = getValueFromClass<EventMesh<Int, Byte>, Duration>(f.build(), name)
         modded =
-            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Duration>(
+            getValueFromClass<EventMesh<Int, Byte>, Duration>(
                 f.withMsgSendSessionInterval(default.plusMinutes(10)).build(), name)
         assertNotEquals(modded, default)
 
         name = "msgSendInterval"
-        default =
-            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Duration>(f.build(), name)
+        default = getValueFromClass<EventMesh<Int, Byte>, Duration>(f.build(), name)
         modded =
-            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Duration>(
+            getValueFromClass<EventMesh<Int, Byte>, Duration>(
                 f.withMsgSendInterval(default.plusMillis(10)).build(), name)
         assertNotEquals(modded, default)
 
         name = "msgSendTimeout"
-        default =
-            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Duration>(f.build(), name)
+        default = getValueFromClass<EventMesh<Int, Byte>, Duration>(f.build(), name)
         modded =
-            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Duration>(
+            getValueFromClass<EventMesh<Int, Byte>, Duration>(
                 f.withMsgSendTimeout(default.plusMinutes(10)).build(), name)
         assertNotEquals(modded, default)
 
         name = "msgScanInterval"
-        default =
-            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Duration>(f.build(), name)
+        default = getValueFromClass<EventMesh<Int, Byte>, Duration>(f.build(), name)
         modded =
-            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Duration>(
+            getValueFromClass<EventMesh<Int, Byte>, Duration>(
                 f.withMsgScanInterval(default.plusMinutes(10)).build(), name)
         assertNotEquals(modded, default)
 
         name = "msgScanDuration"
-        default =
-            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Duration>(f.build(), name)
+        default = getValueFromClass<EventMesh<Int, Byte>, Duration>(f.build(), name)
         modded =
-            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Duration>(
+            getValueFromClass<EventMesh<Int, Byte>, Duration>(
                 f.withMsgScanDuration(default.plusMinutes(10)).build(), name)
         assertNotEquals(modded, default)
 
         name = "msgCacheLimit"
-        var def =
-            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Long>(f.build(), name)
+        var def = getValueFromClass<EventMesh<Int, Byte>, Long>(f.build(), name)
         var mod =
-            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Long>(
+            getValueFromClass<EventMesh<Int, Byte>, Long>(
                 f.withMsgCacheLimit(def + 10).build(), name)
         assertNotEquals(mod, def)
 
         name = "msgTTL"
-        def = getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Long>(f.build(), name)
-        mod =
-            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, Long>(
-                f.withMsgTTL(def + 10).build(), name)
+        def = getValueFromClass<EventMesh<Int, Byte>, Long>(f.build(), name)
+        mod = getValueFromClass<EventMesh<Int, Byte>, Long>(f.withMsgTTL(def + 10).build(), name)
         assertNotEquals(mod, def)
     }
 
@@ -250,11 +229,9 @@ class BuilderTest {
                 .setFromIDFunction { _ -> byteArrayOf(0, 1, 2, 3) }
                 .setFromDataFunction { b -> byteArrayOf(b) }
         // .build()
-        assertNotNull(
-            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, MessageCache<Int>?>(
-                f.build(), name))
+        assertNotNull(getValueFromClass<EventMesh<Int, Byte>, MessageCache<Int>?>(f.build(), name))
         assertNull(
-            getValueFromClass<EventMesh<Int, Byte, *, MessageCache<Int>>, MessageCache<Int>?>(
+            getValueFromClass<EventMesh<Int, Byte>, MessageCache<Int>?>(
                 f.withMsgCache(null).build(), name))
 
         val g =
@@ -268,7 +245,7 @@ class BuilderTest {
                 .setFromDataFunction { b -> byteArrayOf(b) }
         // .build()
         assertNull(
-            getValueFromClass<EventMesh<Int, Byte, *, *>, MessageCache<*>?>(
+            getValueFromClass<EventMesh<Int, Byte>, MessageCache<*>?>(
                 g.withMsgCache(null).build(), name))
     }
 
@@ -284,7 +261,7 @@ class BuilderTest {
             .setFromIDFunction { _ -> byteArrayOf(0, 1, 2, 3) }
             .setFromDataFunction { b -> byteArrayOf(b) }
 
-        var m = EventMesh.builder<Int, Byte, MessageCache<Int>>(null)
+        var m = EventMesh.builder<Int, Byte>(null)
         assertFails { m.build() }
         m.setDataConstant(0)
             .setIDGenerator { 10 }
