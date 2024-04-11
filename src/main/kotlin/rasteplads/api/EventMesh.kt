@@ -142,9 +142,11 @@ private constructor(
             GlobalScope.launch(Dispatchers.Default) {
                 try {
                     println("START HW (IF LOCAL)")
-                    while (isActive) {
+                    do {
                         delay(msgSendSessionInterval.toMillis())
-                    }
+                        val data = msgData.getLeft() ?: msgData.getRight()!!()
+                        // TODO: SEND BYTES WITH TTL
+                    } while (isActive)
                 } finally {
                     println("STOP HW (IF LOCAL)")
                 }
@@ -155,8 +157,11 @@ private constructor(
                     println("START HW (IF LOCAL)")
                     do {
                         delay(msgScanInterval.toMillis())
-                        // print a message twice a second
-                        // println("SCANNING")
+                        val k =
+                            withTimeout(msgScanDuration.toMillis()) {
+                                // TODO: CALL DEVICE.FUNC WITH [scanningCallback]
+                                // TODO: HANDLE RELAYING
+                            }
                     } while (isActive)
                 } finally {
                     println("STOP HW (IF LOCAL)")
