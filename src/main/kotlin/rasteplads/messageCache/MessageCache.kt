@@ -4,9 +4,8 @@ import java.time.LocalTime
 
 
 class MessageCache<T> {
-    val cacheTime : Long = 2
-    private val cache = LinkedHashMap<Int, Pair<LocalTime, T>>()
-
+    val cacheTime : Long = 1
+    private val cache = LinkedHashMap<Int, Pair<LocalTime, T>>()//Todo: if !save messages then use queue*
     fun cacheMessage(key: Int, msg:T){
         if (!cache.containsKey(key))
             cache[key] = Pair(LocalTime.now().plusMinutes(cacheTime), msg)
