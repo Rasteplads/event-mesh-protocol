@@ -43,17 +43,16 @@ fun main() = runBlocking {
  *
  * If the default message cache is used, `ID` must af [equals] overridden.
  *
- * To use, use the one of the [builder] functions (or [builderWithoutMC] if no message cache is
- * needed), that returns a [Builder], which needs some values to work (more or less all methods
- * following the 'set*' naming scheme). After this, you can simply run [start], that runs everything
- * in the background.
+ * To use, use the one of the [builder] functions, that returns a [Builder], which needs some values
+ * to work (more or less all methods following the 'set*' naming scheme). After this, you can simply
+ * run [start], that runs everything in the background. When you want to stop, simply run [stop].
  *
  * @author t-lohse
  */
 final class EventMesh<ID, Data, Device, MC : MessageCache<ID>> // TODO EventMeshDevice interface pls
 private constructor(
-    private val messageCache: MC?,
     private val device: Device,
+    private val messageCache: MC?,
     private val callback: (ID, Data) -> Unit,
     private val intoID: (ByteArray) -> ID,
     private val intoData: (ByteArray) -> Data,
@@ -95,8 +94,8 @@ private constructor(
     private constructor(
         builder: BuilderImpl<ID, Data, Device, MC>
     ) : this(
+        builder.device,
         builder.msgCache,
-        builder.device!!,
         builder.callback,
         builder.intoID,
         builder.intoData,
@@ -362,7 +361,7 @@ private constructor(
              * Sets the time a message ID should be saved in the cache. This is to reduce the number
              * of redundant relays, since relaying the same message several times is not needed.
              *
-             * @param t Duration the message should be saved
+             * @param d Duration the message should be saved
              * @return The modified [Builder]
              */
             fun withMsgCacheDelete(d: Duration): Builder<ID, Data, Device, MC>
@@ -379,7 +378,7 @@ private constructor(
             /**
              * Sets the message sending interval
              *
-             * @param t Waiting time
+             * @param d Waiting time
              * @return The modified [Builder]
              */
             fun withMsgSendInterval(d: Duration): Builder<ID, Data, Device, MC>
@@ -388,7 +387,7 @@ private constructor(
              * Sets the sending duration. This is the time duration the message defined in either
              * [setDataConstant] or [setDataGenerator] will be transmitted.
              *
-             * @param t Sending time
+             * @param d Sending time
              * @return The modified [Builder]
              */
             fun withMsgSendDuration(d: Duration): Builder<ID, Data, Device, MC>
@@ -396,7 +395,7 @@ private constructor(
             /**
              * Sets the scanning interval.
              *
-             * @param t Waiting time
+             * @param d Waiting time
              * @return The modified [Builder]
              */
             fun withMsgScanInterval(d: Duration): Builder<ID, Data, Device, MC>
@@ -404,7 +403,7 @@ private constructor(
             /**
              * Sets the scanning duration.
              *
-             * @param t Scanning time
+             * @param d Scanning time
              * @return The modified [Builder]
              */
             fun withMsgScanDuration(d: Duration): Builder<ID, Data, Device, MC>
