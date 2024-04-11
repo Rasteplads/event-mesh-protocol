@@ -1,10 +1,37 @@
 package rasteplads.api
 
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.*
 import rasteplads.messageCache.MessageCache
 import rasteplads.util.Either
 
 // buffer.copyOf(position)
+
+fun main() = runBlocking {
+    println("start")
+
+    val f =
+        EventMesh.builder<Int, Byte>()
+            .setDataConstant(0)
+            .setIDGenerator { 10 }
+            .setHandleMessage { _, _ -> }
+            .setIntoIDFunction { _ -> 9 }
+            .setIntoDataFunction { _ -> 0 }
+            .setFromIDFunction { _ -> byteArrayOf(0, 1, 2, 3) }
+            .setFromDataFunction { byteArrayOf(it) }
+            .build()
+    println("f")
+    // val b = runBlocking {f.start()}
+    // val s = launch {f.start()}
+    f.start()
+    delay(1000)
+    println("I want it to stop")
+    f.stop()
+    // b.cancelAndJoin()
+    // delay(1000)
+    println("works I guess")
+}
 
 /**
  * This class handles communicating messages to the dynamic mesh network.
@@ -32,29 +59,32 @@ private constructor(
     private val msgId: Either<ID, () -> ID>,
     private val filterID: List<(ID) -> Boolean>,
     private val messageCache: MC?
-) {
+) : CoroutineScope {
 
     // TODO: set correct default values
     /** Time a message is stored in the cache. Defined in seconds. */
-    private var msgDelete: UInt = 600u
+    private var msgDelete: Long = 600
 
     /** Time TO Live (TTL) for the messages. */
-    private var msgTTL: UInt = 32u
+    private var msgTTL: Long = 32
 
     /** The interval the messages from [msgData] will be sent. Defined in seconds. */
-    private var msgSendInterval: UInt = 32u
+    private var msgSendInterval: Long = 32
 
     /** The duration the messages from [msgData] will be sent. Defined in seconds. */
-    private var msgSendDuration: UInt = 32u
+    private var msgSendDuration: Long = 32
 
     /** The interval incoming messages will be scanned for. Defined in seconds. */
-    private var msgScanInterval: UInt = 32u
+    private var msgScanInterval: Long = 32
 
     /** The duration incoming messages will be scanned for. Defined in seconds. */
-    private var msgScanDuration: UInt = 32u
+    private var msgScanDuration: Long = 32
 
     /** The maximum number of elements stored in the cache */
-    private var msgCacheLimit: UInt = 32u
+    private var msgCacheLimit: Long = 32
+
+    private lateinit var btScanner: Job
+    private lateinit var btSender: Job
 
     // TODO: MESSAGE CACHE
     // private var msgCache: MsgCache
@@ -80,16 +110,42 @@ private constructor(
         builder.msgCacheLimit?.let { msgCacheLimit = it }
     }
 
-    /** Executes (lol) */
+    /** TODO */
     fun start() = runBlocking {
-        launch {
-            b()
-            println("hvad")
-        }
-        // TODO: EXEC IN BG
+        // TODO: SETUP BT TO HANDLE MESSAGES (CONVERT, FILTER, CALLBACK)
+        println("START HW (IF GLOBAL)")
+        btSender =
+            GlobalScope.launch(Dispatchers.Default) {
+                try {
+                    println("START HW (IF LOCAL)")
+                    while (isActive) {
+                        delay(msgSendInterval)
+                    }
+                } finally {
+                    println("STOP HW (IF LOCAL)")
+                }
+            }
+        btScanner =
+            GlobalScope.launch(Dispatchers.Default) {
+                try {
+                    println("START HW (IF LOCAL)")
+                    do {
+                        delay(msgScanInterval)
+                        // print a message twice a second
+                        // println("SCANNING")
+                    } while (isActive)
+                } finally {
+                    println("STOP HW (IF LOCAL)")
+                }
+            }
     }
 
-    suspend fun b() {}
+    /** TODO */
+    fun stop() = runBlocking {
+        if (btSender.isActive) btSender.cancelAndJoin()
+        if (btScanner.isActive) btScanner.cancelAndJoin()
+        println("STOP HW (IF GLOBAL)")
+    }
 
     companion object {
         /**
@@ -134,11 +190,11 @@ private constructor(
         interface Builder<ID, Data, MC : MessageCache<ID>> {
 
             /**
-             * Sets a function that will be called on every message that is not filtered (See
-             * [addFilterFunction]).
+             * Sets a function that will be called on every message that is not filtered.
              *
              * @param f The function
              * @return the modified [Builder]]
+             * @see addFilterFunction
              */
             fun setHandleMessage(f: (ID, Data) -> Unit): Builder<ID, Data, MC>
 
@@ -284,7 +340,7 @@ private constructor(
              * @param t Time the message should be saved (seconds)
              * @return The modified [Builder]
              */
-            fun withMsgCacheDelete(t: UInt): Builder<ID, Data, MC>
+            fun withMsgCacheDelete(t: Long): Builder<ID, Data, MC>
 
             /**
              * Sets the message Time TO Live (TTL). This number denotes how many times a node can
@@ -293,7 +349,7 @@ private constructor(
              * @param t Number of relays
              * @return The modified [Builder]
              */
-            fun withMsgTTL(t: UInt): Builder<ID, Data, MC>
+            fun withMsgTTL(t: Long): Builder<ID, Data, MC>
 
             /**
              * Sets the message sending interval (in seconds)
@@ -301,7 +357,7 @@ private constructor(
              * @param t Waiting time
              * @return The modified [Builder]
              */
-            fun withMsgSendInterval(t: UInt): Builder<ID, Data, MC>
+            fun withMsgSendInterval(t: Long): Builder<ID, Data, MC>
 
             /**
              * Sets the sending duration (in seconds). This is the time duration the message defined
@@ -310,7 +366,7 @@ private constructor(
              * @param t Sending time
              * @return The modified [Builder]
              */
-            fun withMsgSendDuration(t: UInt): Builder<ID, Data, MC>
+            fun withMsgSendDuration(t: Long): Builder<ID, Data, MC>
 
             /**
              * Sets the scanning interval (in seconds)
@@ -318,7 +374,7 @@ private constructor(
              * @param t Waiting time
              * @return The modified [Builder]
              */
-            fun withMsgScanInterval(t: UInt): Builder<ID, Data, MC>
+            fun withMsgScanInterval(t: Long): Builder<ID, Data, MC>
 
             /**
              * Sets the scanning duration (in seconds)
@@ -326,7 +382,7 @@ private constructor(
              * @param t Scanning time
              * @return The modified [Builder]
              */
-            fun withMsgScanDuration(t: UInt): Builder<ID, Data, MC>
+            fun withMsgScanDuration(t: Long): Builder<ID, Data, MC>
 
             /**
              * Sets a message cache. If `null`, it disables the message cache
@@ -342,7 +398,7 @@ private constructor(
              * @param l Limit
              * @return The modified [Builder]
              */
-            fun withMsgCacheLimit(l: UInt): Builder<ID, Data, MC>
+            fun withMsgCacheLimit(l: Long): Builder<ID, Data, MC>
 
             /**
              * Builds the [Builder]
@@ -365,14 +421,14 @@ private constructor(
 
             val filterID: MutableList<(ID) -> Boolean> = mutableListOf()
 
-            var msgDelete: UInt? = null
-            var msgTTL: UInt? = null
+            var msgDelete: Long? = null
+            var msgTTL: Long? = null
 
-            var msgSendInterval: UInt? = null
-            var msgSendDuration: UInt? = null
-            var msgScanInterval: UInt? = null
-            var msgScanDuration: UInt? = null
-            var msgCacheLimit: UInt? = null
+            var msgSendInterval: Long? = null
+            var msgSendDuration: Long? = null
+            var msgScanInterval: Long? = null
+            var msgScanDuration: Long? = null
+            var msgCacheLimit: Long? = null
             var msgCacheEnabled: Boolean = true
 
             override fun build(): EventMesh<ID, Data, MC> {
@@ -454,32 +510,32 @@ private constructor(
                 return this
             }
 
-            override fun withMsgCacheDelete(t: UInt): Builder<ID, Data, MC> {
+            override fun withMsgCacheDelete(t: Long): Builder<ID, Data, MC> {
                 msgDelete = t
                 return this
             }
 
-            override fun withMsgTTL(t: UInt): Builder<ID, Data, MC> {
+            override fun withMsgTTL(t: Long): Builder<ID, Data, MC> {
                 msgTTL = t
                 return this
             }
 
-            override fun withMsgSendInterval(t: UInt): Builder<ID, Data, MC> {
+            override fun withMsgSendInterval(t: Long): Builder<ID, Data, MC> {
                 msgSendInterval = t
                 return this
             }
 
-            override fun withMsgSendDuration(t: UInt): Builder<ID, Data, MC> {
+            override fun withMsgSendDuration(t: Long): Builder<ID, Data, MC> {
                 msgSendDuration = t
                 return this
             }
 
-            override fun withMsgScanInterval(t: UInt): Builder<ID, Data, MC> {
+            override fun withMsgScanInterval(t: Long): Builder<ID, Data, MC> {
                 msgScanInterval = t
                 return this
             }
 
-            override fun withMsgScanDuration(t: UInt): Builder<ID, Data, MC> {
+            override fun withMsgScanDuration(t: Long): Builder<ID, Data, MC> {
                 msgScanDuration = t
                 return this
             }
@@ -489,10 +545,13 @@ private constructor(
                 return this
             }
 
-            override fun withMsgCacheLimit(l: UInt): Builder<ID, Data, MC> {
+            override fun withMsgCacheLimit(l: Long): Builder<ID, Data, MC> {
                 msgCacheLimit = l
                 return this
             }
         }
     }
+
+    override val coroutineContext: CoroutineContext
+        get() = EmptyCoroutineContext
 }

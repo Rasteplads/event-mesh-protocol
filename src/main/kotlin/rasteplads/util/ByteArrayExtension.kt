@@ -8,7 +8,7 @@ fun ByteArray.toUByte(): UByte = this.toByte().toUByte()
 
 fun ByteArray.toShort(): Short = ByteBuffer.wrap(this).getShort()
 
-fun ByteArray.toUSHort(): UShort = this.toShort().toUShort()
+fun ByteArray.toUShort(): UShort = this.toShort().toUShort()
 
 fun ByteArray.toInt(): Int = ByteBuffer.wrap(this).getInt()
 
