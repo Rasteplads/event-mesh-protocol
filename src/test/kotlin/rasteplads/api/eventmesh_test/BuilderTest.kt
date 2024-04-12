@@ -240,16 +240,16 @@ class BuilderTest {
         assertNotEquals(modded, default)
 
         name = "msgCacheLimit"
-        var def = getValueFromClass<EventMesh<Int, Byte>, Long>(f.build(), name)
-        var mod =
+        val def = getValueFromClass<EventMesh<Int, Byte>, Long>(f.build(), name)
+        val mod =
             getValueFromClass<EventMesh<Int, Byte>, Long>(
                 f.withMsgCacheLimit(def + 10).build(), name)
         assertNotEquals(mod, def)
 
         name = "msgTTL"
-        def = getValueFromClass<EventMesh<Int, Byte>, Long>(f.build(), name)
-        mod = getValueFromClass<EventMesh<Int, Byte>, Long>(f.withMsgTTL(def + 10).build(), name)
-        assertNotEquals(mod, def)
+        val deff = getValueFromClass<EventMesh<Int, Byte>, UInt>(f.build(), name)
+        val modd = getValueFromClass<EventMesh<Int, Byte>, UInt>(f.withMsgTTL(deff + 10u).build(), name)
+        assertNotEquals(modd, deff)
     }
 
     @Test

@@ -148,7 +148,7 @@ private constructor(
                         val id = msgId.getLeft() ?: msgId.getRight()!!()
                         val data = msgData.getLeft() ?: msgData.getRight()!!()
                         // TODO: SEND BYTES WITH TTL
-                        //device.transmit(msgTTL, encodeID(id), encodeData(data))
+                        // device.transmit(msgTTL, encodeID(id), encodeData(data))
                     } while (isActive)
                 } finally {
                     println("STOP HW (IF LOCAL)")
@@ -432,7 +432,7 @@ private constructor(
              * @param t Number of relays
              * @return The modified [Builder]
              */
-            fun withMsgTTL(t: Long): Builder<ID, Data>
+            fun withMsgTTL(t: UInt): Builder<ID, Data>
 
             /**
              * Sets the interval between message sending sessions
@@ -526,7 +526,7 @@ private constructor(
             val filterID: MutableList<(ID) -> Boolean> = mutableListOf()
 
             var msgDelete: Duration? = null
-            var msgTTL: Long? = null
+            var msgTTL: UInt? = null
 
             var msgSendSessionInterval: Duration? = null
             var msgSendInterval: Duration? = null
@@ -620,7 +620,7 @@ private constructor(
                 return this
             }
 
-            override fun withMsgTTL(t: Long): Builder<ID, Data> {
+            override fun withMsgTTL(t: UInt): Builder<ID, Data> {
                 msgTTL = t
                 return this
             }
