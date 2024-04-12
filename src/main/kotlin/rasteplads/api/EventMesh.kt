@@ -1,10 +1,15 @@
 package rasteplads.api
 
 import java.time.Duration
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.*
 import rasteplads.messageCache.MessageCache
 import rasteplads.util.Either
 import rasteplads.util.toInt
+
+val temp: AtomicReference<MutableList<(ByteArray) -> Unit>> = AtomicReference(mutableListOf())
+val i: AtomicInteger = AtomicInteger(10)
 
 fun main() {
     println("start")
@@ -24,6 +29,8 @@ fun main() {
             .build()
 
     val b = byteArrayOf(0, 3, 5, 6, 8, 0)
+    println(i.decrementAndGet())
+    /*
     println(b.toList())
     // f.scanningCallback(b)
     println(b.toList())
@@ -37,6 +44,7 @@ fun main() {
     f.stop()
 
     println("works I guess")
+     */
 }
 
 /**

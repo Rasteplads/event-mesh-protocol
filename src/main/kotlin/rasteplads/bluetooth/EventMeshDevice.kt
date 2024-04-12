@@ -2,6 +2,9 @@ package rasteplads.bluetooth
 
 import java.time.Duration
 import kotlinx.coroutines.*
+import rasteplads.api.EventMesh.Companion.ID_MAX_SIZE
+
+private operator fun Byte.plus(other: ByteArray): ByteArray = byteArrayOf(this) + other
 
 class EventMeshDevice(
     private val receiver: EventMeshReceiver,
@@ -9,33 +12,34 @@ class EventMeshDevice(
     tTimeout: Duration? = null,
     rDuration: Duration? = null,
 ) {
-    private val transmitTimeout: Duration
-    private val receiveDuration: Duration
 
     init {
-        receiver.handlers.add { message -> onMessageReceived(message) }
-        transmitTimeout = tTimeout ?: Duration.ofSeconds(60)
-        receiveDuration = rDuration ?: Duration.ofSeconds(600)
+        tTimeout?.let { transmitter.transmitTimeout = it.toMillis() }
+        rDuration?.let { receiver.duration = it.toMillis() }
     }
 
-    suspend fun startTransmitting(message: ByteArray) = runBlocking {
+    fun startTransmitting(ttl: Byte, id: ByteArray, message: ByteArray) = runBlocking {
+        check(id.size <= ID_MAX_SIZE) { "ID too big" }
         // Begin transmitting.
         // If null, no echo
-        withTimeoutOrNull(transmitTimeout.toMillis()) {
-            // TODO: Transmit with a given interval, cancel on echo
-            while (isActive) {
-                transmitter.transmit(message)
-                delay(100000000000000000) // TODO: interval
-            }
+        val combinedMsg = ttl + id + message
+        val tx = launch { transmitter.transmit(combinedMsg) }
+        withTimeoutOrNull(transmitter.transmitTimeout) {
+            receiver.scanForID(id) { tx.cancelAndJoin() }
         }
             ?: Unit
     }
 
-    fun addReceivedMessageCallback(f: (ByteArray) -> Unit) = receiver.handlers.add(f)
+    fun startReceiving() = receiver.scanForMessages()
 
-    fun addReceivedMessageCallback(vararg f: (ByteArray) -> Unit) = receiver.handlers.addAll(f)
+    fun addReceivedMessageCallback(vararg f: suspend (ByteArray) -> Unit) =
+        receiver.handlers.addAll(f)
 
-    private fun onMessageReceived(message: ByteArray) {}
+    fun addReceivedMessageCallbackA(f: suspend (ByteArray) -> Unit) =
+        receiver.handlersA.get().add(f)
+
+    fun addReceivedMessageCallbackA(vararg f: suspend (ByteArray) -> Unit) =
+        receiver.handlersA.get().addAll(f)
 
     class Builder {
         private var receiver: EventMeshReceiver? = null
@@ -54,6 +58,7 @@ class EventMeshDevice(
         }
 
         fun withTransmitTimeout(d: Duration): Builder {
+            // transmitter!!.transmitTimeout = d.toMillis()
             tTimeout = d
             return this
         }
