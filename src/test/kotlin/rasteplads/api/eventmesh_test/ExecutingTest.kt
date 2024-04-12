@@ -4,23 +4,9 @@ import kotlin.reflect.jvm.isAccessible
 import kotlin.test.assertFails
 import org.junit.jupiter.api.Test
 import rasteplads.api.EventMesh
-import rasteplads.util.toByteArray
+import rasteplads.api.eventmesh_test.BuilderTest.Companion.correct
 
 class ExecutingTest {
-
-    private fun correct() =
-        EventMesh.builder<Byte, Int>()
-            .setDataConstant(0)
-            .setIDGenerator { 10 }
-            .setMessageCallback { _, _ -> }
-            .setIDDecodeFunction { _ -> 9 }
-            .setDataDecodeFunction { _ -> 0 }
-            .setIDEncodeFunction { _ -> byteArrayOf(0, 1, 2, 3) }
-            .setDataEncodeFunction { it.toByteArray() }
-
-    private inline fun <reified C, reified R> getValueFromClass(target: C, field: String): R =
-        C::class.members.find { m -> m.name == field }!!.apply { isAccessible = true }.call(target)
-            as R
 
     @Test
     fun returnArraysTooLarge() {

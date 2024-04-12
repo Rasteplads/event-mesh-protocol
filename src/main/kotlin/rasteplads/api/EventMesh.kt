@@ -2,6 +2,8 @@ package rasteplads.api
 
 import java.time.Duration
 import kotlinx.coroutines.*
+import rasteplads.bluetooth.EventMeshDevice
+import rasteplads.bluetooth.TransportDevice
 import rasteplads.messageCache.MessageCache
 import rasteplads.util.Either
 import rasteplads.util.toInt
@@ -53,9 +55,9 @@ fun main() {
  *
  * @author t-lohse
  */
-final class EventMesh<ID, Data> // TODO EventMeshDevice interface pls
+final class EventMesh<ID, Data>
 private constructor(
-    private val device: Int, // TODO: EVENTMESHDEVICE
+    private val device: EventMeshDevice,
     private val messageCache: MessageCache<ID>?,
     private val callback: (ID, Data) -> Unit,
     private val decodeID: (ByteArray) -> ID,
@@ -72,7 +74,7 @@ private constructor(
     private var msgDelete: Duration = Duration.ofSeconds(30)
 
     /** Time TO Live (TTL) for the messages. */
-    private var msgTTL: Long = 10
+    private var msgTTL: UInt = 10u
 
     /**
      * The interval the messages from [msgData] will be sent. This corresponds to 'Advertising
@@ -105,7 +107,7 @@ private constructor(
     private constructor(
         builder: BuilderImpl<ID, Data>
     ) : this(
-        builder.device,
+        builder.device.build(),
         builder.msgCache,
         builder.callback,
         builder.decodeID,
@@ -143,8 +145,10 @@ private constructor(
                     println("START HW (IF LOCAL)")
                     do {
                         delay(msgSendSessionInterval.toMillis())
+                        val id = msgId.getLeft() ?: msgId.getRight()!!()
                         val data = msgData.getLeft() ?: msgData.getRight()!!()
                         // TODO: SEND BYTES WITH TTL
+                        //device.transmit(msgTTL, encodeID(id), encodeData(data))
                     } while (isActive)
                 } finally {
                     println("STOP HW (IF LOCAL)")
@@ -199,12 +203,6 @@ private constructor(
     }
 
     private fun relay(msg: ByteArray) {
-        /*
-        val out = msg.copyOf()
-        println(out.toList())
-        out[0]--
-        println(out.toList())
-         */
         println(msg.toList())
         msg[0]--
         println(msg.toList())
@@ -234,7 +232,7 @@ private constructor(
          * @param Data The messages' content
          */
         fun <ID, Data> builder(): Builder<ID, Data> =
-            BuilderImpl(7, MessageCache()) // TODO: REAL TYPE AND INITIALISATION
+            BuilderImpl(EventMeshDevice.Builder(), MessageCache()) // TODO: Default vals?
 
         /**
          * Creates a [Builder] for [EventMesh] with a provided message cache (set to `null` to
@@ -245,7 +243,7 @@ private constructor(
          * @param mc The instance of the [MessageCache] (set to `null` to disable)
          */
         fun <ID, Data> builder(mc: MessageCache<ID>?): Builder<ID, Data> =
-            BuilderImpl(7, mc) // TODO: REAL TYPE AND INITIALISATION
+            BuilderImpl(EventMeshDevice.Builder(), mc) // TODO: REAL TYPE AND INITIALISATION
 
         /**
          * Creates a [Builder] for [EventMesh] with a provided [EventMeshDevice]. Uses the default
@@ -255,10 +253,10 @@ private constructor(
          * @param Data The messages' content
          * @param device The instance of the [EventMeshDevice] (Or derivative)
          */
-        fun <ID, Data> builder(
-            device: Int // TODO: SIMON
-        ): Builder<ID, Data> =
-            BuilderImpl(device, MessageCache()) // TODO: REAL TYPE AND INITIALISATION
+        fun <ID, Data> builder(device: TransportDevice): Builder<ID, Data> =
+            BuilderImpl(
+                EventMeshDevice.Builder().withDevice(device),
+                MessageCache()) // TODO: REAL TYPE AND INITIALISATION
 
         /**
          * Creates a [Builder] for [EventMesh] with a provided message cache (set to `null` to
@@ -269,10 +267,8 @@ private constructor(
          * @param device The instance of the [EventMeshDevice] (Or derivative)
          * @param mc The instance of the [MessageCache] (Or derivative) (set to `null` to disable)
          */
-        fun <ID, Data> builder(
-            device: Int, // TODO: SIMON
-            mc: MessageCache<ID>?
-        ): Builder<ID, Data> = BuilderImpl(device, mc)
+        fun <ID, Data> builder(device: TransportDevice, mc: MessageCache<ID>?): Builder<ID, Data> =
+            BuilderImpl(EventMeshDevice.Builder().withDevice(device), mc)
 
         interface Builder<ID, Data> {
 
@@ -280,7 +276,7 @@ private constructor(
              * Sets a function that will be called on every message that is not filtered.
              *
              * @param f The function
-             * @return the modified [Builder]]
+             * @return the modified [Builder]
              * @see addFilterFunction
              */
             fun setMessageCallback(f: (ID, Data) -> Unit): Builder<ID, Data>
@@ -516,7 +512,7 @@ private constructor(
         }
 
         private class BuilderImpl<ID, Data>(
-            val device: Int, // TODO SIMON
+            val device: EventMeshDevice.Builder, // TODO SIMON
             var msgCache: MessageCache<ID>? = null,
         ) : Builder<ID, Data> {
             lateinit var callback: (ID, Data) -> Unit

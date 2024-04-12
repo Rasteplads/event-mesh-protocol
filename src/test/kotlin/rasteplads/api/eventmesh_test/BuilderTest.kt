@@ -3,26 +3,63 @@ package rasteplads.api.eventmesh_test
 import java.time.Duration
 import kotlin.reflect.jvm.isAccessible
 import kotlin.test.assertFails
+import kotlinx.coroutines.channels.Channel
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import rasteplads.api.EventMesh
+import rasteplads.bluetooth.MessageBuffer
+import rasteplads.bluetooth.TransportDevice
 import rasteplads.messageCache.MessageCache
 import rasteplads.util.Either
 
 class BuilderTest {
-    private fun correct() =
-        EventMesh.builder<Int, Byte>()
-            .setDataConstant(0)
-            .setIDGenerator { 10 }
-            .setMessageCallback { _, _ -> }
-            .setIDDecodeFunction { _ -> 9 }
-            .setDataDecodeFunction { _ -> 0 }
-            .setIDEncodeFunction { _ -> byteArrayOf(0, 1, 2, 3) }
-            .setDataEncodeFunction { b -> byteArrayOf(b) }
 
-    private inline fun <reified C, reified R> getValueFromClass(target: C, field: String): R =
-        C::class.members.find { m -> m.name == field }!!.apply { isAccessible = true }.call(target)
-            as R
+    object TestDevice : TransportDevice {
+        override var messageBuffer: MessageBuffer<ByteArray>
+            get() = TODO("Not yet implemented")
+            set(value) {}
+
+        override val receiveChannel: Channel<ByteArray>
+            get() = TODO("Not yet implemented")
+
+        override val transmitChannel: Channel<ByteArray>
+            get() = TODO("Not yet implemented")
+
+        override fun beginTransmitting(message: ByteArray) {
+            TODO("Not yet implemented")
+        }
+
+        override fun stopTransmitting(message: ByteArray) {
+            TODO("Not yet implemented")
+        }
+
+        override fun beginReceiving() {
+            TODO("Not yet implemented")
+        }
+
+        override fun stopReceiving() {
+            TODO("Not yet implemented")
+        }
+    }
+
+    companion object {
+        fun correct() =
+            EventMesh.builder<Int, Byte>(TestDevice)
+                .setDataConstant(0)
+                .setIDGenerator { 10 }
+                .setMessageCallback { _, _ -> }
+                .setIDDecodeFunction { _ -> 9 }
+                .setDataDecodeFunction { _ -> 0 }
+                .setIDEncodeFunction { _ -> byteArrayOf(0, 1, 2, 3) }
+                .setDataEncodeFunction { b -> byteArrayOf(b) }
+
+        inline fun <reified C, reified R> getValueFromClass(target: C, field: String): R =
+            C::class
+                .members
+                .find { m -> m.name == field }!!
+                .apply { isAccessible = true }
+                .call(target) as R
+    }
 
     @Test
     fun missingAllFunc() {
@@ -220,7 +257,7 @@ class BuilderTest {
         val name = "messageCache"
 
         val f =
-            EventMesh.builder<Int, Byte>()
+            EventMesh.builder<Int, Byte>(TestDevice)
                 .setDataConstant(0)
                 .setIDGenerator { 10 }
                 .setMessageCallback { _, _ -> }
@@ -235,7 +272,7 @@ class BuilderTest {
                 f.withMsgCache(null).build(), name))
 
         val g =
-            EventMesh.builder<Int, Byte>()
+            EventMesh.builder<Int, Byte>(TestDevice)
                 .setDataConstant(0)
                 .setIDGenerator { 10 }
                 .setMessageCallback { _, _ -> }
@@ -251,7 +288,7 @@ class BuilderTest {
 
     @Test
     fun differentBuilders() {
-        val b = EventMesh.builder<Int, Byte>()
+        val b = EventMesh.builder<Int, Byte>(TestDevice)
         assertFails { b.build() }
         b.setDataConstant(0)
             .setIDGenerator { 10 }
@@ -262,7 +299,7 @@ class BuilderTest {
             .setDataEncodeFunction { b -> byteArrayOf(b) }
             .build()
 
-        var m = EventMesh.builder<Int, Byte>(null)
+        var m = EventMesh.builder<Int, Byte>(TestDevice, null)
         assertFails { m.build() }
         m.setDataConstant(0)
             .setIDGenerator { 10 }
@@ -272,7 +309,7 @@ class BuilderTest {
             .setIDEncodeFunction { _ -> byteArrayOf(0, 1, 2, 3) }
             .setDataEncodeFunction { b -> byteArrayOf(b) }
             .build()
-        m = EventMesh.builder(MessageCache())
+        m = EventMesh.builder(TestDevice, MessageCache())
         assertFails { m.build() }
         m.setDataConstant(0)
             .setIDGenerator { 10 }
