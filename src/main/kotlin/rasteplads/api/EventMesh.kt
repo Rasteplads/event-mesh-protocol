@@ -1,6 +1,5 @@
 package rasteplads.api
 
-// import kotlin.time.Duration
 import java.time.Duration
 import kotlinx.coroutines.*
 import rasteplads.messageCache.MessageCache
@@ -26,7 +25,7 @@ fun main() {
 
     val b = byteArrayOf(0, 3, 5, 6, 8, 0)
     println(b.toList())
-    f.scanningCallback(b)
+    // f.scanningCallback(b)
     println(b.toList())
 
     println("f")
@@ -181,7 +180,7 @@ private constructor(
     private fun ByteArray.split(i: Int): Pair<ByteArray, ByteArray> =
         Pair(this.sliceArray(0 until i), this.sliceArray(i until this.size))
 
-    fun scanningCallback(msg: ByteArray) {
+    private fun scanningCallback(msg: ByteArray) {
         // TODO: cache check before or after relay?
         require(msg.size >= 1 + ID_MAX_SIZE) {
             "Message does not conform with the minimum requirement (TTL + ID)"
