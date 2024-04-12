@@ -1,39 +1,47 @@
 package rasteplads.bluetooth
 
-import rasteplads.api.EventMesh
+import java.time.Duration
+import kotlinx.coroutines.*
 
 class EventMeshDevice(
     private val receiver: EventMeshReceiver,
     private val transmitter: EventMeshTransmitter,
+    tTimeout: Duration? = null,
+    rDuration: Duration? = null,
 ) {
-
-    private val receiveQueue = ArrayDeque<ByteArray>()
+    private val transmitTimeout: Duration
+    private val receiveDuration: Duration
 
     init {
         receiver.handlers.add { message -> onMessageReceived(message) }
+        transmitTimeout = tTimeout ?: Duration.ofSeconds(60)
+        receiveDuration = rDuration ?: Duration.ofSeconds(600)
     }
 
-    suspend fun transmit(ttl: UInt, id: ByteArray, message: ByteArray) {
+    suspend fun startTransmitting(message: ByteArray) = runBlocking {
         // Begin transmitting.
-        require(id.size <= EventMesh.ID_MAX_SIZE)
-        transmitter.transmit(message)
-
-        // Begin listening for echos
-
-        // Timeout if echos are not received.
-        // Stop transmitting when echos are received.
-        // Return when done.
+        // If null, no echo
+        withTimeoutOrNull(transmitTimeout.toMillis()) {
+            // TODO: Transmit with a given interval, cancel on echo
+            while (isActive) {
+                transmitter.transmit(message)
+                delay(100000000000000000) // TODO: interval
+            }
+        }
+            ?: Unit
     }
 
-    fun getReceivedMessages(): Sequence<ByteArray> {
-        return sequence { if (receiveQueue.isNotEmpty()) yield(receiveQueue.removeFirst()) }
-    }
+    fun addReceivedMessageCallback(f: (ByteArray) -> Unit) = receiver.handlers.add(f)
+
+    fun addReceivedMessageCallback(vararg f: (ByteArray) -> Unit) = receiver.handlers.addAll(f)
 
     private fun onMessageReceived(message: ByteArray) {}
 
     class Builder {
         private var receiver: EventMeshReceiver? = null
         private var transmitter: EventMeshTransmitter? = null
+        private var tTimeout: Duration? = null
+        private var rDuration: Duration? = null
 
         fun withReceiver(receiver: EventMeshReceiver): Builder {
             this.receiver = receiver
@@ -42,6 +50,16 @@ class EventMeshDevice(
 
         fun withTransmitter(transmitter: EventMeshTransmitter): Builder {
             this.transmitter = transmitter
+            return this
+        }
+
+        fun withTransmitTimeout(d: Duration): Builder {
+            tTimeout = d
+            return this
+        }
+
+        fun withReceiveDuration(d: Duration): Builder {
+            rDuration = d
             return this
         }
 
