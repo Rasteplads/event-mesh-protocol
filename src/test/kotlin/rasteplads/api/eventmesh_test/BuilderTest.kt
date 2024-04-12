@@ -24,16 +24,18 @@ class BuilderTest {
 
         override val transmitChannel: Channel<ByteArray>
             get() = TODO("Not yet implemented")
+        override val transmissionInterval: Long
+            get() = TODO("Not yet implemented")
 
         override fun beginTransmitting(message: ByteArray) {
             TODO("Not yet implemented")
         }
 
-        override fun stopTransmitting(message: ByteArray) {
+        override fun stopTransmitting() {
             TODO("Not yet implemented")
         }
 
-        override fun beginReceiving() {
+        override fun beginReceiving(callback: suspend (ByteArray) -> Unit) {
             TODO("Not yet implemented")
         }
 

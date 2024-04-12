@@ -1,39 +1,51 @@
 package rasteplads.bluetooth
 
-import rasteplads.api.EventMesh
+import java.time.Duration
+import kotlinx.coroutines.*
+import rasteplads.api.EventMesh.Companion.ID_MAX_SIZE
+
+private operator fun Byte.plus(other: ByteArray): ByteArray = byteArrayOf(this) + other
 
 class EventMeshDevice(
     private val receiver: EventMeshReceiver,
     private val transmitter: EventMeshTransmitter,
+    tTimeout: Duration? = null,
+    rDuration: Duration? = null,
 ) {
 
-    private val receiveQueue = ArrayDeque<ByteArray>()
-
     init {
-        receiver.handlers.add { message -> onMessageReceived(message) }
+        tTimeout?.let { transmitter.transmitTimeout = it.toMillis() }
+        rDuration?.let { receiver.duration = it.toMillis() }
     }
 
-    suspend fun transmit(ttl: UInt, id: ByteArray, message: ByteArray) {
+    fun startTransmitting(ttl: Byte, id: ByteArray, message: ByteArray) = runBlocking {
+        check(id.size <= ID_MAX_SIZE) { "ID too big" }
         // Begin transmitting.
-        require(id.size <= EventMesh.ID_MAX_SIZE)
-        transmitter.transmit(message)
-
-        // Begin listening for echos
-
-        // Timeout if echos are not received.
-        // Stop transmitting when echos are received.
-        // Return when done.
+        // If null, no echo
+        val combinedMsg = ttl + id + message
+        val tx = launch { transmitter.transmit(combinedMsg) }
+        withTimeoutOrNull(transmitter.transmitTimeout) {
+            receiver.scanForID(id) { tx.cancelAndJoin() }
+        }
+            ?: Unit
     }
 
-    fun getReceivedMessages(): Sequence<ByteArray> {
-        return sequence { if (receiveQueue.isNotEmpty()) yield(receiveQueue.removeFirst()) }
-    }
+    fun startReceiving() = receiver.scanForMessages()
 
-    private fun onMessageReceived(message: ByteArray) {}
+    fun addReceivedMessageCallback(vararg f: suspend (ByteArray) -> Unit) =
+        receiver.handlers.addAll(f)
+
+    fun addReceivedMessageCallbackA(f: suspend (ByteArray) -> Unit) =
+        receiver.handlersA.get().add(f)
+
+    fun addReceivedMessageCallbackA(vararg f: suspend (ByteArray) -> Unit) =
+        receiver.handlersA.get().addAll(f)
 
     class Builder {
         private var receiver: EventMeshReceiver? = null
         private var transmitter: EventMeshTransmitter? = null
+        private var tTimeout: Duration? = null
+        private var rDuration: Duration? = null
 
         fun withReceiver(receiver: EventMeshReceiver): Builder {
             this.receiver = receiver
@@ -48,6 +60,17 @@ class EventMeshDevice(
         fun withDevice(device: TransportDevice): Builder {
             receiver = EventMeshReceiver(device)
             transmitter = EventMeshTransmitter(device)
+            return this
+        }
+
+        fun withTransmitTimeout(d: Duration): Builder {
+            // transmitter!!.transmitTimeout = d.toMillis()
+            tTimeout = d
+            return this
+        }
+
+        fun withReceiveDuration(d: Duration): Builder {
+            rDuration = d
             return this
         }
 
