@@ -12,11 +12,11 @@ class ExecutingTest {
         EventMesh.builder<Byte, Int>()
             .setDataConstant(0)
             .setIDGenerator { 10 }
-            .setHandleMessage { _, _ -> }
-            .setIntoIDFunction { _ -> 9 }
-            .setIntoDataFunction { _ -> 0 }
-            .setFromIDFunction { _ -> byteArrayOf(0, 1, 2, 3) }
-            .setFromDataFunction { it.toByteArray() }
+            .setMessageCallback { _, _ -> }
+            .setIDDecodeFunction { _ -> 9 }
+            .setDataDecodeFunction { _ -> 0 }
+            .setIDEncodeFunction { _ -> byteArrayOf(0, 1, 2, 3) }
+            .setDataEncodeFunction { it.toByteArray() }
 
     private inline fun <reified C, reified R> getValueFromClass(target: C, field: String): R =
         C::class.members.find { m -> m.name == field }!!.apply { isAccessible = true }.call(target)

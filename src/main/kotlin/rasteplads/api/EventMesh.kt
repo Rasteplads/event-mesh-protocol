@@ -13,11 +13,11 @@ fun main() {
         EventMesh.builder<Int, Byte>()
             .setDataConstant(0)
             .setIDGenerator { 10 }
-            .setHandleMessage { _, _ -> }
-            .setIntoIDFunction { it.toInt() }
-            .setIntoDataFunction { _ -> 0 }
-            .setFromIDFunction { _ -> byteArrayOf(0, 1, 2, 3) }
-            .setFromDataFunction { byteArrayOf(it) }
+            .setMessageCallback { _, _ -> }
+            .setIDDecodeFunction { it.toInt() }
+            .setDataDecodeFunction { _ -> 0 }
+            .setIDEncodeFunction { _ -> byteArrayOf(0, 1, 2, 3) }
+            .setDataEncodeFunction { byteArrayOf(it) }
             .addFilterFunction { id -> id and 1 == 0 } // isEven
             .addFilterFunction { id -> id < 5_000_000 } // isEven
             .addFilterFunction { id -> id > 1_000_000 } // isEven
@@ -58,10 +58,10 @@ private constructor(
     private val device: Int, // TODO: EVENTMESHDEVICE
     private val messageCache: MessageCache<ID>?,
     private val callback: (ID, Data) -> Unit,
-    private val intoID: (ByteArray) -> ID,
-    private val intoData: (ByteArray) -> Data,
-    private val fromID: (ID) -> ByteArray,
-    private val fromData: (Data) -> ByteArray,
+    private val decodeID: (ByteArray) -> ID,
+    private val decodeData: (ByteArray) -> Data,
+    private val encodeID: (ID) -> ByteArray,
+    private val encodeData: (Data) -> ByteArray,
     private val msgData: Either<Data, () -> Data>,
     private val msgId: Either<ID, () -> ID>,
     private val filterID: List<(ID) -> Boolean>,
@@ -108,10 +108,10 @@ private constructor(
         builder.device,
         builder.msgCache,
         builder.callback,
-        builder.intoID,
-        builder.intoData,
-        builder.fromID,
-        builder.fromData,
+        builder.decodeID,
+        builder.decodeData,
+        builder.encodeID,
+        builder.encodeData,
         builder.msgData,
         builder.msgID,
         builder.filterID,
@@ -189,13 +189,13 @@ private constructor(
         if (msg[0] > Byte.MIN_VALUE) relay(msg) // TTL
 
         val (idB, dataB) = msg.sliceArray(1 until msg.size).split(ID_MAX_SIZE)
-        val id = intoID(idB)
+        val id = decodeID(idB)
 
         // TODO: CACHE CHECK
 
         if (filterID.any { f -> !f(id) }) return // FILTER
 
-        callback(id, intoData(dataB))
+        callback(id, decodeData(dataB))
     }
 
     private fun relay(msg: ByteArray) {
@@ -283,81 +283,81 @@ private constructor(
              * @return the modified [Builder]]
              * @see addFilterFunction
              */
-            fun setHandleMessage(f: (ID, Data) -> Unit): Builder<ID, Data>
+            fun setMessageCallback(f: (ID, Data) -> Unit): Builder<ID, Data>
 
             /**
              * Sets a function that converts a binary representation into an `ID`. This is what is
              * read from the other nodes. The array will always have the length [ID_MAX_SIZE],
              * otherwise an exception will be thrown. This function should uphold have the same
-             * identity when using the function set in [setFromIDFunction], meaning:
+             * identity when using the function set in [setIDEncodeFunction], meaning:
              * ```
              * x = g(f(x))
              * ```
              *
              * where `f` is the function set here, and `g` is the function set in
-             * [setFromIDFunction] Some functions have been made that may be of use, see
+             * [setIDEncodeFunction] Some functions have been made that may be of use, see
              * [rasteplads.util]
              *
              * @param f The function
              * @return The modified [Builder]
              */
-            fun setIntoIDFunction(f: (ByteArray) -> ID): Builder<ID, Data>
+            fun setIDDecodeFunction(f: (ByteArray) -> ID): Builder<ID, Data>
 
             // TODO: MAKE SURE THE LENGTH IS CORRECT
             /**
              * Sets a function that converts a binary representation into an `ID`. This is what is
              * read from the other nodes. The array will always have the length [DATA_MAX_SIZE],
              * otherwise an exception will be thrown. This function should uphold have the same
-             * identity when using the function set in [setFromDataFunction], meaning:
+             * identity when using the function set in [setDataEncodeFunction], meaning:
              * ```
              * x = g(f(x))
              * ```
              *
              * where `f` is the function set here, and `g` is the function set in
-             * [setFromDataFunction] Some functions have been made that may be of use, see
+             * [setDataEncodeFunction] Some functions have been made that may be of use, see
              * [rasteplads.util]
              *
              * @param f The function
              * @return The modified [Builder]
              */
-            fun setIntoDataFunction(f: (ByteArray) -> Data): Builder<ID, Data>
+            fun setDataDecodeFunction(f: (ByteArray) -> Data): Builder<ID, Data>
 
             /**
              * Sets a function that converts the `ID` into a binary representation. This is needed
              * for transmitting the data. The array returned should have length [ID_MAX_SIZE],
              * otherwise an exception will be thrown. This function should uphold have the same
-             * identity when using the function set in [setIntoIDFunction], meaning:
+             * identity when using the function set in [setIDDecodeFunction], meaning:
              * ```
              * x = g(f(x))
              * ```
              *
              * where `f` is the function set here, and `g` is the function set in
-             * [setIntoIDFunction] Some functions have been made that may be of use, see
+             * [setIDDecodeFunction] Some functions have been made that may be of use, see
              * [rasteplads.util]
              *
              * @param f The function
              * @return The modified [Builder]
              */
-            fun setFromIDFunction(f: (ID) -> ByteArray): Builder<ID, Data>
+            fun setIDEncodeFunction(f: (ID) -> ByteArray): Builder<ID, Data>
 
             // TODO: MAKE SURE THE LENGTH IS CORRECT
             /**
              * Sets a function that converts the `Data` into a binary representation. This is needed
              * for transmitting the data. The array returned should have length [DATA_MAX_SIZE],
              * otherwise an exception will be thrown. This function should uphold have the same
-             * identity when using the function set in [setIntoDataFunction], meaning:
+             * identity when using the function set in [setDataDecodeFunction], meaning:
              * ```
              * x = g(f(x))
              * ```
              *
              * where `f` is the function set here, and `g` is the function set in
-             * [setIntoDataFunction] Some functions have been made that may be of use, see
+             * [setDataDecodeFunction] Some functions have been made that may be of use, see
              * [rasteplads.util]
              *
              * @param f The function
              * @return The modified [Builder]
              */
-            fun setFromDataFunction(f: (Data) -> ByteArray): Builder<ID, Data>
+            fun setDataEncodeFunction(f: (Data) -> ByteArray): Builder<ID, Data>
 
             /**
              * Sets a constant message that will be sent out from the device at every interval (see
@@ -403,7 +403,7 @@ private constructor(
             /**
              * Adds a filtering function. These functions filter messages by their ID. Only IDs that
              * return `true` from the filters will be sent called with the handle function (See
-             * [setHandleMessage]). The filters are applied in the order they are set.
+             * [setMessageCallback]). The filters are applied in the order they are set.
              *
              * @param f The filter-function
              * @return The modified [Builder]
@@ -413,7 +413,7 @@ private constructor(
             /**
              * Adds multiple filtering functions. These functions filter messages by their ID. Only
              * IDs that return `true` from the filters will be sent called with the handle function
-             * (See [setHandleMessage]). The filters are applied in the order they are set.
+             * (See [setMessageCallback]). The filters are applied in the order they are set.
              *
              * @param fs The filter-functions
              * @return The modified [Builder]
@@ -520,10 +520,10 @@ private constructor(
             var msgCache: MessageCache<ID>? = null,
         ) : Builder<ID, Data> {
             lateinit var callback: (ID, Data) -> Unit
-            lateinit var intoID: (ByteArray) -> ID
-            lateinit var intoData: (ByteArray) -> Data
-            lateinit var fromID: (ID) -> ByteArray
-            lateinit var fromData: (Data) -> ByteArray
+            lateinit var decodeID: (ByteArray) -> ID
+            lateinit var decodeData: (ByteArray) -> Data
+            lateinit var encodeID: (ID) -> ByteArray
+            lateinit var encodeData: (Data) -> ByteArray
             lateinit var msgData: Either<Data, () -> Data>
             lateinit var msgID: Either<ID, () -> ID>
 
@@ -542,16 +542,16 @@ private constructor(
             override fun build(): EventMesh<ID, Data> {
                 // check(device != null) { "EventMesh Device is needed" }
                 check(::callback.isInitialized) { "Function for callbacks is necessary" }
-                check(::intoID.isInitialized) {
+                check(::decodeID.isInitialized) {
                     "Function to convert binary data into `ID` is necessary"
                 }
-                check(::intoData.isInitialized) {
+                check(::decodeData.isInitialized) {
                     "Function to convert binary data into `Data` is necessary"
                 }
-                check(::fromID.isInitialized) {
+                check(::encodeID.isInitialized) {
                     "Function to convert `ID` into binary data is necessary"
                 }
-                check(::fromData.isInitialized) {
+                check(::encodeData.isInitialized) {
                     "Function to convert `Data` into binary data is necessary"
                 }
                 check(::msgData.isInitialized) {
@@ -564,23 +564,23 @@ private constructor(
                 return EventMesh(this)
             }
 
-            override fun setIntoIDFunction(f: (ByteArray) -> ID): Builder<ID, Data> {
-                intoID = f
+            override fun setIDDecodeFunction(f: (ByteArray) -> ID): Builder<ID, Data> {
+                decodeID = f
                 return this
             }
 
-            override fun setIntoDataFunction(f: (ByteArray) -> Data): Builder<ID, Data> {
-                intoData = f
+            override fun setDataDecodeFunction(f: (ByteArray) -> Data): Builder<ID, Data> {
+                decodeData = f
                 return this
             }
 
-            override fun setFromIDFunction(f: (ID) -> ByteArray): Builder<ID, Data> {
-                fromID = f
+            override fun setIDEncodeFunction(f: (ID) -> ByteArray): Builder<ID, Data> {
+                encodeID = f
                 return this
             }
 
-            override fun setFromDataFunction(f: (Data) -> ByteArray): Builder<ID, Data> {
-                fromData = f
+            override fun setDataEncodeFunction(f: (Data) -> ByteArray): Builder<ID, Data> {
+                encodeData = f
                 return this
             }
 
@@ -609,7 +609,7 @@ private constructor(
                 return this
             }
 
-            override fun setHandleMessage(f: (ID, Data) -> Unit): Builder<ID, Data> {
+            override fun setMessageCallback(f: (ID, Data) -> Unit): Builder<ID, Data> {
                 callback = f
                 return this
             }

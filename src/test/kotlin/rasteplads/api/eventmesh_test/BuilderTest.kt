@@ -14,11 +14,11 @@ class BuilderTest {
         EventMesh.builder<Int, Byte>()
             .setDataConstant(0)
             .setIDGenerator { 10 }
-            .setHandleMessage { _, _ -> }
-            .setIntoIDFunction { _ -> 9 }
-            .setIntoDataFunction { _ -> 0 }
-            .setFromIDFunction { _ -> byteArrayOf(0, 1, 2, 3) }
-            .setFromDataFunction { b -> byteArrayOf(b) }
+            .setMessageCallback { _, _ -> }
+            .setIDDecodeFunction { _ -> 9 }
+            .setDataDecodeFunction { _ -> 0 }
+            .setIDEncodeFunction { _ -> byteArrayOf(0, 1, 2, 3) }
+            .setDataEncodeFunction { b -> byteArrayOf(b) }
 
     private inline fun <reified C, reified R> getValueFromClass(target: C, field: String): R =
         C::class.members.find { m -> m.name == field }!!.apply { isAccessible = true }.call(target)
@@ -34,82 +34,82 @@ class BuilderTest {
         assertFails {
             EventMesh.builder<Int, Byte>()
                 .setIDGenerator { 10 }
-                .setHandleMessage { _, _ -> }
-                .setIntoIDFunction { _ -> 9 }
-                .setIntoDataFunction { _ -> 0 }
-                .setFromIDFunction { byteArrayOf(0, 1, 2, 3) }
-                .setFromDataFunction { b -> byteArrayOf(b) }
+                .setMessageCallback { _, _ -> }
+                .setIDDecodeFunction { _ -> 9 }
+                .setDataDecodeFunction { _ -> 0 }
+                .setIDEncodeFunction { byteArrayOf(0, 1, 2, 3) }
+                .setDataEncodeFunction { b -> byteArrayOf(b) }
                 .build()
         }
 
         assertFails {
             EventMesh.builder<Int, Byte>()
                 .setDataConstant(0)
-                .setHandleMessage { _, _ -> }
-                .setIntoIDFunction { _ -> 9 }
-                .setIntoDataFunction { _ -> 0 }
-                .setFromIDFunction { byteArrayOf(0, 1, 2, 3) }
-                .setFromDataFunction { b -> byteArrayOf(b) }
+                .setMessageCallback { _, _ -> }
+                .setIDDecodeFunction { _ -> 9 }
+                .setDataDecodeFunction { _ -> 0 }
+                .setIDEncodeFunction { byteArrayOf(0, 1, 2, 3) }
+                .setDataEncodeFunction { b -> byteArrayOf(b) }
                 .build()
         }
         assertFails {
             EventMesh.builder<Int, Byte>()
                 .setDataConstant(0)
                 .setIDGenerator { 10 }
-                .setIntoIDFunction { _ -> 9 }
-                .setIntoDataFunction { _ -> 0 }
-                .setFromIDFunction { byteArrayOf(0, 1, 2, 3) }
-                .setFromDataFunction { b -> byteArrayOf(b) }
+                .setIDDecodeFunction { _ -> 9 }
+                .setDataDecodeFunction { _ -> 0 }
+                .setIDEncodeFunction { byteArrayOf(0, 1, 2, 3) }
+                .setDataEncodeFunction { b -> byteArrayOf(b) }
                 .build()
         }
         assertFails {
             EventMesh.builder<Int, Byte>()
                 .setDataConstant(0)
                 .setIDGenerator { 10 }
-                .setIntoIDFunction { _ -> 9 }
-                .setIntoDataFunction { _ -> 0 }
-                .setFromIDFunction { byteArrayOf(0, 1, 2, 3) }
-                .setFromDataFunction { b -> byteArrayOf(b) }
+                .setIDDecodeFunction { _ -> 9 }
+                .setDataDecodeFunction { _ -> 0 }
+                .setIDEncodeFunction { byteArrayOf(0, 1, 2, 3) }
+                .setDataEncodeFunction { b -> byteArrayOf(b) }
                 .build()
         }
         assertFails {
             EventMesh.builder<Int, Byte>()
                 .setDataConstant(0)
                 .setIDGenerator { 10 }
-                .setHandleMessage { _, _ -> }
-                .setIntoDataFunction { _ -> 0 }
-                .setFromIDFunction { byteArrayOf(0, 1, 2, 3) }
-                .setFromDataFunction { b -> byteArrayOf(b) }
+                .setMessageCallback { _, _ -> }
+                .setDataDecodeFunction { _ -> 0 }
+                .setIDEncodeFunction { byteArrayOf(0, 1, 2, 3) }
+                .setDataEncodeFunction { b -> byteArrayOf(b) }
                 .build()
         }
         assertFails {
             EventMesh.builder<Int, Byte>()
                 .setDataConstant(0)
                 .setIDGenerator { 10 }
-                .setHandleMessage { _, _ -> }
-                .setIntoIDFunction { _ -> 9 }
-                .setFromIDFunction { byteArrayOf(0, 1, 2, 3) }
-                .setFromDataFunction { b -> byteArrayOf(b) }
+                .setMessageCallback { _, _ -> }
+                .setIDDecodeFunction { _ -> 9 }
+                .setIDEncodeFunction { byteArrayOf(0, 1, 2, 3) }
+                .setDataEncodeFunction { b -> byteArrayOf(b) }
                 .build()
         }
         assertFails {
             EventMesh.builder<Int, Byte>()
                 .setDataConstant(0)
                 .setIDGenerator { 10 }
-                .setHandleMessage { _, _ -> }
-                .setIntoIDFunction { _ -> 9 }
-                .setIntoDataFunction { _ -> 0 }
-                .setFromDataFunction { b -> byteArrayOf(b) }
+                .setMessageCallback { _, _ -> }
+                .setIDDecodeFunction { _ -> 9 }
+                .setDataDecodeFunction { _ -> 0 }
+                .setDataEncodeFunction { b -> byteArrayOf(b) }
                 .build()
         }
         assertFails {
             EventMesh.builder<Int, Byte>()
                 .setDataConstant(0)
                 .setIDGenerator { 10 }
-                .setHandleMessage { _, _ -> }
-                .setIntoIDFunction { _ -> 9 }
-                .setIntoDataFunction { _ -> 0 }
-                .setFromIDFunction { byteArrayOf(0, 1, 2, 3) }
+                .setMessageCallback { _, _ -> }
+                .setIDDecodeFunction { _ -> 9 }
+                .setDataDecodeFunction { _ -> 0 }
+                .setIDEncodeFunction { byteArrayOf(0, 1, 2, 3) }
                 .build()
         }
     }
@@ -223,11 +223,11 @@ class BuilderTest {
             EventMesh.builder<Int, Byte>()
                 .setDataConstant(0)
                 .setIDGenerator { 10 }
-                .setHandleMessage { _, _ -> }
-                .setIntoIDFunction { _ -> 9 }
-                .setIntoDataFunction { _ -> 0 }
-                .setFromIDFunction { _ -> byteArrayOf(0, 1, 2, 3) }
-                .setFromDataFunction { b -> byteArrayOf(b) }
+                .setMessageCallback { _, _ -> }
+                .setIDDecodeFunction { _ -> 9 }
+                .setDataDecodeFunction { _ -> 0 }
+                .setIDEncodeFunction { _ -> byteArrayOf(0, 1, 2, 3) }
+                .setDataEncodeFunction { b -> byteArrayOf(b) }
         // .build()
         assertNotNull(getValueFromClass<EventMesh<Int, Byte>, MessageCache<Int>?>(f.build(), name))
         assertNull(
@@ -238,11 +238,11 @@ class BuilderTest {
             EventMesh.builder<Int, Byte>()
                 .setDataConstant(0)
                 .setIDGenerator { 10 }
-                .setHandleMessage { _, _ -> }
-                .setIntoIDFunction { _ -> 9 }
-                .setIntoDataFunction { _ -> 0 }
-                .setFromIDFunction { _ -> byteArrayOf(0, 1, 2, 3) }
-                .setFromDataFunction { b -> byteArrayOf(b) }
+                .setMessageCallback { _, _ -> }
+                .setIDDecodeFunction { _ -> 9 }
+                .setDataDecodeFunction { _ -> 0 }
+                .setIDEncodeFunction { _ -> byteArrayOf(0, 1, 2, 3) }
+                .setDataEncodeFunction { b -> byteArrayOf(b) }
         // .build()
         assertNull(
             getValueFromClass<EventMesh<Int, Byte>, MessageCache<*>?>(
@@ -255,32 +255,32 @@ class BuilderTest {
         assertFails { b.build() }
         b.setDataConstant(0)
             .setIDGenerator { 10 }
-            .setHandleMessage { _, _ -> }
-            .setIntoIDFunction { _ -> 9 }
-            .setIntoDataFunction { _ -> 0 }
-            .setFromIDFunction { _ -> byteArrayOf(0, 1, 2, 3) }
-            .setFromDataFunction { b -> byteArrayOf(b) }
+            .setMessageCallback { _, _ -> }
+            .setIDDecodeFunction { _ -> 9 }
+            .setDataDecodeFunction { _ -> 0 }
+            .setIDEncodeFunction { _ -> byteArrayOf(0, 1, 2, 3) }
+            .setDataEncodeFunction { b -> byteArrayOf(b) }
             .build()
 
         var m = EventMesh.builder<Int, Byte>(null)
         assertFails { m.build() }
         m.setDataConstant(0)
             .setIDGenerator { 10 }
-            .setHandleMessage { _, _ -> }
-            .setIntoIDFunction { _ -> 9 }
-            .setIntoDataFunction { _ -> 0 }
-            .setFromIDFunction { _ -> byteArrayOf(0, 1, 2, 3) }
-            .setFromDataFunction { b -> byteArrayOf(b) }
+            .setMessageCallback { _, _ -> }
+            .setIDDecodeFunction { _ -> 9 }
+            .setDataDecodeFunction { _ -> 0 }
+            .setIDEncodeFunction { _ -> byteArrayOf(0, 1, 2, 3) }
+            .setDataEncodeFunction { b -> byteArrayOf(b) }
             .build()
         m = EventMesh.builder(MessageCache())
         assertFails { m.build() }
         m.setDataConstant(0)
             .setIDGenerator { 10 }
-            .setHandleMessage { _, _ -> }
-            .setIntoIDFunction { _ -> 9 }
-            .setIntoDataFunction { _ -> 0 }
-            .setFromIDFunction { _ -> byteArrayOf(0, 1, 2, 3) }
-            .setFromDataFunction { b -> byteArrayOf(b) }
+            .setMessageCallback { _, _ -> }
+            .setIDDecodeFunction { _ -> 9 }
+            .setDataDecodeFunction { _ -> 0 }
+            .setIDEncodeFunction { _ -> byteArrayOf(0, 1, 2, 3) }
+            .setDataEncodeFunction { b -> byteArrayOf(b) }
             .build()
 
         // TODO: Check with Device when type is ready
