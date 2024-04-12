@@ -1,17 +1,20 @@
 package rasteplads.bluetooth
 
-class EventMeshDevice<T>(
-    private val receiver: EventMeshReceiver<T>,
-    private val transmitter: EventMeshTransmitter<T>,
+import rasteplads.api.ID_MAX_SIZE
+
+class EventMeshDevice(
+    private val receiver: EventMeshReceiver,
+    private val transmitter: EventMeshTransmitter,
 ) {
 
-    private val receiveQueue = ArrayDeque<Message<T>>()
+    private val receiveQueue = ArrayDeque<ByteArray>()
     init {
         receiver.handlers.add {message -> onMessageReceived(message)}
     }
 
-    suspend fun transmit(message: Message<T>){
+    suspend fun transmit(ttl: UInt, id: ByteArray, message: ByteArray){
         // Begin transmitting.
+        require(id.size <= ID_MAX_SIZE)
         transmitter.transmit(message)
 
         // Begin listening for echos

@@ -7,14 +7,14 @@ import rasteplads.util.Either
  *
  * The default value is 29.
  */
-private const val DATA_MAX_SIZE = 29u
+const val DATA_MAX_SIZE = 29u
 
 /**
  * Default value for the size of a message's ID (when converted to buffer).
  *
  * The default value is 4.
  */
-private const val ID_MAX_SIZE = 4u
+const val ID_MAX_SIZE = 4u
 
 // buffer.copyOf(position)
 
