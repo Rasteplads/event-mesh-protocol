@@ -1,9 +1,5 @@
 package rasteplads.bluetooth
 
-
-class EventMeshReceiver<T>(
-    private val device: TransportDevice<T>
-) {
-    val handlers = mutableListOf<(Message<T>) -> Unit>()
-
+class EventMeshReceiver(private val device: TransportDevice) {
+    val handlers = mutableListOf<(ByteArray) -> Unit>()
 }

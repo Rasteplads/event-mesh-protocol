@@ -1,4 +1,4 @@
-package rasteplads.util.ByteArrayExtension
+package rasteplads.util.byte_array_extension
 
 import kotlin.test.assertFails
 import org.junit.jupiter.api.Assertions.*
@@ -7,6 +7,8 @@ import rasteplads.util.*
 
 class ByteTest {
     private fun testEq(v: Byte): Unit = assertEquals(v, v.toByteArray().toByte())
+
+    private fun testEq(v: UByte): Unit = assertEquals(v, v.toByteArray().toUByte())
 
     private fun testEq(v: ByteArray): Unit =
         assertEquals(v.toList(), v.toByte().toByteArray().toList())
@@ -25,6 +27,19 @@ class ByteTest {
 
         testEq(Byte.MAX_VALUE)
         testEq(Byte.MIN_VALUE)
+    }
+
+    @Test
+    fun fromUByteReflexive() {
+        testEq(0u)
+        testEq(1u)
+
+        testEq(10u)
+
+        testEq(99u)
+
+        testEq(UByte.MAX_VALUE)
+        testEq(UByte.MIN_VALUE)
     }
 
     @Test
@@ -52,13 +67,17 @@ class ByteTest {
             generateRands(Byte.SIZE_BYTES).permutations().forEach { testEq(it.toByteArray()) }
         }
         (Byte.MIN_VALUE..Byte.MAX_VALUE).forEach { n -> testEq(n.toByte()) }
+        (UByte.MIN_VALUE..UByte.MAX_VALUE).forEach { n -> testEq(n.toUByte()) }
     }
 
     @Test
     fun throwsOnSmallArray() {
         val i = Byte.SIZE_BYTES
         (0..i).forEach { num ->
-            if (num != Byte.SIZE_BYTES) assertFails { generateRands(num).toByteArray().toByte() }
+            if (num != Byte.SIZE_BYTES) {
+                assertFails { generateRands(num).toByteArray().toByte() }
+                assertFails { generateRands(num).toByteArray().toUByte() }
+            }
         }
     }
 
