@@ -18,18 +18,18 @@ class EventMeshDevice(
         rxDuration?.let { receiver.duration = it.toMillis() }
     }
 
-    fun startTransmitting(ttl: Byte, id: ByteArray, message: ByteArray) = runBlocking {
+    suspend fun startTransmitting(ttl: Byte, id: ByteArray, message: ByteArray) = runBlocking {
         check(id.size <= ID_MAX_SIZE) { "ID too big" }
-        // Begin transmitting.
-        // If null, no echo
         val combinedMsg = ttl + id + message
         val tx = launch { transmitter.transmit(combinedMsg) }
 
-        // TODO: PLS
-        /*withTimeoutOrNull(transmitter.transmitTimeout) {
-            receiver.scanForID(id) { tx.cancelAndJoin() }
-        }
-            ?: Unit*/
+        try {
+            withTimeout(transmitter.transmitTimeout) {
+                receiver.scanForID(id, transmitter.transmitTimeout) { tx.cancelAndJoin() }
+            }
+        } catch (_: TimeoutCancellationException) {
+            // TODO: No echo
+        } finally {}
     }
 
     suspend fun startReceiving() = receiver.scanForMessages()

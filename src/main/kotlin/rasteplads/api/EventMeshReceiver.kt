@@ -7,19 +7,18 @@ import kotlinx.coroutines.*
 // TODO: Handling of timeouts should be reconsidered (or maybe implement a counter of sorts)
 
 class EventMeshReceiver(private val device: TransportDevice) {
-    private val handlers: AtomicReference<MutableList<suspend (ByteArray) -> Unit>> =
-        AtomicReference(mutableListOf())
     var duration: Long = 10_000 // 10 sec //TODO: Default val
     private val scannerCount: AtomicInteger = AtomicInteger(0)
     private var runner: AtomicReference<Job?> = AtomicReference(null)
     private val callback: AtomicReference<suspend (ByteArray) -> Unit> = AtomicReference {}
+    // (scanMessage callback, scanForId callback)
     private val handle:
         Pair<
             AtomicReference<suspend (ByteArray) -> Unit?>,
             AtomicReference<suspend (ByteArray) -> Unit?>> =
         Pair(AtomicReference(null), AtomicReference(null))
 
-    suspend fun scanForID(id: ByteArray, callback: suspend () -> Unit) {
+    suspend fun scanForID(id: ByteArray, timout: Long, callback: suspend () -> Unit) {
         var found = false
         val callbackWrap: suspend (ByteArray) -> Unit = { msg: ByteArray ->
             if ((!found) && id.zip(msg).all { (i, s) -> i == s }) {
@@ -29,15 +28,15 @@ class EventMeshReceiver(private val device: TransportDevice) {
             yield()
         }
         try {
-            withTimeout(duration) {
-                // handlers.get().add(callbackWrap)
+            withTimeout(timout) {
                 handle.second.set(callbackWrap)
                 startDevice()
                 while (!found) {
                     yield()
                 }
             }
-        } catch (_: TimeoutCancellationException) {} finally {
+        } // catch (_: TimeoutCancellationException) {}
+        finally {
             stopDevice()
             // handlers.get().remove(callbackWrap)
             handle.second.set(null)
@@ -52,14 +51,14 @@ class EventMeshReceiver(private val device: TransportDevice) {
                 startDevice()
                 while (true) yield()
             }
-        } catch (_: Exception) {} finally {
+        } catch (_: TimeoutCancellationException) {} finally {
             stopDevice()
             // handlers.get().remove(callback.get())
             handle.first.set(null)
         }
     }
 
-    private suspend fun startDevice(): Unit {
+    private suspend fun startDevice() {
         if (scannerCount.getAndIncrement() == 0) {
             runner.set(
                 GlobalScope.launch {

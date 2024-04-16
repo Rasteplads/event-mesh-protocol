@@ -70,7 +70,7 @@ class EventMeshReceiverTest {
         assertEquals(3, l.size)
         assert(l.all { it.contentEquals(b) })
         var id = false
-        launch { rx.scanForID(byteArrayOf(0, 1, 2, 4)) { id = true } }
+        launch { rx.scanForID(byteArrayOf(0, 1, 2, 4), RX_DURATION) { id = true } }
         assertFalse(id)
         delay(100)
         device.receiveMessage(b)
@@ -117,7 +117,7 @@ class EventMeshReceiverTest {
         assertEquals(3, l.size)
         assert(l.all { it.contentEquals(b) })
         var id = false
-        val j = launch { rx.scanForID(byteArrayOf(0, 1, 2, 4)) { id = true } }
+        val j = launch { rx.scanForID(byteArrayOf(0, 1, 2, 4), RX_DURATION) { id = true } }
         assert(device.receiving.get())
         assertFalse(id)
         delay(100)
@@ -155,7 +155,7 @@ class EventMeshReceiverTest {
         var id = false
         rx.duration = RX_DURATION // 5 sec
         assertFalse(device.receiving.get())
-        launch { rx.scanForID(byteArrayOf(0, 1, 2, 4)) { id = true } }
+        launch { rx.scanForID(byteArrayOf(0, 1, 2, 4), RX_DURATION) { id = true } }
         delay(100)
         assert(device.receiving.get())
         assertFalse(id)
@@ -182,7 +182,7 @@ class EventMeshReceiverTest {
         rx.setReceivedMessageCallback { l.add(it) }
         assertFalse(device.receiving.get())
         var id = false
-        launch { rx.scanForID(byteArrayOf(0, 1, 2, 4)) { id = true } }
+        launch { rx.scanForID(byteArrayOf(0, 1, 2, 4), RX_DURATION) { id = true } }
         delay(100)
         assert(device.receiving.get())
         assertFalse(id)
@@ -267,6 +267,22 @@ class EventMeshReceiverTest {
         delay(100)
         assertEquals(4, l.size)
         assert(l.all { it.contentEquals(b) })
+    }
+
+    @Test
+    fun throwsException(): Unit = runBlocking {
+        assertFails {
+            EventMeshReceiver(device).scanForID(
+                byteArrayOf(
+                    0,
+                    1,
+                    2,
+                    4,
+                    5,
+                    6,
+                ),
+                1_000) {}
+        }
     }
 
     companion object {
