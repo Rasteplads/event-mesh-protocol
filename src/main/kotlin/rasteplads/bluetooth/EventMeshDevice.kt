@@ -14,8 +14,8 @@ class EventMeshDevice(
 ) {
 
     init {
-        tTimeout?.let { transmitter.transmitTimeout = it.toMillis() }
-        rDuration?.let { receiver.duration = it.toMillis() }
+        txTimeout?.let { transmitter.transmitTimeout = it.toMillis() }
+        rxDuration?.let { receiver.duration = it.toMillis() }
     }
 
     fun startTransmitting(ttl: Byte, id: ByteArray, message: ByteArray) = runBlocking {
