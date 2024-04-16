@@ -1,9 +1,8 @@
-package rasteplads.bluetooth
+package rasteplads.api
 
 import kotlinx.coroutines.channels.Channel
 
 interface TransportDevice {
-    var messageBuffer: MessageBuffer<ByteArray>
     val receiveChannel: Channel<ByteArray>
     val transmitChannel: Channel<ByteArray>
     val transmissionInterval: Long

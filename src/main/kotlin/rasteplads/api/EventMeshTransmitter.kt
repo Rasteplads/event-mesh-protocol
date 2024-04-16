@@ -1,4 +1,4 @@
-package rasteplads.bluetooth
+package rasteplads.api
 
 import kotlinx.coroutines.*
 
