@@ -10,7 +10,7 @@ class EventMeshDevice(
     private val receiver: EventMeshReceiver,
     private val transmitter: EventMeshTransmitter,
     txTimeout: Duration? = null,
-    rDuration: Duration? = null,
+    rxDuration: Duration? = null,
 ) {
 
     init {
