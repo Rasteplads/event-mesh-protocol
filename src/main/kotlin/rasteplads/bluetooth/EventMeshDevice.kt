@@ -9,7 +9,7 @@ private operator fun Byte.plus(other: ByteArray): ByteArray = byteArrayOf(this) 
 class EventMeshDevice(
     private val receiver: EventMeshReceiver,
     private val transmitter: EventMeshTransmitter,
-    tTimeout: Duration? = null,
+    txTimeout: Duration? = null,
     rDuration: Duration? = null,
 ) {
 
