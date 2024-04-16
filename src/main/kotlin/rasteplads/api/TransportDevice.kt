@@ -11,7 +11,7 @@ interface TransportDevice {
 
     fun stopTransmitting()
 
-    fun beginReceiving(callback: suspend (ByteArray) -> Unit)
+    suspend fun beginReceiving(callback: suspend (ByteArray) -> Unit)
 
     fun stopReceiving()
 }

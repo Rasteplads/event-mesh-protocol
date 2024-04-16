@@ -16,9 +16,10 @@ class MockDevice(
 
     val reveivingJob: AtomicReference<Job?> = AtomicReference(null)
 
-    private val receivedPool: MutableList<ByteArray> = mutableListOf()
+    val receivedPool: AtomicReference<MutableList<ByteArray>> = AtomicReference(mutableListOf())
 
     val transmitting: AtomicBoolean = AtomicBoolean(false)
+    val receiving: AtomicBoolean = AtomicBoolean(false)
 
     override suspend fun beginTransmitting(message: ByteArray): Unit {
         transmittedMessages.removeAll { true }
@@ -26,33 +27,32 @@ class MockDevice(
 
         while (transmitting.get()) {
             transmittedMessages.add(message)
-            withContext(Dispatchers.IO) { Thread.sleep(transmissionInterval) }
+            delay(transmissionInterval)
             yield()
         }
     }
 
     override fun stopTransmitting(): Unit = transmitting.set(false)
 
-    override fun beginReceiving(callback: suspend (ByteArray) -> Unit) = runBlocking {
-        reveivingJob.set(
-            GlobalScope.launch {
-                try {
-                    while (isActive) {
-                        val iter = receivedPool.iterator()
-                        for (i in iter) {
-                            iter.remove()
-                        }
-                        delay(1000) // 1 sec
-                    }
-                } finally {
-                    reveivingJob.set(null)
-                }
-            })
+    override suspend fun beginReceiving(callback: suspend (ByteArray) -> Unit) {
+        receiving.set(true)
+
+        while (receiving.get()) {
+            val iter = receivedPool.get().iterator()
+            for (i in iter) {
+                callback(i)
+                iter.remove()
+            }
+            delay(50) // 1 sec
+            yield()
+        }
     }
 
-    override fun stopReceiving(): Unit = runBlocking { reveivingJob.get()?.cancelAndJoin() }
+    override fun stopReceiving(): Unit = receiving.set(false)
 
-    fun receiveMessage(b: ByteArray) = receivedPool.add(b)
+    fun receiveMessage(b: ByteArray) {
+        receivedPool.get().add(b)
+    }
 }
 
 class EventMeshDeviceTest {}

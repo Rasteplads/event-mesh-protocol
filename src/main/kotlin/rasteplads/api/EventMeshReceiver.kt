@@ -2,52 +2,89 @@ package rasteplads.api
 
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
-import rasteplads.api.EventMesh.Companion.ID_MAX_SIZE
+import kotlinx.coroutines.*
+
+// TODO: Handling of timeouts should be reconsidered (or maybe implement a counter of sorts)
 
 class EventMeshReceiver(private val device: TransportDevice) {
-    val handlers = mutableListOf<suspend (ByteArray) -> Unit>()
-    val handlersA: AtomicReference<MutableList<suspend (ByteArray) -> Unit>> =
+    private val handlers: AtomicReference<MutableList<suspend (ByteArray) -> Unit>> =
         AtomicReference(mutableListOf())
-    var duration: Long = 10000 // 10 sec //TODO: Default val
+    var duration: Long = 10_000 // 10 sec //TODO: Default val
     private val scannerCount: AtomicInteger = AtomicInteger(0)
+    private var runner: AtomicReference<Job?> = AtomicReference(null)
+    private val callback: AtomicReference<suspend (ByteArray) -> Unit> = AtomicReference {}
+    private val handle:
+        Pair<
+            AtomicReference<suspend (ByteArray) -> Unit?>,
+            AtomicReference<suspend (ByteArray) -> Unit?>> =
+        Pair(AtomicReference(null), AtomicReference(null))
 
     suspend fun scanForID(id: ByteArray, callback: suspend () -> Unit) {
+        var found = false
         val callbackWrap: suspend (ByteArray) -> Unit = { msg: ByteArray ->
-            if (id.zip(msg.sliceArray(1..ID_MAX_SIZE)).all { (i, s) -> i == s }) {
+            if ((!found) && id.zip(msg).all { (i, s) -> i == s }) {
                 callback()
+                found = true
             }
+            yield()
         }
         try {
-            handlersA.get().add(callbackWrap)
-            if (scannerCount.getAndIncrement() == 0)
-                device.beginReceiving(::scanForMessagesCallback)
-            /*
-            device.beginReceiving { scanned ->
-                if (id.zip(scanned.sliceArray(1..ID_MAX_SIZE)).all { (i, s) -> i == s }) {
-                    callback()
+            withTimeout(duration) {
+                // handlers.get().add(callbackWrap)
+                handle.second.set(callbackWrap)
+                startDevice()
+                while (!found) {
+                    yield()
                 }
             }
-             */
-        } finally {
-            handlersA.get().remove(callbackWrap)
-            if (scannerCount.decrementAndGet() == 0) device.stopReceiving()
+        } catch (_: TimeoutCancellationException) {} finally {
+            stopDevice()
+            // handlers.get().remove(callbackWrap)
+            handle.second.set(null)
         }
     }
 
-    fun scanForMessages() = runBlocking {
+    suspend fun scanForMessages() {
         try {
-            if (scannerCount.getAndIncrement() == 0)
-                device.beginReceiving(::scanForMessagesCallback)
+            // handlers.get().add(callback.get())
+            handle.first.set(callback.get())
             withTimeout(duration) {
-                // device.beginReceiving(callback)
+                startDevice()
+                while (true) yield()
             }
-        } finally {
-            if (scannerCount.decrementAndGet() == 0) device.stopReceiving()
+        } catch (_: Exception) {} finally {
+            stopDevice()
+            // handlers.get().remove(callback.get())
+            handle.first.set(null)
         }
     }
 
-    private suspend fun scanForMessagesCallback(msg: ByteArray) =
-        handlersA.get().forEach { it(msg) }
+    private suspend fun startDevice(): Unit {
+        if (scannerCount.getAndIncrement() == 0) {
+            runner.set(
+                GlobalScope.launch {
+                    try {
+                        device.beginReceiving(::scanForMessagesCallback)
+                    } finally {
+                        device.stopReceiving()
+                    }
+                })
+        } else Unit
+    }
+
+    private fun stopDevice(): Unit =
+        if (scannerCount.decrementAndGet() == 0)
+            runner.getAndSet(null)?.cancel() ?: Unit // .set(device.stopReceiving()) ?: Unit
+        else Unit
+
+    private suspend fun scanForMessagesCallback(msg: ByteArray) {
+        //   handlers.get().forEach { it(msg) }
+        handle.first.get()?.invoke(msg)
+        handle.second.get()?.invoke(msg)
+    }
+
+    fun setReceivedMessageCallback(f: suspend (ByteArray) -> Unit) = callback.set(f)
+
+    // fun addReceivedMessageCallback(vararg f: suspend (ByteArray) -> Unit) =
+    // handlers.get().addAll(f)
 }

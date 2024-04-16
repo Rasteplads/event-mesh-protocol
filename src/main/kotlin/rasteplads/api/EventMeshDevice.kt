@@ -24,22 +24,15 @@ class EventMeshDevice(
         // If null, no echo
         val combinedMsg = ttl + id + message
         val tx = launch { transmitter.transmit(combinedMsg) }
-        withTimeoutOrNull(transmitter.transmitTimeout) {
+
+        // TODO: PLS
+        /*withTimeoutOrNull(transmitter.transmitTimeout) {
             receiver.scanForID(id) { tx.cancelAndJoin() }
         }
-            ?: Unit
+            ?: Unit*/
     }
 
-    fun startReceiving() = receiver.scanForMessages()
-
-    fun addReceivedMessageCallback(vararg f: suspend (ByteArray) -> Unit) =
-        receiver.handlers.addAll(f)
-
-    fun addReceivedMessageCallbackA(f: suspend (ByteArray) -> Unit) =
-        receiver.handlersA.get().add(f)
-
-    fun addReceivedMessageCallbackA(vararg f: suspend (ByteArray) -> Unit) =
-        receiver.handlersA.get().addAll(f)
+    suspend fun startReceiving() = receiver.scanForMessages()
 
     class Builder {
         private var receiver: EventMeshReceiver? = null
