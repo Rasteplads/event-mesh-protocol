@@ -6,10 +6,10 @@ class EventMeshTransmitter(private val device: TransportDevice) {
 
     var transmitTimeout: Long = 60000 // 60 sec // TODO: Default val
 
-    fun transmit(message: ByteArray) = runBlocking {
+    fun transmit(message: ByteArray): Unit = runBlocking {
         try {
             withTimeout(transmitTimeout) { device.beginTransmitting(message) }
-        } finally {
+        } catch (_: TimeoutCancellationException) {} finally {
             device.stopTransmitting()
         }
     }

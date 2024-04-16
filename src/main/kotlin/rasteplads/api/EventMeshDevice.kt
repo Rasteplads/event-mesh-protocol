@@ -7,10 +7,10 @@ import rasteplads.api.EventMesh.Companion.ID_MAX_SIZE
 private operator fun Byte.plus(other: ByteArray): ByteArray = byteArrayOf(this) + other
 
 class EventMeshDevice(
-        private val receiver: EventMeshReceiver,
-        private val transmitter: EventMeshTransmitter,
-        txTimeout: Duration? = null,
-        rxDuration: Duration? = null,
+    private val receiver: EventMeshReceiver,
+    private val transmitter: EventMeshTransmitter,
+    txTimeout: Duration? = null,
+    rxDuration: Duration? = null,
 ) {
 
     init {

@@ -7,7 +7,7 @@ interface TransportDevice {
     val transmitChannel: Channel<ByteArray>
     val transmissionInterval: Long
 
-    fun beginTransmitting(message: ByteArray)
+    suspend fun beginTransmitting(message: ByteArray)
 
     fun stopTransmitting()
 
