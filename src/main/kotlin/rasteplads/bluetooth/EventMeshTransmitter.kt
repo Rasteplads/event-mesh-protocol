@@ -1,15 +1,16 @@
 package rasteplads.bluetooth
 
-class EventMeshTransmitter(private val device: TransportDevice) {
-    /**
-     * Adds the message to the outgoing message queue. The message will be transmitted on the next
-     * possible opportunity.
-     */
-    fun transmit(message: ByteArray, callback: (ByteArray) -> Unit) {
-        TODO()
-    }
+import kotlinx.coroutines.*
 
-    fun transmit(message: ByteArray) {
-        device.beginTransmitting(message)
+class EventMeshTransmitter(private val device: TransportDevice) {
+
+    var transmitTimeout: Long = 60000 // 60 sec // TODO: Default val
+
+    fun transmit(message: ByteArray) = runBlocking {
+        try {
+            withTimeout(transmitTimeout) { device.beginTransmitting(message) }
+        } finally {
+            device.stopTransmitting()
+        }
     }
 }

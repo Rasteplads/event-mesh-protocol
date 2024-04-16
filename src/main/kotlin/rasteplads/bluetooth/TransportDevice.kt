@@ -6,12 +6,13 @@ interface TransportDevice {
     var messageBuffer: MessageBuffer<ByteArray>
     val receiveChannel: Channel<ByteArray>
     val transmitChannel: Channel<ByteArray>
+    val transmissionInterval: Long
 
     fun beginTransmitting(message: ByteArray)
 
-    fun stopTransmitting(message: ByteArray)
+    fun stopTransmitting()
 
-    fun beginReceiving()
+    fun beginReceiving(callback: suspend (ByteArray) -> Unit)
 
     fun stopReceiving()
 }
