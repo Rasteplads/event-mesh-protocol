@@ -1,51 +1,9 @@
 package rasteplads.api
 
 import java.time.Duration
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.*
 import rasteplads.messageCache.MessageCache
 import rasteplads.util.Either
-import rasteplads.util.toInt
-
-val temp: AtomicReference<MutableList<(ByteArray) -> Unit>> = AtomicReference(mutableListOf())
-val i: AtomicInteger = AtomicInteger(10)
-
-fun main() {
-    println("start")
-
-    val f =
-        EventMesh.builder<Int, Byte>()
-            .setDataConstant(0)
-            .setIDGenerator { 10 }
-            .setMessageCallback { _, _ -> }
-            .setIDDecodeFunction { it.toInt() }
-            .setDataDecodeFunction { _ -> 0 }
-            .setIDEncodeFunction { _ -> byteArrayOf(0, 1, 2, 3) }
-            .setDataEncodeFunction { byteArrayOf(it) }
-            .addFilterFunction { id -> id and 1 == 0 } // isEven
-            .addFilterFunction { id -> id < 5_000_000 } // isEven
-            .addFilterFunction { id -> id > 1_000_000 } // isEven
-            .build()
-
-    val b = byteArrayOf(0, 3, 5, 6, 8, 0)
-    println(i.decrementAndGet())
-    /*
-    println(b.toList())
-    // f.scanningCallback(b)
-    println(b.toList())
-
-    println("f")
-    f.start()
-    println("MAIN")
-
-    // delay(1000)
-    println("I want it to stop")
-    f.stop()
-
-    println("works I guess")
-     */
-}
 
 /**
  * This class handles communicating messages to the dynamic mesh network.
@@ -86,10 +44,10 @@ private constructor(
      * The interval the messages from [msgData] will be sent. This corresponds to 'Advertising
      * Interval' in Bluetooth
      */
-    private var msgSendInterval: Duration = Duration.ofMillis(100)
+    // private var msgSendInterval: Duration = Duration.ofMillis(100)
 
     /** The interval the between a message session. */
-    private var msgSendSessionInterval: Duration = Duration.ofSeconds(10)
+    private var msgSendInterval: Duration = Duration.ofSeconds(10)
 
     /**
      * The duration the messages from [msgData] will be sent. A message session will only be this
@@ -102,7 +60,7 @@ private constructor(
     private var msgScanInterval: Duration = Duration.ofSeconds(5)
 
     /** The duration incoming messages will be scanned for. */
-    private var msgScanDuration: Duration = Duration.ofSeconds(1)
+    // private var msgScanDuration: Duration = Duration.ofSeconds(1)
 
     /** The maximum number of elements stored in the cache */
     private var msgCacheLimit: Long = 32
@@ -127,7 +85,6 @@ private constructor(
         builder.msgDelete?.let { msgDelete = it }
         builder.msgTTL?.let { msgTTL = it }
 
-        builder.msgSendSessionInterval?.let { msgSendSessionInterval = it }
         builder.msgSendInterval?.let { msgSendInterval = it }
         builder.msgSendTimeout?.let { msgSendTimeout = it }
 
@@ -136,7 +93,6 @@ private constructor(
         }
 
         builder.msgScanInterval?.let { msgScanInterval = it }
-        builder.msgScanDuration?.let { msgScanDuration = it }
 
         builder.msgCacheLimit?.let { msgCacheLimit = it }
     }
@@ -144,47 +100,37 @@ private constructor(
     /** TODO */
     fun start() = runBlocking {
         // TODO: SETUP BT TO HANDLE MESSAGES (CONVERT, FILTER, CALLBACK)
-        println("START HW (IF GLOBAL)")
+        // TODO: Setup callback
         btSender =
-            GlobalScope.launch(Dispatchers.Default) {
+            GlobalScope.launch(Dispatchers.IO) {
                 try {
-                    println("START HW (IF LOCAL)")
                     do {
-                        delay(msgSendSessionInterval.toMillis())
+                        delay(msgSendInterval.toMillis())
                         val id = msgId.getLeft() ?: msgId.getRight()!!()
                         val data = msgData.getLeft() ?: msgData.getRight()!!()
-                        // TODO: SEND BYTES WITH TTL
-                        // device.transmit(msgTTL, encodeID(id), encodeData(data))
+                        device.startTransmitting(msgTTL.toByte(), encodeID(id), encodeData(data))
                     } while (isActive)
                 } finally {
-                    println("STOP HW (IF LOCAL)")
+                    // TODO: Handle cancel?
                 }
             }
         btScanner =
-            GlobalScope.launch(Dispatchers.Default) {
+            GlobalScope.launch(Dispatchers.IO) {
                 try {
-                    println("START HW (IF LOCAL)")
                     do {
                         delay(msgScanInterval.toMillis())
-                        val k =
-                            withTimeout(msgScanDuration.toMillis()) {
-                                // TODO: CALL DEVICE.FUNC WITH [scanningCallback]
-                                // TODO: HANDLE RELAYING
-                            }
+                        device.startReceiving()
                     } while (isActive)
                 } finally {
-                    println("STOP HW (IF LOCAL)")
+                    // TODO: Handle cancel?
                 }
             }
-        delay(3000)
-        println("FUNC")
     }
 
     /** TODO */
     fun stop() = runBlocking {
-        if (btSender.isActive) btSender.cancelAndJoin()
-        if (btScanner.isActive) btScanner.cancelAndJoin()
-        println("STOP HW (IF GLOBAL)")
+        if (btSender.isActive) btSender.cancel()
+        if (btScanner.isActive) btScanner.cancel()
     }
 
     private fun ByteArray.split(i: Int): Pair<ByteArray, ByteArray> =
@@ -238,7 +184,7 @@ private constructor(
          * @param Data The messages' content
          */
         fun <ID, Data> builder(): Builder<ID, Data> =
-            BuilderImpl(EventMeshDevice.Builder(), MessageCache()) // TODO: Default vals?
+            BuilderImpl(EventMeshDevice.Builder(), MessageCache())
 
         /**
          * Creates a [Builder] for [EventMesh] with a provided message cache (set to `null` to
@@ -252,21 +198,21 @@ private constructor(
             BuilderImpl(EventMeshDevice.Builder(), mc) // TODO: REAL TYPE AND INITIALISATION
 
         /**
-         * Creates a [Builder] for [EventMesh] with a provided [EventMeshDevice]. Uses the default
-         * message cache ([MessageCache]).
+         * Creates a [Builder] for [EventMesh] with a provided [TransportDevice]. This device is
+         * used for both the [EventMeshReceiver] and [EventMeshTransmitter]. The default message
+         * cache ([MessageCache]) is used.
          *
          * @param ID The messages' ID
          * @param Data The messages' content
          * @param device The instance of the [EventMeshDevice] (Or derivative)
          */
         fun <ID, Data> builder(device: TransportDevice): Builder<ID, Data> =
-            BuilderImpl(
-                EventMeshDevice.Builder().withDevice(device),
-                MessageCache()) // TODO: REAL TYPE AND INITIALISATION
+            BuilderImpl(EventMeshDevice.Builder().withDevice(device), MessageCache())
 
         /**
-         * Creates a [Builder] for [EventMesh] with a provided message cache (set to `null` to
-         * disable) and [EventMeshDevice].
+         * Creates a [Builder] for [EventMesh] with a provided [TransportDevice]. This device is
+         * used for both the [EventMeshReceiver] and [EventMeshTransmitter]. The provided message
+         * cache ([MessageCache]) is used (set to `null` to disable).
          *
          * @param ID The messages' ID
          * @param Data The messages' content
@@ -276,7 +222,62 @@ private constructor(
         fun <ID, Data> builder(device: TransportDevice, mc: MessageCache<ID>?): Builder<ID, Data> =
             BuilderImpl(EventMeshDevice.Builder().withDevice(device), mc)
 
+        /**
+         * Creates a [Builder] for [EventMesh] with a provided [EventMeshReceiver] and
+         * [EventMeshTransmitter]. The default message cache ([MessageCache]) is used.
+         *
+         * @param ID The messages' ID
+         * @param Data The messages' content
+         * @param rx The [EventMeshReceiver] used
+         * @param tx The [EventMeshTransmitter] used
+         */
+        fun <ID, Data> builder(rx: EventMeshReceiver, tx: EventMeshTransmitter): Builder<ID, Data> =
+            BuilderImpl(
+                EventMeshDevice.Builder().withReceiver(rx).withTransmitter(tx), MessageCache())
+
+        /**
+         * Creates a [Builder] for [EventMesh] with a provided [EventMeshReceiver] and
+         * [EventMeshTransmitter]. The provided message cache ([MessageCache]) is used (set to
+         * `null` to disable).
+         *
+         * @param ID The messages' ID
+         * @param Data The messages' content
+         * @param rx The [EventMeshReceiver] used
+         * @param tx The [EventMeshTransmitter] used
+         * @param mc The instance of the [MessageCache] (Or derivative) (set to `null` to disable)
+         */
+        fun <ID, Data> builder(
+            rx: EventMeshReceiver,
+            tx: EventMeshTransmitter,
+            mc: MessageCache<ID>?
+        ): Builder<ID, Data> =
+            BuilderImpl(EventMeshDevice.Builder().withReceiver(rx).withTransmitter(tx), mc)
+
         interface Builder<ID, Data> {
+
+            /**
+             * Sets the [EventMeshReceiver] in [EventMeshDevice].
+             *
+             * @param rx The [EventMeshReceiver]
+             * @return the modified [Builder]
+             */
+            fun setReceiver(rx: EventMeshReceiver): Builder<ID, Data>
+
+            /**
+             * Sets the [EventMeshTransmitter] in [EventMeshDevice].
+             *
+             * @param tx The [EventMeshTransmitter]
+             * @return the modified [Builder]
+             */
+            fun setTransmitter(tx: EventMeshTransmitter): Builder<ID, Data>
+
+            /**
+             * Sets the [MessageCache] (`null` to disable).
+             *
+             * @param mc The [MessageCache]
+             * @return the modified [Builder]
+             */
+            fun setMessageCache(mc: MessageCache<ID>?): Builder<ID, Data>
 
             /**
              * Sets a function that will be called on every message that is not filtered.
@@ -363,7 +364,7 @@ private constructor(
 
             /**
              * Sets a constant message that will be sent out from the device at every interval (see
-             * [withMsgSendInterval]). This function overrides any value set through
+             * [withMsgSendTransmissionInterval]). This function overrides any value set through
              * [setDataGenerator].
              *
              * @param c The data to be sent
@@ -373,8 +374,8 @@ private constructor(
 
             /**
              * Sets a function for generating the messages that will be sent out from the device at
-             * every interval (see [withMsgSendInterval]). This function overrides any value set
-             * through [setDataConstant].
+             * every interval (see [withMsgSendTransmissionInterval]). This function overrides any
+             * value set through [setDataConstant].
              *
              * @param f The generator-function
              * @return The modified [Builder]
@@ -446,15 +447,15 @@ private constructor(
              * @param d Waiting time
              * @return The modified [Builder]
              */
-            fun withMsgSendSessionInterval(d: Duration): Builder<ID, Data>
+            fun withMsgSendInterval(d: Duration): Builder<ID, Data>
 
             /**
-             * Sets the message sending interval
+             * Sets the message sending interval, I.E. the discrete events of transmissions.
              *
              * @param d Waiting time
              * @return The modified [Builder]
              */
-            fun withMsgSendInterval(d: Duration): Builder<ID, Data>
+            // fun withMsgSendTransmissionInterval(d: Duration): Builder<ID, Data>
 
             /**
              * Sets the sending duration timeout (cap). This is the max time duration the message
@@ -534,11 +535,9 @@ private constructor(
             var msgDelete: Duration? = null
             var msgTTL: UInt? = null
 
-            var msgSendSessionInterval: Duration? = null
             var msgSendInterval: Duration? = null
             var msgSendTimeout: Duration? = null
             var msgScanInterval: Duration? = null
-            var msgScanDuration: Duration? = null
             var msgCacheLimit: Long? = null
 
             override fun build(): EventMesh<ID, Data> {
@@ -612,7 +611,7 @@ private constructor(
             }
 
             override fun setMessageCallback(f: (ID, Data) -> Unit): Builder<ID, Data> {
-                callback = f
+                callback = f // TODO: should end in the receiver somehow
                 return this
             }
 
@@ -621,8 +620,23 @@ private constructor(
                 return this
             }
 
+            override fun setReceiver(rx: EventMeshReceiver): Builder<ID, Data> {
+                device.withReceiver(rx)
+                return this
+            }
+
+            override fun setTransmitter(tx: EventMeshTransmitter): Builder<ID, Data> {
+                device.withTransmitter(tx)
+                return this
+            }
+
+            override fun setMessageCache(mc: MessageCache<ID>?): Builder<ID, Data> {
+                msgCache = mc
+                return this
+            }
+
             override fun withMsgCacheDelete(d: Duration): Builder<ID, Data> {
-                msgDelete = d
+                msgDelete = d // TODO: Handle this
                 return this
             }
 
@@ -631,18 +645,21 @@ private constructor(
                 return this
             }
 
-            override fun withMsgSendSessionInterval(d: Duration): Builder<ID, Data> {
-                msgSendSessionInterval = d
+            override fun withMsgSendInterval(d: Duration): Builder<ID, Data> {
+                msgSendInterval = d // TODO
                 return this
             }
 
-            override fun withMsgSendInterval(d: Duration): Builder<ID, Data> {
-                msgSendInterval = d
+            /*
+            // TODO: IS bad with BT android
+            override fun withMsgSendTransmissionInterval(d: Duration): Builder<ID, Data> {
+                msgSendInterval = d // TODO: skal i device
                 return this
             }
+             */
 
             override fun withMsgSendTimeout(d: Duration): Builder<ID, Data> {
-                msgSendTimeout = d
+                device.withTransmitTimeout(d)
                 return this
             }
 
@@ -652,12 +669,12 @@ private constructor(
             }
 
             override fun withMsgScanDuration(d: Duration): Builder<ID, Data> {
-                msgScanDuration = d
+                device.withReceiveDuration(d)
                 return this
             }
 
             override fun withMsgCache(mc: MessageCache<ID>?): Builder<ID, Data> {
-                this.msgCache = mc
+                msgCache = mc
                 return this
             }
 
@@ -671,7 +688,6 @@ private constructor(
                 device = d
                 return this
             }
-
              */
         }
     }

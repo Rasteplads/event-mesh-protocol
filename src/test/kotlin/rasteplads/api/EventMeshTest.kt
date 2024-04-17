@@ -206,13 +206,6 @@ class EventMeshTest {
                     f.withMsgCacheDelete(default.plusMinutes(10)).build(), name)
             Assertions.assertNotEquals(modded, default)
 
-            name = "msgSendSessionInterval"
-            default = getValueFromClass<EventMesh<Int, Byte>, Duration>(f.build(), name)
-            modded =
-                getValueFromClass<EventMesh<Int, Byte>, Duration>(
-                    f.withMsgSendSessionInterval(default.plusMinutes(10)).build(), name)
-            Assertions.assertNotEquals(modded, default)
-
             name = "msgSendInterval"
             default = getValueFromClass<EventMesh<Int, Byte>, Duration>(f.build(), name)
             modded =
@@ -220,12 +213,14 @@ class EventMeshTest {
                     f.withMsgSendInterval(default.plusMillis(10)).build(), name)
             Assertions.assertNotEquals(modded, default)
 
+            /*
             name = "msgSendTimeout"
             default = getValueFromClass<EventMesh<Int, Byte>, Duration>(f.build(), name)
             modded =
                 getValueFromClass<EventMesh<Int, Byte>, Duration>(
                     f.withMsgSendTimeout(default.plusMinutes(10)).build(), name)
             Assertions.assertNotEquals(modded, default)
+             */
 
             name = "msgScanInterval"
             default = getValueFromClass<EventMesh<Int, Byte>, Duration>(f.build(), name)

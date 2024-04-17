@@ -35,8 +35,8 @@ class EventMeshDevice(
     fun startReceiving() = receiver.scanForMessages()
 
     class Builder {
-        private var receiver: EventMeshReceiver? = null
-        private var transmitter: EventMeshTransmitter? = null
+        private lateinit var receiver: EventMeshReceiver
+        private lateinit var transmitter: EventMeshTransmitter
         private var txTimeout: Duration? = null
         private var rxDuration: Duration? = null
         private var echo: (() -> Unit)? = null
@@ -77,21 +77,17 @@ class EventMeshDevice(
         }
 
         fun build(): EventMeshDevice {
-            check(transmitter != null) {
+            check(::transmitter.isInitialized) {
                 "A transmitter must be specified when using the EventMeshDevice.Builder."
             }
-            check(receiver != null) {
+            check(::receiver.isInitialized) {
                 "A receiver must be specified when using the EventMeshDevice.Builder."
             }
             // TODO: Construct tx and rx if none are provided.
             // val transmitter = this.transmitter ?: EventMeshTransmitter<T>()
 
             return EventMeshDevice(
-                receiver!!,
-                transmitter!!,
-                rxDuration = rxDuration,
-                txTimeout = txTimeout,
-                echo = echo)
+                receiver, transmitter, rxDuration = rxDuration, txTimeout = txTimeout, echo = echo)
         }
 
         fun withDevice(device: TransportDevice): Builder {
