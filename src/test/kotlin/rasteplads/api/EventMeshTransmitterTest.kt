@@ -6,7 +6,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
 
 class EventMeshTransmitterTest {
 
@@ -43,6 +42,6 @@ class EventMeshTransmitterTest {
 
     companion object {
         const val TX_INTERVAL: Long = 50
-        val device = MockDevice(Channel(0), Channel(0), TX_INTERVAL)
+        val device = MockDevice(TX_INTERVAL)
     }
 }

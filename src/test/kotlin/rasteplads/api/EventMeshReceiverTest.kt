@@ -2,7 +2,6 @@ package rasteplads.api
 
 import kotlin.test.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
 
 class EventMeshReceiverTest {
@@ -287,6 +286,6 @@ class EventMeshReceiverTest {
 
     companion object {
         const val RX_DURATION: Long = 5_000
-        val device = MockDevice(Channel(0), Channel(0), 0)
+        val device = MockDevice(100)
     }
 }

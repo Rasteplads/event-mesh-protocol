@@ -5,16 +5,11 @@ import java.util.concurrent.atomic.*
 import kotlin.math.*
 import kotlin.test.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
 import org.junit.jupiter.api.Test
 import rasteplads.api.EventMesh.Companion.ID_MAX_SIZE
 import rasteplads.util.byte_array_extension.generateRands
 
-class MockDevice(
-    override val receiveChannel: Channel<ByteArray>,
-    override val transmitChannel: Channel<ByteArray>,
-    override val transmissionInterval: Long
-) : TransportDevice {
+class MockDevice(override val transmissionInterval: Long) : TransportDevice {
 
     val transmittedMessages: AtomicReference<MutableList<ByteArray>> =
         AtomicReference(mutableListOf())
@@ -64,7 +59,7 @@ class EventMeshDeviceTest {
 
     companion object {
         const val T_INTERVAL: Long = 100
-        val device = MockDevice(Channel(0), Channel(0), T_INTERVAL)
+        val device = MockDevice(T_INTERVAL)
     }
 
     @Test
