@@ -38,8 +38,8 @@ class EventMeshDevice(
     class Builder {
         private var receiver: EventMeshReceiver? = null
         private var transmitter: EventMeshTransmitter? = null
-        private var tTimeout: Duration? = null
-        private var rDuration: Duration? = null
+        private var txTimeout: Duration? = null
+        private var rxDuration: Duration? = null
         private var echo: (() -> Unit)? = null
 
         fun withReceiver(receiver: EventMeshReceiver): Builder {
@@ -53,13 +53,22 @@ class EventMeshDevice(
         }
 
         fun withTransmitTimeout(d: Duration): Builder {
-            // transmitter!!.transmitTimeout = d.toMillis()
-            tTimeout = d
+            txTimeout = d
+            return this
+        }
+
+        fun withTransmitTimeout(milliseconds: Long): Builder {
+            txTimeout = Duration.ofMillis(milliseconds)
             return this
         }
 
         fun withReceiveDuration(d: Duration): Builder {
-            rDuration = d
+            rxDuration = d
+            return this
+        }
+
+        fun withReceiveDuration(milliseconds: Long): Builder {
+            rxDuration = Duration.ofMillis(milliseconds)
             return this
         }
 

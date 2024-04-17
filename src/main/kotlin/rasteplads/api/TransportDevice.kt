@@ -1,10 +1,6 @@
 package rasteplads.api
 
-import kotlinx.coroutines.channels.Channel
-
 interface TransportDevice {
-    val receiveChannel: Channel<ByteArray>
-    val transmitChannel: Channel<ByteArray>
     val transmissionInterval: Long
 
     fun beginTransmitting(message: ByteArray)
