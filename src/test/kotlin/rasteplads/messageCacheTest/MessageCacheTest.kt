@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 class MessageCacheTest {
     @Test
     fun testOutdatedStringMessage() {
-        val cache = MessageCache<String>(1)
+        val cache = MessageCache<String>(60)
         cache.cacheMessage("first")
         Thread.sleep(60000L)
         cache.cacheMessage("second")
@@ -19,8 +19,26 @@ class MessageCacheTest {
     }
 
     @Test
+    fun testLifeTimeMessage() {
+        val cache1 = MessageCache<String>(30)
+        val cache2 = MessageCache<String>(60)
+        cache1.cacheMessage("first")
+        cache2.cacheMessage("first2")
+        Thread.sleep(30000L)
+        cache1.cacheMessage("second")
+        cache2.cacheMessage("second2")
+
+        assertFalse(cache1.containsMessage("first"))
+        assert(cache1.containsMessage("second"))
+        assertEquals(cache1.getSize(), 1)
+        assert(cache2.containsMessage("first2"))
+        assert(cache2.containsMessage("second2"))
+        assertEquals(cache2.getSize(), 2)
+    }
+
+    @Test
     fun testNoOutdatedStringMessage() {
-        val cache = MessageCache<String>(1)
+        val cache = MessageCache<String>(60)
         cache.cacheMessage("first")
         cache.cacheMessage("second")
 
@@ -31,7 +49,7 @@ class MessageCacheTest {
 
     @Test
     fun testDuplicateStringKey() {
-        val cache = MessageCache<String>(1)
+        val cache = MessageCache<String>(60)
         cache.cacheMessage("first")
         cache.cacheMessage("first")
 
@@ -40,7 +58,7 @@ class MessageCacheTest {
 
     @Test
     fun testDuplicateIntKey() {
-        val cache = MessageCache<Int>(1)
+        val cache = MessageCache<Int>(60)
         cache.cacheMessage(1)
         cache.cacheMessage(1)
 
@@ -49,7 +67,7 @@ class MessageCacheTest {
 
     @Test
     fun testNoOutdatedIntMessage() {
-        val cache = MessageCache<Int>(1)
+        val cache = MessageCache<Int>(60)
         cache.cacheMessage(1)
         cache.cacheMessage(2)
 
@@ -60,7 +78,7 @@ class MessageCacheTest {
 
     @Test
     fun testOutdatedIntMessage() {
-        val cache = MessageCache<Int>(1)
+        val cache = MessageCache<Int>(60)
         cache.cacheMessage(1)
         Thread.sleep(60000L)
         cache.cacheMessage(2)

@@ -3,20 +3,20 @@ package org.example.cache
 import java.time.LocalTime
 import java.util.*
 
-class MessageCache<T>(private val cacheTime: Long) {
+class MessageCache<T>(private val cacheTimeInSeconds: Long) {
     private val cacheID: Queue<Pair<T, LocalTime>> = ArrayDeque()
 
     fun cacheMessage(msg: T) {
         if (!cacheID.any { it.first == msg })
-            cacheID.add(Pair(msg, LocalTime.now().plusMinutes(cacheTime)))
+            cacheID.add(Pair(msg, LocalTime.now().plusSeconds(cacheTimeInSeconds)))
 
         checkForOutdatedMessages()
     }
 
     private fun checkForOutdatedMessages() {
         val msg = cacheID.iterator()
-
-        while (msg.next().second.compareTo(LocalTime.now()) ==
+        val time = LocalTime.now()
+        while (msg.next().second.compareTo(time) ==
             -1) { // While message exceeded its cacheTime remove them
             msg.remove()
         }
