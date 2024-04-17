@@ -33,3 +33,5 @@ fun UInt.toByteArray(): ByteArray = this.toInt().toByteArray()
 fun Long.toByteArray(): ByteArray = ByteBuffer.allocate(Long.SIZE_BYTES).putLong(this).array()
 
 fun ULong.toByteArray(): ByteArray = this.toLong().toByteArray()
+
+operator fun Byte.plus(other: ByteArray): ByteArray = byteArrayOf(this) + other

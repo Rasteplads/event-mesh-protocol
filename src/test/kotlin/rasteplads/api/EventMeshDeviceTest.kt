@@ -10,6 +10,7 @@ import kotlinx.coroutines.*
 import org.junit.jupiter.api.Nested
 import rasteplads.api.EventMesh.Companion.ID_MAX_SIZE
 import rasteplads.util.byte_array_extension.generateRands
+import rasteplads.util.plus
 
 class MockDevice(override val transmissionInterval: Long) : TransportDevice {
     val transmittedMessages: AtomicReference<MutableList<ByteArray>> =
@@ -167,6 +168,8 @@ class EventMeshDeviceTest {
         assertFalse(device.transmitting.get())
         assertFalse(device.receiving.get())
     }
+
+    // TODO: Test starting and stopping (and counter)
 
     @Nested
     inner class BuilderTest {

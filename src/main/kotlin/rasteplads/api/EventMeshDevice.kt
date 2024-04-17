@@ -3,8 +3,7 @@ package rasteplads.api
 import java.time.Duration
 import kotlinx.coroutines.*
 import rasteplads.api.EventMesh.Companion.ID_MAX_SIZE
-
-operator fun Byte.plus(other: ByteArray): ByteArray = byteArrayOf(this) + other
+import rasteplads.util.plus
 
 class EventMeshDevice(
     private val receiver: EventMeshReceiver,

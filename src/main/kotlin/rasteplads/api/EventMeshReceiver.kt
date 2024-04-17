@@ -11,7 +11,6 @@ class EventMeshReceiver(private val device: TransportDevice) {
     private val scannerCount: AtomicInteger = AtomicInteger(0)
     private var runner: AtomicReference<Job?> = AtomicReference(null)
     private val callback: AtomicReference<suspend (ByteArray) -> Unit> = AtomicReference {}
-    // (scanMessage callback, scanForId callback)
     private val handle:
         Pair<
             AtomicReference<suspend (ByteArray) -> Unit?>,
@@ -36,14 +35,12 @@ class EventMeshReceiver(private val device: TransportDevice) {
         } // catch (_: TimeoutCancellationException) {}
         finally {
             stopDevice()
-            // handlers.get().remove(callbackWrap)
             handle.second.set(null)
         }
     }
 
     fun scanForMessages() = runBlocking {
         try {
-            // handlers.get().add(callback.get())
             handle.first.set(callback.get())
             withTimeout(duration) {
                 startDevice()
@@ -51,7 +48,6 @@ class EventMeshReceiver(private val device: TransportDevice) {
             }
         } catch (_: TimeoutCancellationException) {} finally {
             stopDevice()
-            // handlers.get().remove(callback.get())
             handle.first.set(null)
         }
     }
@@ -66,23 +62,20 @@ class EventMeshReceiver(private val device: TransportDevice) {
                         device.stopReceiving()
                     }
                 })
-        } else Unit
+        }
     }
 
-    private fun stopDevice(): Unit =
+    private fun stopDevice() {
         if (scannerCount.decrementAndGet() == 0) {
             device.stopReceiving()
-            runner.getAndSet(null)?.cancel() ?: Unit // .set(device.stopReceiving()) ?: Unit
-        } else Unit
+            runner.getAndSet(null)?.cancel() // .set(device.stopReceiving()) ?: Unit
+        }
+    }
 
     private suspend fun scanForMessagesCallback(msg: ByteArray) {
-        //   handlers.get().forEach { it(msg) }
         handle.first.get()?.invoke(msg)
         handle.second.get()?.invoke(msg)
     }
 
     fun setReceivedMessageCallback(f: suspend (ByteArray) -> Unit) = callback.set(f)
-
-    // fun addReceivedMessageCallback(vararg f: suspend (ByteArray) -> Unit) =
-    // handlers.get().addAll(f)
 }

@@ -284,6 +284,14 @@ class EventMeshReceiverTest {
         }
     }
 
+    @Test
+    fun `missing callback`(): Unit = runBlocking {
+        val e = EventMeshReceiver(device)
+        e.duration = 1_000
+        // e.setReceivedMessageCallback {  }
+        e.scanForMessages()
+    }
+
     companion object {
         const val RX_DURATION: Long = 5_000
         val device = MockDevice(100)
