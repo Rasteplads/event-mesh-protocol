@@ -87,7 +87,12 @@ class EventMeshDevice(
             // TODO: Construct tx and rx if none are provided.
             // val transmitter = this.transmitter ?: EventMeshTransmitter<T>()
 
-            return EventMeshDevice(receiver!!, transmitter!!, echo = echo)
+            return EventMeshDevice(
+                receiver!!,
+                transmitter!!,
+                rxDuration = rxDuration,
+                txTimeout = txTimeout,
+                echo = echo)
         }
     }
 }

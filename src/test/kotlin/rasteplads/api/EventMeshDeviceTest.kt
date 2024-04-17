@@ -3,14 +3,15 @@ package rasteplads.api
 import java.time.Duration
 import java.util.concurrent.atomic.*
 import kotlin.math.*
+import kotlin.reflect.jvm.isAccessible
 import kotlin.test.*
+import kotlin.test.Test
 import kotlinx.coroutines.*
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Nested
 import rasteplads.api.EventMesh.Companion.ID_MAX_SIZE
 import rasteplads.util.byte_array_extension.generateRands
 
 class MockDevice(override val transmissionInterval: Long) : TransportDevice {
-
     val transmittedMessages: AtomicReference<MutableList<ByteArray>> =
         AtomicReference(mutableListOf())
     val receivedPool: AtomicReference<MutableList<ByteArray>> = AtomicReference(mutableListOf())
@@ -167,6 +168,58 @@ class EventMeshDeviceTest {
         assertFalse(device.receiving.get())
     }
 
-    // TODO: Test Builder
-    class BuilderTest {}
+    @Nested
+    inner class BuilderTest {
+        private inline fun <reified C, reified R> getValueFromClass(target: C, field: String): R =
+            C::class
+                .members
+                .find { m -> m.name == field }!!
+                .apply { isAccessible = true }
+                .call(target) as R
+
+        @Test
+        fun `Missing transmitter`() {
+            val rx = EventMeshReceiver(device)
+            assertFails { EventMeshDevice.Builder().withReceiver(rx).build() }
+        }
+
+        @Test
+        fun `Missing receiver`() {
+            val tx = EventMeshTransmitter(device)
+            assertFails { EventMeshDevice.Builder().withTransmitter(tx).build() }
+        }
+
+        @Test
+        fun `with optional`() {
+            val tx = EventMeshTransmitter(device)
+            val rx = EventMeshReceiver(device)
+            val e = EventMeshDevice.Builder().withTransmitter(tx).withReceiver(rx)
+            var eb: EventMeshDevice
+            run {
+                eb = e.withEchoCallback {}.build()
+                val echo = getValueFromClass<EventMeshDevice, (() -> Unit)?>(eb, "echo")
+                assertNotNull(echo)
+            }
+            run {
+                eb = e.withReceiveDuration(Duration.ofSeconds(10)).build()
+                val r = getValueFromClass<EventMeshDevice, EventMeshReceiver>(eb, "receiver")
+                assertEquals(10_000, r.duration)
+            }
+            run {
+                eb = e.withReceiveDuration(10).build()
+                val r = getValueFromClass<EventMeshDevice, EventMeshReceiver>(eb, "receiver")
+                assertEquals(10, r.duration)
+            }
+            run {
+                eb = e.withTransmitTimeout(Duration.ofSeconds(10)).build()
+                val t = getValueFromClass<EventMeshDevice, EventMeshTransmitter>(eb, "transmitter")
+                assertEquals(10_000, t.transmitTimeout)
+            }
+            run {
+                eb = e.withTransmitTimeout(10).build()
+                val t = getValueFromClass<EventMeshDevice, EventMeshTransmitter>(eb, "transmitter")
+                assertEquals(10, t.transmitTimeout)
+            }
+        }
+    }
 }
