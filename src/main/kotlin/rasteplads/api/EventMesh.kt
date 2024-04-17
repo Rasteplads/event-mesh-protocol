@@ -4,8 +4,6 @@ import java.time.Duration
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.*
-import rasteplads.bluetooth.EventMeshDevice
-import rasteplads.bluetooth.TransportDevice
 import rasteplads.messageCache.MessageCache
 import rasteplads.util.Either
 import rasteplads.util.toInt

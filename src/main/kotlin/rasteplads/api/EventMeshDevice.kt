@@ -1,51 +1,45 @@
-package rasteplads.bluetooth
+package rasteplads.api
 
 import java.time.Duration
 import kotlinx.coroutines.*
 import rasteplads.api.EventMesh.Companion.ID_MAX_SIZE
-
-private operator fun Byte.plus(other: ByteArray): ByteArray = byteArrayOf(this) + other
+import rasteplads.util.plus
 
 class EventMeshDevice(
     private val receiver: EventMeshReceiver,
     private val transmitter: EventMeshTransmitter,
-    tTimeout: Duration? = null,
-    rDuration: Duration? = null,
+    txTimeout: Duration? = null,
+    rxDuration: Duration? = null,
+    private val echo: (() -> Unit)? = null
 ) {
 
     init {
-        tTimeout?.let { transmitter.transmitTimeout = it.toMillis() }
-        rDuration?.let { receiver.duration = it.toMillis() }
+        txTimeout?.let { transmitter.transmitTimeout = it.toMillis() }
+        rxDuration?.let { receiver.duration = it.toMillis() }
     }
 
     fun startTransmitting(ttl: Byte, id: ByteArray, message: ByteArray) = runBlocking {
         check(id.size <= ID_MAX_SIZE) { "ID too big" }
-        // Begin transmitting.
-        // If null, no echo
         val combinedMsg = ttl + id + message
         val tx = launch { transmitter.transmit(combinedMsg) }
-        withTimeoutOrNull(transmitter.transmitTimeout) {
-            receiver.scanForID(id) { tx.cancelAndJoin() }
-        }
-            ?: Unit
+
+        try {
+            // withTimeout(transmitter.transmitTimeout) {
+            receiver.scanForID(id, transmitter.transmitTimeout) { tx.cancel() }
+            // }
+        } catch (e: TimeoutCancellationException) {
+            echo?.invoke()
+        } finally {}
     }
 
     fun startReceiving() = receiver.scanForMessages()
 
-    fun addReceivedMessageCallback(vararg f: suspend (ByteArray) -> Unit) =
-        receiver.handlers.addAll(f)
-
-    fun addReceivedMessageCallbackA(f: suspend (ByteArray) -> Unit) =
-        receiver.handlersA.get().add(f)
-
-    fun addReceivedMessageCallbackA(vararg f: suspend (ByteArray) -> Unit) =
-        receiver.handlersA.get().addAll(f)
-
     class Builder {
         private var receiver: EventMeshReceiver? = null
         private var transmitter: EventMeshTransmitter? = null
-        private var tTimeout: Duration? = null
-        private var rDuration: Duration? = null
+        private var txTimeout: Duration? = null
+        private var rxDuration: Duration? = null
+        private var echo: (() -> Unit)? = null
 
         fun withReceiver(receiver: EventMeshReceiver): Builder {
             this.receiver = receiver
@@ -57,20 +51,28 @@ class EventMeshDevice(
             return this
         }
 
-        fun withDevice(device: TransportDevice): Builder {
-            receiver = EventMeshReceiver(device)
-            transmitter = EventMeshTransmitter(device)
+        fun withTransmitTimeout(d: Duration): Builder {
+            txTimeout = d
             return this
         }
 
-        fun withTransmitTimeout(d: Duration): Builder {
-            // transmitter!!.transmitTimeout = d.toMillis()
-            tTimeout = d
+        fun withTransmitTimeout(milliseconds: Long): Builder {
+            txTimeout = Duration.ofMillis(milliseconds)
             return this
         }
 
         fun withReceiveDuration(d: Duration): Builder {
-            rDuration = d
+            rxDuration = d
+            return this
+        }
+
+        fun withReceiveDuration(milliseconds: Long): Builder {
+            rxDuration = Duration.ofMillis(milliseconds)
+            return this
+        }
+
+        fun withEchoCallback(e: (() -> Unit)?): Builder {
+            echo = e
             return this
         }
 
@@ -84,7 +86,18 @@ class EventMeshDevice(
             // TODO: Construct tx and rx if none are provided.
             // val transmitter = this.transmitter ?: EventMeshTransmitter<T>()
 
-            return EventMeshDevice(receiver!!, transmitter!!)
+            return EventMeshDevice(
+                receiver!!,
+                transmitter!!,
+                rxDuration = rxDuration,
+                txTimeout = txTimeout,
+                echo = echo)
+        }
+
+        fun withDevice(device: TransportDevice): Builder {
+            receiver = EventMeshReceiver(device)
+            transmitter = EventMeshTransmitter(device)
+            return this
         }
     }
 }
