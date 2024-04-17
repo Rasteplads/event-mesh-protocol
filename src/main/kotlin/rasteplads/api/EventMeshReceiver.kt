@@ -1,5 +1,6 @@
 package rasteplads.api
 
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.max
@@ -20,20 +21,20 @@ class EventMeshReceiver(private val device: TransportDevice) {
             AtomicReference<suspend (ByteArray) -> Unit?>> =
         Pair(AtomicReference(null), AtomicReference(null))
 
-    fun scanForID(id: ByteArray, timout: Long, callback: suspend () -> Unit) = runBlocking {
-        var found = false
+    fun scanForID(id: ByteArray, timeout: Long, callback: suspend () -> Unit) = runBlocking {
+        val found = AtomicBoolean(false)
         val callbackWrap: suspend (ByteArray) -> Unit = { msg: ByteArray ->
-            if ((!found) && id.zip(msg).all { (i, s) -> i == s }) {
+            if (id.zip(msg).all { (i, s) -> i == s }) {
                 callback()
-                found = true
+                found.set(true)
             }
             yield()
         }
         try {
-            withTimeout(timout) {
+            withTimeout(timeout) {
                 handle.second.set(callbackWrap)
                 startDevice()
-                while (!found) yield()
+                while (!found.get()) yield()
             }
         } // catch (_: TimeoutCancellationException) {}
         finally {
