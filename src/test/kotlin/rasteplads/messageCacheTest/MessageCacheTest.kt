@@ -47,6 +47,7 @@ class MessageCacheTest {
 
         assertFalse(cache.containsMessage("first"))
         assert(cache.containsMessage("second"))
+        assert(cache.containsMessage("third"))
         assertEquals(cache.getSize(), 2)
     }
 
