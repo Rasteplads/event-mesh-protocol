@@ -3,7 +3,7 @@ package rasteplads.messageCache
 import java.time.LocalTime
 import java.util.*
 
-class MessageCache<T>(private val cacheTimeInSeconds: Long) {
+class MessageCache<T>(private var cacheTimeInSeconds: Long) {
     private val cacheID: Queue<Pair<T, LocalTime>> = ArrayDeque()
 
     fun cacheMessage(msg: T) {
@@ -20,6 +20,9 @@ class MessageCache<T>(private val cacheTimeInSeconds: Long) {
             -1) { // While message exceeded its cacheTime remove them
             msg.remove()
         }
+    }
+    fun changeCacheTime(cacheTime: Long) {
+        cacheTimeInSeconds = cacheTime
     }
 
     fun containsMessage(msg: T): Boolean = cacheID.any { it.first == msg }

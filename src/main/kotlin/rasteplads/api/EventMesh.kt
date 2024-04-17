@@ -241,7 +241,7 @@ private constructor(
          * @param Data The messages' content
          */
         fun <ID, Data> builder(): Builder<ID, Data> =
-            BuilderImpl(7, MessageCache()) // TODO: REAL TYPE AND INITIALISATION
+            BuilderImpl(7, MessageCache(60)) // TODO: REAL TYPE AND INITIALISATION
 
         /**
          * Creates a [Builder] for [EventMesh] with a provided message cache (set to `null` to
