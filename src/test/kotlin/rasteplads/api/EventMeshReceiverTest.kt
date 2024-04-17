@@ -213,10 +213,10 @@ class EventMeshReceiverTest {
         assert(device.receiving.get())
         assert(id)
         delay(100)
-        device.receiveMessage(b)
+        device.receiveMessage(byteArrayOf(0, 1, 2, 4, 5, 6, 7, 8))
         delay(100)
         assertEquals(4, l.size)
-        assertEquals(l.size - 1, l.count { it.contentEquals(b) })
+        assertEquals(l.size - 2, l.count { it.contentEquals(b) })
     }
 
     @Test
