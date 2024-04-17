@@ -1,9 +1,9 @@
 package rasteplads.messageCacheTest
 
+import org.junit.jupiter.api.Test
+import rasteplads.messageCache.MessageCache
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import org.example.cache.MessageCache
-import org.junit.jupiter.api.Test
 
 class MessageCacheTest {
     @Test

@@ -1,4 +1,4 @@
-package org.example.cache
+package rasteplads.messageCache
 
 import java.time.LocalTime
 import java.util.*
