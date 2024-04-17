@@ -2,6 +2,7 @@ package rasteplads.api
 
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.math.max
 import kotlinx.coroutines.*
 
 // TODO: Handling of timeouts should be reconsidered (or maybe implement a counter of sorts)
@@ -10,6 +11,7 @@ class EventMeshReceiver(private val device: TransportDevice) {
     var duration: Long = 10_000 // 10 sec //TODO: Default val
     private val scannerCount: AtomicInteger = AtomicInteger(0)
     private var runner: AtomicReference<Job?> = AtomicReference(null)
+    // Not covered in code coverage, because it's an intermediate variable. Would need to use reflection test it
     private val callback: AtomicReference<suspend (ByteArray) -> Unit> = AtomicReference {}
     private val handle:
         Pair<
@@ -53,7 +55,7 @@ class EventMeshReceiver(private val device: TransportDevice) {
     }
 
     private fun startDevice() {
-        if (scannerCount.getAndIncrement() == 0) {
+        if (scannerCount.getAndIncrement() <= 0) {
             runner.set(
                 GlobalScope.launch {
                     try {
@@ -66,7 +68,7 @@ class EventMeshReceiver(private val device: TransportDevice) {
     }
 
     private fun stopDevice() {
-        if (scannerCount.decrementAndGet() == 0) {
+        if (scannerCount.updateAndGet { old -> max(old - 1, 0) } == 0) {
             device.stopReceiving()
             runner.getAndSet(null)?.cancel() // .set(device.stopReceiving()) ?: Unit
         }

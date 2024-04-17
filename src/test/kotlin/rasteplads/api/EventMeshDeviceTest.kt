@@ -62,6 +62,13 @@ class EventMeshDeviceTest {
     companion object {
         const val T_INTERVAL: Long = 100
         val device = MockDevice(T_INTERVAL)
+
+        inline fun <reified C, reified R> getValueFromClass(target: C, field: String): R =
+            C::class
+                .members
+                .find { m -> m.name == field }!!
+                .apply { isAccessible = true }
+                .call(target) as R
     }
 
     @Test
@@ -169,17 +176,8 @@ class EventMeshDeviceTest {
         assertFalse(device.receiving.get())
     }
 
-    // TODO: Test starting and stopping (and counter)
-
     @Nested
     inner class BuilderTest {
-        private inline fun <reified C, reified R> getValueFromClass(target: C, field: String): R =
-            C::class
-                .members
-                .find { m -> m.name == field }!!
-                .apply { isAccessible = true }
-                .call(target) as R
-
         @Test
         fun `Missing transmitter`() {
             val rx = EventMeshReceiver(device)

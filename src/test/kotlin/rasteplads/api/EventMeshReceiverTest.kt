@@ -1,8 +1,11 @@
 package rasteplads.api
 
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.reflect.jvm.isAccessible
 import kotlin.test.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.runBlocking
+import rasteplads.api.EventMeshDeviceTest.Companion.getValueFromClass
 
 class EventMeshReceiverTest {
 
@@ -284,16 +287,49 @@ class EventMeshReceiverTest {
         }
     }
 
+    // TODO: Test starting and stopping (and counter)
+
     @Test
-    fun `missing callback`(): Unit = runBlocking {
-        val e = EventMeshReceiver(device)
-        e.duration = 1_000
-        // e.setReceivedMessageCallback {  }
-        e.scanForMessages()
+    fun `multiple starters`() {
+        val rx = EventMeshReceiver(EventMeshDeviceTest.device)
+        val count = getValueFromClass<EventMeshReceiver, AtomicInteger>(rx, "scannerCount")
+        val e = 10
+
+        assertEquals(0, count.get())
+
+        for (i in 1..e) callFuncFromClass<EventMeshReceiver>(rx, "startDevice")
+        assertEquals(e, count.get())
+
+        for (i in 1..e / 2) callFuncFromClass<EventMeshReceiver>(rx, "stopDevice")
+        assertEquals(e / 2, count.get())
+
+        for (i in 1..e / 2) callFuncFromClass<EventMeshReceiver>(rx, "stopDevice")
+
+        assertEquals(0, count.get())
+    }
+
+    @Test
+    fun `scanners can't go below zero`() {
+        val rx = EventMeshReceiver(EventMeshDeviceTest.device)
+        val count = getValueFromClass<EventMeshReceiver, AtomicInteger>(rx, "scannerCount")
+        val e = 10
+
+        assertEquals(0, count.get())
+
+        for (i in 1..e) callFuncFromClass<EventMeshReceiver>(rx, "stopDevice")
+        assertEquals(0, count.get())
     }
 
     companion object {
         const val RX_DURATION: Long = 5_000
         val device = MockDevice(100)
+
+        inline fun <reified C> callFuncFromClass(target: C, field: String) {
+            C::class
+                .members
+                .find { m -> m.name == field }!!
+                .apply { isAccessible = true }
+                .call(target)
+        }
     }
 }
