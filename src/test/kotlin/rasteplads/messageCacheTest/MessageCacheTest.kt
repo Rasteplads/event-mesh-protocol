@@ -37,6 +37,20 @@ class MessageCacheTest {
     }
 
     @Test
+    fun testChangeCacheTime() {
+        val cache = MessageCache<String>(30)
+        cache.cacheMessage("first")
+        cache.changeCacheTime(60)
+        cache.cacheMessage("second")
+        Thread.sleep(30000L)
+        cache.cacheMessage("third")
+
+        assertFalse(cache.containsMessage("first"))
+        assert(cache.containsMessage("second"))
+        assertEquals(cache.getSize(), 2)
+    }
+
+    @Test
     fun testNoOutdatedStringMessage() {
         val cache = MessageCache<String>(60)
         cache.cacheMessage("first")

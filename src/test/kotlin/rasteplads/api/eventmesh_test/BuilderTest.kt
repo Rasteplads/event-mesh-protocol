@@ -272,7 +272,7 @@ class BuilderTest {
             .setFromIDFunction { _ -> byteArrayOf(0, 1, 2, 3) }
             .setFromDataFunction { b -> byteArrayOf(b) }
             .build()
-        m = EventMesh.builder(MessageCache())
+        m = EventMesh.builder(MessageCache(60))
         assertFails { m.build() }
         m.setDataConstant(0)
             .setIDGenerator { 10 }
