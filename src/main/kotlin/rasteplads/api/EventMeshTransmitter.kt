@@ -8,8 +8,9 @@ class EventMeshTransmitter(private val device: TransportDevice) {
 
     fun transmit(message: ByteArray): Unit = runBlocking {
         try {
-            withTimeout(transmitTimeout) { device.beginTransmitting(message) }
-        } catch (_: TimeoutCancellationException) {} finally {
+            device.beginTransmitting(message)
+            delay(transmitTimeout)
+        } finally {
             device.stopTransmitting()
         }
     }

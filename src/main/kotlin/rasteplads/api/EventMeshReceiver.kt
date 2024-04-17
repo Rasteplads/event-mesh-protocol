@@ -18,7 +18,7 @@ class EventMeshReceiver(private val device: TransportDevice) {
             AtomicReference<suspend (ByteArray) -> Unit?>> =
         Pair(AtomicReference(null), AtomicReference(null))
 
-    suspend fun scanForID(id: ByteArray, timout: Long, callback: suspend () -> Unit) {
+    fun scanForID(id: ByteArray, timout: Long, callback: suspend () -> Unit) = runBlocking {
         var found = false
         val callbackWrap: suspend (ByteArray) -> Unit = { msg: ByteArray ->
             if ((!found) && id.zip(msg).all { (i, s) -> i == s }) {
@@ -31,9 +31,7 @@ class EventMeshReceiver(private val device: TransportDevice) {
             withTimeout(timout) {
                 handle.second.set(callbackWrap)
                 startDevice()
-                while (!found) {
-                    yield()
-                }
+                while (!found) yield()
             }
         } // catch (_: TimeoutCancellationException) {}
         finally {
@@ -43,7 +41,7 @@ class EventMeshReceiver(private val device: TransportDevice) {
         }
     }
 
-    suspend fun scanForMessages() {
+    fun scanForMessages() = runBlocking {
         try {
             // handlers.get().add(callback.get())
             handle.first.set(callback.get())
@@ -58,7 +56,7 @@ class EventMeshReceiver(private val device: TransportDevice) {
         }
     }
 
-    private suspend fun startDevice() {
+    private fun startDevice() {
         if (scannerCount.getAndIncrement() == 0) {
             runner.set(
                 GlobalScope.launch {
@@ -72,9 +70,10 @@ class EventMeshReceiver(private val device: TransportDevice) {
     }
 
     private fun stopDevice(): Unit =
-        if (scannerCount.decrementAndGet() == 0)
+        if (scannerCount.decrementAndGet() == 0) {
+            device.stopReceiving()
             runner.getAndSet(null)?.cancel() ?: Unit // .set(device.stopReceiving()) ?: Unit
-        else Unit
+        } else Unit
 
     private suspend fun scanForMessagesCallback(msg: ByteArray) {
         //   handlers.get().forEach { it(msg) }

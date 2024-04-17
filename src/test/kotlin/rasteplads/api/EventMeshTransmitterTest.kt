@@ -1,61 +1,44 @@
 package rasteplads.api
 
+// import org.junit.jupiter.api.Test
 import kotlin.math.ceil
+import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import org.junit.jupiter.api.Test
 
 class EventMeshTransmitterTest {
 
-    /*
     @Test
-    fun transmittingCorrectNumber() {
-        val b = byteArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
-        var sleep: Long = 120
-        device.beginTransmitting(b)
-        Thread.sleep(sleep)
-        device.stopTransmitting()
-        assertEquals(ceil((sleep / TX_INTERVAL.toDouble())).toInt(), device.transmittedMessages.size)
-
-        device.beginTransmitting(b)
-        Thread.sleep(sleep)
-        device.stopTransmitting()
-        assertEquals(ceil((sleep / TX_INTERVAL.toDouble())).toInt(), device.transmittedMessages.size)
-
-        sleep = 1020
-        device.beginTransmitting(b)
-        Thread.sleep(sleep)
-        device.stopTransmitting()
-        assertEquals(ceil((sleep / TX_INTERVAL.toDouble())).toInt(), device.transmittedMessages.size)
-    }
-     */
-
-    @Test
-    fun transmittingCorrectThroughEventMeshTransmitter() {
+    fun `transmitting correct through EventMeshTransmitter`() = runBlocking {
         val tx = EventMeshTransmitter(device)
         val b = byteArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
         tx.transmitTimeout = 140
-        tx.transmit(b)
-        Thread.sleep(
-            1000) // Sleep here to ensure that additional messages are not sent, and it stopos
-        // transmitting
+        launch { tx.transmit(b) }
+        delay(50)
+        assert(device.transmitting.get())
+        // Sleep here to ensure that additional messages are not sent, and it stops transmitting
+        delay(1000)
+        assertFalse(device.transmitting.get())
 
         assertEquals(
             ceil((tx.transmitTimeout / TX_INTERVAL.toDouble())).toInt(),
-            device.transmittedMessages.size)
-        assert(device.transmittedMessages.all { it.contentEquals(b) })
+            device.transmittedMessages.get().size)
+        assert(device.transmittedMessages.get().all { it.contentEquals(b) })
 
         tx.transmitTimeout = 1000
-        tx.transmit(b)
-        Thread.sleep(
-            1000) // Sleep here to ensure that additional messages are not sent, and it stopos
-        // transmitting
+        launch { tx.transmit(b) }
+        delay(50)
+        assert(device.transmitting.get())
+        // Sleep here to ensure that additional messages are not sent, and it stops transmitting
+        delay(1000)
+        assertFalse(device.transmitting.get())
 
         assertEquals(
             ceil((tx.transmitTimeout / TX_INTERVAL.toDouble())).toInt(),
-            device.transmittedMessages.size)
-        assert(device.transmittedMessages.all { it.contentEquals(b) })
+            device.transmittedMessages.get().size)
+        assert(device.transmittedMessages.get().all { it.contentEquals(b) })
     }
 
     companion object {

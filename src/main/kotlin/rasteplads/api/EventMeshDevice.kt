@@ -4,13 +4,14 @@ import java.time.Duration
 import kotlinx.coroutines.*
 import rasteplads.api.EventMesh.Companion.ID_MAX_SIZE
 
-private operator fun Byte.plus(other: ByteArray): ByteArray = byteArrayOf(this) + other
+operator fun Byte.plus(other: ByteArray): ByteArray = byteArrayOf(this) + other
 
 class EventMeshDevice(
     private val receiver: EventMeshReceiver,
     private val transmitter: EventMeshTransmitter,
     txTimeout: Duration? = null,
     rxDuration: Duration? = null,
+    private val echo: (() -> Unit)? = null
 ) {
 
     init {
@@ -18,27 +19,28 @@ class EventMeshDevice(
         rxDuration?.let { receiver.duration = it.toMillis() }
     }
 
-    suspend fun startTransmitting(ttl: Byte, id: ByteArray, message: ByteArray) = runBlocking {
+    fun startTransmitting(ttl: Byte, id: ByteArray, message: ByteArray) = runBlocking {
         check(id.size <= ID_MAX_SIZE) { "ID too big" }
         val combinedMsg = ttl + id + message
         val tx = launch { transmitter.transmit(combinedMsg) }
 
         try {
-            withTimeout(transmitter.transmitTimeout) {
-                receiver.scanForID(id, transmitter.transmitTimeout) { tx.cancelAndJoin() }
-            }
-        } catch (_: TimeoutCancellationException) {
-            // TODO: No echo
+            // withTimeout(transmitter.transmitTimeout) {
+            receiver.scanForID(id, transmitter.transmitTimeout) { tx.cancel() }
+            // }
+        } catch (e: TimeoutCancellationException) {
+            echo?.invoke()
         } finally {}
     }
 
-    suspend fun startReceiving() = receiver.scanForMessages()
+    fun startReceiving() = receiver.scanForMessages()
 
     class Builder {
         private var receiver: EventMeshReceiver? = null
         private var transmitter: EventMeshTransmitter? = null
         private var tTimeout: Duration? = null
         private var rDuration: Duration? = null
+        private var echo: (() -> Unit)? = null
 
         fun withReceiver(receiver: EventMeshReceiver): Builder {
             this.receiver = receiver
@@ -61,6 +63,11 @@ class EventMeshDevice(
             return this
         }
 
+        fun withEchoCallback(e: (() -> Unit)?): Builder {
+            echo = e
+            return this
+        }
+
         fun build(): EventMeshDevice {
             check(transmitter != null) {
                 "A transmitter must be specified when using the EventMeshDevice.Builder."
@@ -71,7 +78,7 @@ class EventMeshDevice(
             // TODO: Construct tx and rx if none are provided.
             // val transmitter = this.transmitter ?: EventMeshTransmitter<T>()
 
-            return EventMeshDevice(receiver!!, transmitter!!)
+            return EventMeshDevice(receiver!!, transmitter!!, echo = echo)
         }
     }
 }
