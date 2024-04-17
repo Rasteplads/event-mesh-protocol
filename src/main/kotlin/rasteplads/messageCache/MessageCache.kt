@@ -27,10 +27,7 @@ class MessageCache<T> {
         }
     }
 
-    fun containsMessage(msg: T): Boolean {
-        return cacheID.any { it.first == msg }
-    }
-
+    fun containsMessage(msg: T): Boolean = cacheID.any { it.first == msg }
     fun getsize(): Int {
         return cacheID.size
     }
