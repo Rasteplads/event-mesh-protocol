@@ -6,8 +6,6 @@ import java.util.*
 class MessageCache<T> (private val cacheTime: Long){
     private val cacheID: Queue<Pair<T, LocalTime>> = ArrayDeque()
 
-
-
     fun cacheMessage(msg: T) {
         if (!cacheID.any { it.first == msg })
             cacheID.add(Pair(msg, LocalTime.now().plusMinutes(cacheTime)))
