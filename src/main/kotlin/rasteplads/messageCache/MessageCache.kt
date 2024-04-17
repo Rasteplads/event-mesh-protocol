@@ -21,6 +21,7 @@ class MessageCache<T>(private var cacheTimeInSeconds: Long) {
             msg.remove()
         }
     }
+
     fun changeCacheTime(cacheTime: Long) {
         cacheTimeInSeconds = cacheTime
     }
