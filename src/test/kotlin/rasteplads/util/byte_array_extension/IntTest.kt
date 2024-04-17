@@ -1,4 +1,4 @@
-package rasteplads.util.ByteArrayExtension
+package rasteplads.util.byte_array_extension
 
 import kotlin.test.assertFails
 import org.junit.jupiter.api.Assertions.*
@@ -9,11 +9,13 @@ class IntTest {
 
     private fun testEq(v: Int): Unit = assertEquals(v, v.toByteArray().toInt())
 
+    private fun testEq(v: UInt): Unit = assertEquals(v, v.toByteArray().toUInt())
+
     private fun testEq(v: ByteArray): Unit =
         assertEquals(v.toList(), v.toInt().toByteArray().toList())
 
     @Test
-    fun signedReflexive() {
+    fun fromIntReflexive() {
         testEq(-1)
         testEq(0)
         testEq(1)
@@ -26,6 +28,19 @@ class IntTest {
 
         testEq(Int.MAX_VALUE)
         testEq(Int.MIN_VALUE)
+    }
+
+    @Test
+    fun fromUIntReflexive() {
+        testEq(0u)
+        testEq(1u)
+
+        testEq(1000u)
+
+        testEq(99999u)
+
+        testEq(UInt.MAX_VALUE)
+        testEq(UInt.MIN_VALUE)
     }
 
     @Test
@@ -53,13 +68,17 @@ class IntTest {
             generateRands(Int.SIZE_BYTES).permutations().forEach { testEq(it.toByteArray()) }
         }
         (Int.MIN_VALUE..Int.MAX_VALUE).forEach { n -> testEq(n) }
+        (UInt.MIN_VALUE..UInt.MAX_VALUE).forEach { n -> testEq(n) }
     }
 
     @Test
     fun throwsOnSmallArray() {
         val i = Int.SIZE_BYTES
         (0..i).forEach { num ->
-            if (num != Int.SIZE_BYTES) assertFails { generateRands(num).toByteArray().toInt() }
+            if (num != Int.SIZE_BYTES) {
+                assertFails { generateRands(num).toByteArray().toInt() }
+                assertFails { generateRands(num).toByteArray().toUInt() }
+            }
         }
     }
 
