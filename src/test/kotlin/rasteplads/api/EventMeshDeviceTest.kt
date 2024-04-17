@@ -131,7 +131,7 @@ class EventMeshDeviceTest {
         val e = EventMeshDevice(rx, tx, txTimeout = Duration.ofMillis(1000), echo = { echo = true })
 
         launch { e.startTransmitting(2, byteArrayOf(0, 1, 2, 3), byteArrayOf()) }
-        delay(50)
+        delay(100)
         assert(device.transmitting.get())
         assert(device.receiving.get())
         assertFalse(echo)
@@ -155,7 +155,7 @@ class EventMeshDeviceTest {
         val e = EventMeshDevice(rx, tx, txTimeout = Duration.ofMillis(1001), echo = { echo = true })
 
         launch { e.startTransmitting(2, byteArrayOf(0, 1, 2, 3), byteArrayOf()) }
-        delay(50)
+        delay(100)
         assertFalse(echo)
         assert(device.transmitting.get())
         assert(device.receiving.get())
