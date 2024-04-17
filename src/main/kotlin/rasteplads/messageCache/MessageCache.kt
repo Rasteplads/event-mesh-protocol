@@ -1,49 +1,38 @@
 package rasteplads.messageCache
 
 import java.time.LocalTime
+import java.util.*
 
-class MessageCache<T> {
-    val cacheTime: Long = 2
-    private val cache = LinkedHashMap<Int, Pair<LocalTime, T>>()
+class MessageCache<T>(private var cacheTimeInSeconds: Long) {
+    private val cacheID: Queue<Pair<T, LocalTime>> = ArrayDeque()
 
-    fun cacheMessage(key: Int, msg: T) {
-        if (!cache.containsKey(key)) cache[key] = Pair(LocalTime.now().plusMinutes(cacheTime), msg)
+    fun cacheMessage(msg: T) {
+        if (!cacheID.any { it.first == msg })
+            cacheID.add(Pair(msg, LocalTime.now().plusSeconds(cacheTimeInSeconds)))
 
         checkForOutdatedMessages()
     }
 
-    fun checkForOutdatedMessages() {
-        val oldmsg = mutableListOf<Int>()
-        for (msg in cache.iterator()) {
-            when (msg.value.first.compareTo(LocalTime.now())) {
-                -1 -> { // Message exceeded its cacheTime and needs to be removed
-                    oldmsg.add(msg.key)
-                }
-                else -> { // The rest of the messages hasn't exceeded its cacheTime
-                    break
-                }
-            }
-        }
-        removeCachedMessage(oldmsg)
-    }
-
-    fun getCachedMessage(key: Int): Pair<LocalTime, T>? {
-        return cache[key]
-    }
-
-    fun printAllMessages() {
-        val cacheItr = cache.iterator()
-
-        while (cacheItr.hasNext()) println(cacheItr.next())
-    }
-
-    fun removeCachedMessage(oldmsg: List<Int>) {
-        for (m in oldmsg) {
-            cache.remove(m)
+    private fun checkForOutdatedMessages() {
+        val msg = cacheID.iterator()
+        val time = LocalTime.now()
+        while (msg.next().second.compareTo(time) ==
+            -1) { // While message exceeded its cacheTime remove them
+            msg.remove()
         }
     }
+
+    fun changeCacheTime(cacheTime: Long) {
+        cacheTimeInSeconds = cacheTime
+    }
+
+    fun containsMessage(msg: T): Boolean = cacheID.any { it.first == msg }
+
+    fun getSize(): Int = cacheID.size
+
+    override fun toString() = cacheID.fold("[", { acc, e -> "$acc, ${e.first}: ${e.second}" }) + "]"
 
     fun clearCache() {
-        cache.clear()
+        cacheID.clear()
     }
 }

@@ -184,7 +184,7 @@ private constructor(
          * @param Data The messages' content
          */
         fun <ID, Data> builder(): Builder<ID, Data> =
-            BuilderImpl(EventMeshDevice.Builder(), MessageCache())
+            BuilderImpl(EventMeshDevice.Builder(), MessageCache(60))
 
         /**
          * Creates a [Builder] for [EventMesh] with a provided message cache (set to `null` to
@@ -207,7 +207,7 @@ private constructor(
          * @param device The instance of the [EventMeshDevice] (Or derivative)
          */
         fun <ID, Data> builder(device: TransportDevice): Builder<ID, Data> =
-            BuilderImpl(EventMeshDevice.Builder().withDevice(device), MessageCache())
+            BuilderImpl(EventMeshDevice.Builder().withDevice(device), MessageCache(60))
 
         /**
          * Creates a [Builder] for [EventMesh] with a provided [TransportDevice]. This device is
