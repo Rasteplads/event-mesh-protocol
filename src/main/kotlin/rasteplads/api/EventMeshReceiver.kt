@@ -12,7 +12,7 @@ class EventMeshReceiver(private val device: TransportDevice) {
     private val scannerCount: AtomicInteger = AtomicInteger(0)
     private var runner: AtomicReference<Job?> = AtomicReference(null)
     // Not covered in code coverage, because it's an intermediate variable. Would need to use
-    // reflection test it
+    // reflection test it, if it should even be tested
     private val callback: AtomicReference<suspend (ByteArray) -> Unit> = AtomicReference {}
     private val handle:
         Pair<
