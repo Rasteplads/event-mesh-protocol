@@ -1,4 +1,4 @@
-package rasteplads.bluetooth
+package rasteplads.api
 
 interface TransportDevice {
     val transmissionInterval: Long
