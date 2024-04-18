@@ -309,7 +309,7 @@ class EventMeshTest {
                 .setIDEncodeFunction { _ -> byteArrayOf(0, 1, 2, 3) }
                 .setDataEncodeFunction { b -> byteArrayOf(b) }
                 .build()
-            m = EventMesh.builder(testDevice, MessageCache())
+            m = EventMesh.builder(testDevice, MessageCache(60))
             assertFails { m.build() }
             m.setDataConstant(0)
                 .setIDGenerator { 10 }

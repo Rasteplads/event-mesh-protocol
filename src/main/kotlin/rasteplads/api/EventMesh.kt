@@ -233,7 +233,7 @@ private constructor(
          */
         fun <ID, Data> builder(rx: EventMeshReceiver, tx: EventMeshTransmitter): Builder<ID, Data> =
             BuilderImpl(
-                EventMeshDevice.Builder().withReceiver(rx).withTransmitter(tx), MessageCache())
+                EventMeshDevice.Builder().withReceiver(rx).withTransmitter(tx), MessageCache(60))
 
         /**
          * Creates a [Builder] for [EventMesh] with a provided [EventMeshReceiver] and
