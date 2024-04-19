@@ -113,11 +113,11 @@ class EventMeshDeviceTest {
         val tx = EventMeshTransmitter(device)
         val l = mutableListOf<ByteArray>()
         rx.setReceivedMessageCallback(l::add)
-        val e = EventMeshDevice(rx, tx, txTimeout = Duration.ofMillis(1050))
+        val e = EventMeshDevice(rx, tx, txTimeout = Duration.ofMillis(1020))
 
         val ttl: Byte = 2
         launch { e.startTransmitting(ttl, byteArrayOf(0, 1, 2, 3), b) }
-        delay(50)
+        delay(100)
         assert(device.transmitting.get())
         assert(device.receiving.get())
         delay(1100)
