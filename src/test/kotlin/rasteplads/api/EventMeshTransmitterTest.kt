@@ -34,8 +34,7 @@ class EventMeshTransmitterTest {
         assertFalse(device.transmitting.get())
 
         assertEquals(
-            (tx.transmitTimeout / TX_INTERVAL),
-            device.transmittedMessages.get().size.toLong())
+            (tx.transmitTimeout / TX_INTERVAL), device.transmittedMessages.get().size.toLong())
         assert(device.transmittedMessages.get().all { it.contentEquals(b) })
 
         tx.transmitTimeout = 1000
@@ -47,8 +46,7 @@ class EventMeshTransmitterTest {
         assertFalse(device.transmitting.get())
 
         assertEquals(
-            (tx.transmitTimeout / TX_INTERVAL),
-            device.transmittedMessages.get().size.toLong())
+            (tx.transmitTimeout / TX_INTERVAL), device.transmittedMessages.get().size.toLong())
         assert(device.transmittedMessages.get().all { it.contentEquals(b) })
     }
 
