@@ -5,6 +5,7 @@ import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlinx.coroutines.*
+import kotlin.test.assertEquals
 
 class EventMeshTransmitterTest {
 
@@ -32,8 +33,8 @@ class EventMeshTransmitterTest {
         delay(1000)
         assertFalse(device.transmitting.get())
 
-        // assertEquals((tx.transmitTimeout / TX_INTERVAL),
-        // device.transmittedMessages.get().size.toLong())
+        assertEquals((tx.transmitTimeout / TX_INTERVAL),
+        device.transmittedMessages.get().size.toLong())
         assert(device.transmittedMessages.get().all { it.contentEquals(b) })
 
         tx.transmitTimeout = 1000
