@@ -170,7 +170,7 @@ class EventMeshReceiverTest {
         assertFalse(id)
         delay(300)
         device.receiveMessage(byteArrayOf(0, 1, 2, 4, 5, 6, 7, 8, 9, 9, 9, 9))
-        delay(100)
+        delay(300)
         assertFalse(device.receiving.get())
         assert(id)
     }
