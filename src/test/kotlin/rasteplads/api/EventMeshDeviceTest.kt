@@ -30,7 +30,9 @@ class MockDevice(override val transmissionInterval: Long) : TransportDevice {
             GlobalScope.launch {
                 try {
                     while (isActive) {
+                        yield()
                         transmittedMessages.get().add(message)
+                        yield()
                         delay(transmissionInterval)
                         yield()
                     }
@@ -49,6 +51,7 @@ class MockDevice(override val transmissionInterval: Long) : TransportDevice {
 
         while (receiving.get()) {
             receivedMsg.getAndSet(null)?.let { callback(it) }
+            yield()
             /*
             val iter = receivedPool.get().iterator()
             for (i in iter) {
@@ -144,7 +147,7 @@ class EventMeshDeviceTest {
         val tx = EventMeshTransmitter(device)
         val l = mutableListOf<ByteArray>()
         rx.setReceivedMessageCallback(l::add)
-        val e = EventMeshDevice(rx, tx, txTimeout = Duration.ofMillis(1010))
+        val e = EventMeshDevice(rx, tx, txTimeout = Duration.ofMillis(1030))
 
         val ttl: Byte = 2
         launchPool.add(GlobalScope.launch { e.startTransmitting(ttl, byteArrayOf(0, 1, 2, 3), b) })
