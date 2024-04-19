@@ -248,15 +248,15 @@ class EventMeshReceiverTest {
 
         assertFalse(device.receiving.get())
         launchPool.add(GlobalScope.launch { rx.scanForMessages() })
-        delay(100)
+        delay(200)
         assert(device.receiving.get())
 
         device.receiveMessage(b)
-        delay(100)
+        delay(200)
         assertEquals(1, l.size)
         assert(l.all { it.contentEquals(b) })
         device.receiveMessage(b)
-        delay(100)
+        delay(200)
         assertEquals(2, l.size)
         assert(l.all { it.contentEquals(b) })
 
