@@ -15,6 +15,7 @@ class MockDevice(override val transmissionInterval: Long) : TransportDevice {
     val transmittedMessages: AtomicReference<MutableList<ByteArray>> =
         AtomicReference(mutableListOf())
     val receivedPool: AtomicReference<MutableList<ByteArray>> = AtomicReference(mutableListOf())
+    val receivedMsg: AtomicReference<ByteArray?> = AtomicReference(null)
 
     val transmitting: AtomicBoolean = AtomicBoolean(false)
     val receiving: AtomicBoolean = AtomicBoolean(false)
@@ -39,11 +40,14 @@ class MockDevice(override val transmissionInterval: Long) : TransportDevice {
         receiving.set(true)
 
         while (receiving.get()) {
+            receivedMsg.getAndSet(null)?.let { callback(it) }
+            /*
             val iter = receivedPool.get().iterator()
             for (i in iter) {
                 callback(i)
                 iter.remove()
             }
+             */
             delay(50) // 1 sec
             yield()
         }
@@ -51,8 +55,13 @@ class MockDevice(override val transmissionInterval: Long) : TransportDevice {
 
     override fun stopReceiving(): Unit = receiving.set(false)
 
-    fun receiveMessage(b: ByteArray) {
-        receivedPool.get().add(b)
+    fun receiveMessage(b: ByteArray) = runBlocking {
+        receivedMsg.set(b)
+        while (receiving.get() && receivedMsg.get() != null) {
+            delay(50)
+            yield()
+        }
+        // receivedPool.get().add(b)
     }
 }
 
@@ -65,6 +74,7 @@ class EventMeshDeviceTest {
         device.stopReceiving()
         device.stopTransmitting()
         device.transmittedMessages.get().removeAll { true }
+        device.receivedMsg.set(null)
         device.receivedPool.get().removeAll { true }
         launchPool.forEach { it.cancelAndJoin() }
         launchPool.removeAll { true }

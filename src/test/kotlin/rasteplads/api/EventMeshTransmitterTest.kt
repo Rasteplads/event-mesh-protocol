@@ -12,10 +12,11 @@ class EventMeshTransmitterTest {
     // @BeforeTest
     @AfterTest
     fun clean(): Unit = runBlocking {
-        EventMeshDeviceTest.device.stopReceiving()
-        EventMeshDeviceTest.device.stopTransmitting()
-        EventMeshDeviceTest.device.transmittedMessages.get().removeAll { true }
-        EventMeshDeviceTest.device.receivedPool.get().removeAll { true }
+        device.stopReceiving()
+        device.stopTransmitting()
+        device.transmittedMessages.get().removeAll { true }
+        device.receivedPool.get().removeAll { true }
+        device.receivedMsg.set(null)
         launchPool.forEach { it.cancelAndJoin() }
         launchPool.removeAll { true }
     }

@@ -17,6 +17,7 @@ class EventMeshReceiverTest {
         device.stopTransmitting()
         device.transmittedMessages.get().removeAll { true }
         device.receivedPool.get().removeAll { true }
+        device.receivedMsg.set(null)
         launchPool.forEach { it.cancelAndJoin() }
         launchPool.removeAll { true }
     }
@@ -257,7 +258,7 @@ class EventMeshReceiverTest {
         assert(l.all { it.contentEquals(b) })
         device.receiveMessage(b)
         delay(400)
-        //assertEquals(2, l.size)
+        // assertEquals(2, l.size)
         assert(l.all { it.contentEquals(b) })
 
         delay(1500)
