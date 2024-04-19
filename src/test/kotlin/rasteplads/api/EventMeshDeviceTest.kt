@@ -20,22 +20,29 @@ class MockDevice(override val transmissionInterval: Long) : TransportDevice {
     val transmitting: AtomicBoolean = AtomicBoolean(false)
     val receiving: AtomicBoolean = AtomicBoolean(false)
 
+    var tx: Job? = null
+
     override fun beginTransmitting(message: ByteArray): Unit = runBlocking {
         transmittedMessages.get().removeAll { true }
         transmitting.set(true)
 
-        GlobalScope.launch {
-            try {
-                while (transmitting.get()) {
-                    transmittedMessages.get().add(message)
-                    delay(transmissionInterval)
-                    yield()
-                }
-            } catch (_: Exception) {}
-        }
+        tx =
+            GlobalScope.launch {
+                try {
+                    while (isActive) {
+                        transmittedMessages.get().add(message)
+                        delay(transmissionInterval)
+                        yield()
+                    }
+                } catch (_: Exception) {}
+            }
     }
 
-    override fun stopTransmitting(): Unit = transmitting.set(false)
+    override fun stopTransmitting() {
+        tx?.cancel()
+        tx = null
+        transmitting.set(false)
+    }
 
     override fun beginReceiving(callback: suspend (ByteArray) -> Unit) = runBlocking {
         receiving.set(true)
@@ -137,7 +144,7 @@ class EventMeshDeviceTest {
         val tx = EventMeshTransmitter(device)
         val l = mutableListOf<ByteArray>()
         rx.setReceivedMessageCallback(l::add)
-        val e = EventMeshDevice(rx, tx, txTimeout = Duration.ofMillis(1030))
+        val e = EventMeshDevice(rx, tx, txTimeout = Duration.ofMillis(1010))
 
         val ttl: Byte = 2
         launchPool.add(GlobalScope.launch { e.startTransmitting(ttl, byteArrayOf(0, 1, 2, 3), b) })
@@ -150,7 +157,7 @@ class EventMeshDeviceTest {
         // TODO: This fails on macos-latest on github actions - why? idk
         // 1000 / 100 = 10 (+1 cuz it does it on time 0)
         assertEquals(
-            tx.transmitTimeout / T_INTERVAL - 1, device.transmittedMessages.get().size.toLong())
+            (tx.transmitTimeout / T_INTERVAL + 1).toInt(), device.transmittedMessages.get().size)
 
         val combined = ttl + byteArrayOf(0, 1, 2, 3) + b
         assert(device.transmittedMessages.get().all { it.contentEquals(combined) })
