@@ -275,7 +275,6 @@ class EventMeshReceiverTest {
         delay(200)
         assertEquals(4, l.size)
         assert(l.all { it.contentEquals(b) })
-        
     }
 
     @Test
