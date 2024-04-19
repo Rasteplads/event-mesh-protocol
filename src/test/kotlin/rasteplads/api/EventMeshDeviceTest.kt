@@ -151,7 +151,7 @@ class EventMeshDeviceTest {
 
         val ttl: Byte = 2
         launchPool.add(
-            GlobalScope.launch(Dispatchers.Default) {
+            GlobalScope.launch(Dispatchers.IO) {
                 e.startTransmitting(ttl, byteArrayOf(0, 1, 2, 3), b)
             })
         delay(200)
