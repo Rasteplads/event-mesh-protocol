@@ -29,6 +29,7 @@ class MockDevice(override val transmissionInterval: Long) : TransportDevice {
                 while (transmitting.get()) {
                     transmittedMessages.get().add(message)
                     delay(transmissionInterval)
+                    yield()
                 }
             } catch (_: Exception) {}
         }
