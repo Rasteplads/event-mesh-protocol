@@ -3,9 +3,9 @@ package rasteplads.api
 // import org.junit.jupiter.api.Test
 import kotlin.test.AfterTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlinx.coroutines.*
-import kotlin.test.assertEquals
 
 class EventMeshTransmitterTest {
 
@@ -33,8 +33,8 @@ class EventMeshTransmitterTest {
         delay(1000)
         assertFalse(device.transmitting.get())
 
-        assertEquals((tx.transmitTimeout / TX_INTERVAL),
-        device.transmittedMessages.get().size.toLong())
+        assertEquals(
+            (tx.transmitTimeout / TX_INTERVAL), device.transmittedMessages.get().size.toLong())
         assert(device.transmittedMessages.get().all { it.contentEquals(b) })
 
         tx.transmitTimeout = 1000
@@ -45,6 +45,7 @@ class EventMeshTransmitterTest {
         delay(1200)
         assertFalse(device.transmitting.get())
 
+        // TODO: This fails on macos-latest on github actions - why? idk
         // assertEquals((tx.transmitTimeout / TX_INTERVAL),
         // device.transmittedMessages.get().size.toLong())
         assert(device.transmittedMessages.get().all { it.contentEquals(b) })
