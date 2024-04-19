@@ -86,7 +86,7 @@ class EventMeshDeviceTest {
     fun clean(): Unit = runBlocking {
         device.stopReceiving()
         device.stopTransmitting()
-        //device.transmittedMessages.get().removeAll { true }
+        // device.transmittedMessages.get().removeAll { true }
         device.receivedMsg.set(null)
         device.receivedPool.get().removeAll { true }
         launchPool.forEach { it.cancelAndJoin() }
