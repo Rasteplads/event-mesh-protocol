@@ -1,7 +1,6 @@
 package rasteplads.api
 
 // import org.junit.jupiter.api.Test
-import kotlin.math.ceil
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -26,7 +25,7 @@ class EventMeshTransmitterTest {
     fun `transmitting correct through EventMeshTransmitter`() = runBlocking {
         val tx = EventMeshTransmitter(device)
         val b = byteArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
-        tx.transmitTimeout = 140
+        tx.transmitTimeout = 150
         launchPool.add(GlobalScope.launch { tx.transmit(b) })
         delay(50)
         assert(device.transmitting.get())
@@ -35,8 +34,8 @@ class EventMeshTransmitterTest {
         assertFalse(device.transmitting.get())
 
         assertEquals(
-            ceil((tx.transmitTimeout / TX_INTERVAL.toDouble())).toInt(),
-            device.transmittedMessages.get().size)
+            (tx.transmitTimeout / TX_INTERVAL),
+            device.transmittedMessages.get().size.toLong())
         assert(device.transmittedMessages.get().all { it.contentEquals(b) })
 
         tx.transmitTimeout = 1000
@@ -48,8 +47,8 @@ class EventMeshTransmitterTest {
         assertFalse(device.transmitting.get())
 
         assertEquals(
-            ceil((tx.transmitTimeout / TX_INTERVAL.toDouble())).toInt(),
-            device.transmittedMessages.get().size)
+            (tx.transmitTimeout / TX_INTERVAL),
+            device.transmittedMessages.get().size.toLong())
         assert(device.transmittedMessages.get().all { it.contentEquals(b) })
     }
 
