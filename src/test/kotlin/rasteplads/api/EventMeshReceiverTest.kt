@@ -266,7 +266,7 @@ class EventMeshReceiverTest {
         launchPool.add(GlobalScope.launch(Dispatchers.IO) { rx.scanForMessages() })
         delay(500)
         assert(device.receiving.get())
-        /*
+
         device.receiveMessage(b)
         delay(200)
         assertEquals(3, l.size)
@@ -275,7 +275,7 @@ class EventMeshReceiverTest {
         delay(200)
         assertEquals(4, l.size)
         assert(l.all { it.contentEquals(b) })
-         */
+        
     }
 
     @Test
