@@ -294,8 +294,6 @@ class EventMeshReceiverTest {
         }
     }
 
-    // TODO: Test starting and stopping (and counter)
-
     @Test
     fun `multiple starters`() {
         val rx = EventMeshReceiver(EventMeshDeviceTest.device)
