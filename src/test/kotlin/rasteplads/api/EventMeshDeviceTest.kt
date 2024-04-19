@@ -56,10 +56,12 @@ class MockDevice(override val transmissionInterval: Long) : TransportDevice {
     override fun stopReceiving(): Unit = receiving.set(false)
 
     fun receiveMessage(b: ByteArray) = runBlocking {
-        receivedMsg.set(b)
-        while (receiving.get() && receivedMsg.get() != null) {
-            delay(50)
-            yield()
+        if (receiving.get()) {
+            receivedMsg.set(b)
+            while (receiving.get() && receivedMsg.get() != null) {
+                delay(50)
+                yield()
+            }
         }
         // receivedPool.get().add(b)
     }
