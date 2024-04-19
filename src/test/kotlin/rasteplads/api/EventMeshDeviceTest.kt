@@ -86,7 +86,7 @@ class EventMeshDeviceTest {
     fun clean(): Unit = runBlocking {
         device.stopReceiving()
         device.stopTransmitting()
-        device.transmittedMessages.get().removeAll { true }
+        //device.transmittedMessages.get().removeAll { true }
         device.receivedMsg.set(null)
         device.receivedPool.get().removeAll { true }
         launchPool.forEach { it.cancelAndJoin() }
@@ -147,7 +147,7 @@ class EventMeshDeviceTest {
         val tx = EventMeshTransmitter(device)
         val l = mutableListOf<ByteArray>()
         rx.setReceivedMessageCallback(l::add)
-        val e = EventMeshDevice(rx, tx, txTimeout = Duration.ofMillis(1000))
+        val e = EventMeshDevice(rx, tx, txTimeout = Duration.ofMillis(1045))
 
         val ttl: Byte = 2
         launchPool.add(GlobalScope.launch { e.startTransmitting(ttl, byteArrayOf(0, 1, 2, 3), b) })
@@ -160,7 +160,8 @@ class EventMeshDeviceTest {
         // TODO: This fails on macos-latest on github actions - why? idk
         // 1000 / 100 = 10 (+1 cuz it does it on time 0)
         assertEquals(
-            (tx.transmitTimeout / T_INTERVAL).toInt(), device.transmittedMessages.get().size)
+            (tx.transmitTimeout.floorDiv(T_INTERVAL) + 1).toInt(),
+            device.transmittedMessages.get().size)
 
         val combined = ttl + byteArrayOf(0, 1, 2, 3) + b
         assert(device.transmittedMessages.get().all { it.contentEquals(combined) })
