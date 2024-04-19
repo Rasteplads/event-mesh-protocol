@@ -83,14 +83,14 @@ class EventMeshReceiverTest {
         delay(100)
         device.receiveMessage(byteArrayOf(0, 1, 2, 4, 5, 6, 7, 8, 9))
         delay(100)
-        assertEquals(5, l.size)
-        assert(l.count { it.contentEquals(b) } == l.size - 1)
+        assertEquals(4, l.size)
+        assert(l.all { it.contentEquals(b) })
         assert(id)
         delay(100)
         device.receiveMessage(b)
         delay(100)
-        assertEquals(6, l.size)
-        assert(l.count { it.contentEquals(b) } == l.size - 1)
+        assertEquals(5, l.size)
+        assert(l.all { it.contentEquals(b) })
     }
 
     @Test
@@ -208,15 +208,15 @@ class EventMeshReceiverTest {
         device.receiveMessage(b)
         device.receiveMessage(byteArrayOf(0, 1, 2, 4, 5, 6, 7, 8, 98, 7, 6, 6))
         delay(1000)
-        assertEquals(3, l.size)
-        assertEquals(l.size - 1, l.count { it.contentEquals(b) })
+        assertEquals(2, l.size)
+        assert(l.all { it.contentEquals(b) })
         assert(device.receiving.get())
         assert(id)
         delay(100)
         device.receiveMessage(byteArrayOf(0, 1, 2, 4, 5, 6, 7, 8))
         delay(100)
-        assertEquals(4, l.size)
-        assertEquals(l.size - 2, l.count { it.contentEquals(b) })
+        assertEquals(3, l.size)
+        assertEquals(l.size - 1, l.count { it.contentEquals(b) })
     }
 
     @Test
