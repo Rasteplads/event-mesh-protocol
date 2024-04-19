@@ -156,21 +156,26 @@ class EventMeshReceiverTest {
         val rx = EventMeshReceiver(device)
         var id = false
         rx.duration = RX_DURATION // 5 sec
+        println(1)
         assertFalse(device.receiving.get())
         launch { rx.scanForID(byteArrayOf(0, 1, 2, 4), RX_DURATION) { id = true } }
         delay(100)
         assert(device.receiving.get())
+        println(2)
         assertFalse(id)
         device.receiveMessage(b)
         assert(device.receiving.get())
+        println(3)
         assertFalse(id)
         delay(300)
         device.receiveMessage(b)
         assert(device.receiving.get())
+        println(4)
         assertFalse(id)
         delay(300)
         device.receiveMessage(byteArrayOf(0, 1, 2, 4, 5, 6, 7, 8, 9, 9, 9, 9))
         delay(300)
+        println(5)
         assertFalse(device.receiving.get())
         assert(id)
     }
