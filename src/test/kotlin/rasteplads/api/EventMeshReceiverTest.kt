@@ -248,7 +248,7 @@ class EventMeshReceiverTest {
         rx.setReceivedMessageCallback { l.add(it) }
 
         assertFalse(device.receiving.get())
-        launchPool.add(GlobalScope.launch(Dispatchers.Default) { rx.scanForMessages() })
+        launchPool.add(GlobalScope.launch { rx.scanForMessages() })
         delay(200)
         assert(device.receiving.get())
 
@@ -264,7 +264,7 @@ class EventMeshReceiverTest {
         delay(1500)
         assertFalse(device.receiving.get())
         delay(200)
-        launchPool.add(GlobalScope.launch(Dispatchers.Default) { rx.scanForMessages() })
+        launchPool.add(GlobalScope.launch { rx.scanForMessages() })
         delay(500)
         assert(device.receiving.get())
 
