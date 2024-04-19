@@ -136,7 +136,7 @@ class EventMeshDeviceTest {
         assertFalse(device.receiving.get())
         // 1000 / 100 = 10 (+1 cuz it does it on time 0)
         assertEquals(
-            tx.transmitTimeout / T_INTERVAL+1, device.transmittedMessages.get().size.toLong())
+            tx.transmitTimeout / T_INTERVAL + 1, device.transmittedMessages.get().size.toLong())
 
         val combined = ttl + byteArrayOf(0, 1, 2, 3) + b
         assert(device.transmittedMessages.get().all { it.contentEquals(combined) })
