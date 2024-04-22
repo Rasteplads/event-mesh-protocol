@@ -46,11 +46,11 @@ class EventMeshTest {
     @Nested
     inner class Receiving {
         @Test
-        fun `messages get passed through`(): Unit = runBlocking { // TODO: refactor
+        fun `messages get passed through`(): Unit = runBlocking {
             val l = mutableListOf<Int>()
             val f =
                 correct()
-                    .withMsgScanInterval(Duration.ofMillis(100))
+                    .withMsgScanInterval(Duration.ofMillis(50))
                     .setMessageCallback { i, byte -> l.add(i) }
                     .build()
             var b = byteArrayOf(0, 2, 3, 4, 5, 6, 7)
@@ -72,16 +72,15 @@ class EventMeshTest {
             testDevice.receiveMessage(b)
             delay(100)
             assertEquals(2, l.size)
-            // assert(l.all { it == id })
-            // TODO: more
+            f.stop()
         }
 
         @Test
-        fun `works with message cache`(): Unit = runBlocking { // TODO: refactor
+        fun `works with message cache`(): Unit = runBlocking {
             val l = mutableListOf<Int>()
             val f =
                 correct()
-                    .withMsgScanInterval(Duration.ofMillis(100))
+                    .withMsgScanInterval(Duration.ofMillis(50))
                     .setMessageCallback { i, byte -> l.add(i) }
                     .withMsgCacheDelete(Duration.ofSeconds(1))
                     .build()
@@ -97,7 +96,6 @@ class EventMeshTest {
 
             testDevice.receiveMessage(b)
             delay(100)
-            println(l)
             assertEquals(1, l.size)
             assert(l.all { it == id })
             delay(1500)
@@ -105,22 +103,18 @@ class EventMeshTest {
             // b = byteArrayOf(0, 3, 2, 4, 5, 6, 7, 8)
             testDevice.receiveMessage(b)
             delay(100)
-            println(l)
             assertEquals(2, l.size)
             assert(l.all { it == id })
-            // TODO: more
         }
 
         @Test // TODO
-        fun `relays correctly`(): Unit = runBlocking { // TODO: refactor
-        }
+        fun `relays correctly`(): Unit = runBlocking {}
 
         @Test // TODO
-        fun `filters correctly`(): Unit = runBlocking { // TODO: refactor
-        }
+        fun `filters correctly`(): Unit = runBlocking {}
 
         @Test
-        fun `return arrays too large`(): Unit = runBlocking { // TODO: refactor
+        fun `return arrays too large`(): Unit = runBlocking {
             val f = correct().withMsgScanInterval(Duration.ofMillis(100)).build()
             /*
                     val runFunc: (String, ByteArray) -> Unit = { name, b ->
@@ -151,7 +145,7 @@ class EventMeshTest {
     @Nested
     inner class Transmitting {
         @Test
-        fun `testing data generator`(): Unit = runBlocking { // TODO: refactor
+        fun `testing data generator`(): Unit = runBlocking {
             val l = mutableListOf<Byte>()
             val d = AtomicInteger(0)
             val f =
@@ -173,7 +167,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `testing id generator`(): Unit = runBlocking { // TODO: refactor
+        fun `testing id generator`(): Unit = runBlocking {
             val l = mutableListOf<Int>()
             val d = AtomicInteger(0)
             val f =
@@ -196,7 +190,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `testing data const`(): Unit = runBlocking { // TODO: refactor
+        fun `testing data const`(): Unit = runBlocking {
             val l = mutableListOf<Byte>()
             val d: Byte = 0
             val f =
@@ -217,7 +211,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `testing id const`(): Unit = runBlocking { // TODO: refactor
+        fun `testing id const`(): Unit = runBlocking {
             val l = mutableListOf<Int>()
             val d = 10
             val f =
@@ -239,7 +233,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `testing correct ttl`(): Unit = runBlocking { // TODO: refactor
+        fun `testing correct ttl`(): Unit = runBlocking {
             val l = mutableListOf<Int>()
             val d = 100u
             val f =

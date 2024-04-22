@@ -168,8 +168,6 @@ private constructor(
 
     private fun relay(msg: ByteArray) {
         println(msg.toList())
-        msg[0]-- // TODO: Here or in callback?
-        println(msg.toList())
         // TODO: Mod TTL, then send
     }
 

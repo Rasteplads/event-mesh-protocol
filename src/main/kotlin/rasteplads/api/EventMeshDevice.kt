@@ -89,7 +89,6 @@ class EventMeshDevice(
             check(::receiver.isInitialized) {
                 "A receiver must be specified when using the EventMeshDevice.Builder."
             }
-            // TODO: Construct tx and rx if none are provided.
             // val transmitter = this.transmitter ?: EventMeshTransmitter<T>()
 
             return EventMeshDevice(

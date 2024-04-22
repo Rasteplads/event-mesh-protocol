@@ -6,8 +6,6 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.max
 import kotlinx.coroutines.*
 
-// TODO: Handling of timeouts should be reconsidered (or maybe implement a counter of sorts)
-
 class EventMeshReceiver(private val device: TransportDevice) {
     var duration: Long = 10_000 // 10 sec //TODO: Default val
     private val scannerCount: AtomicInteger = AtomicInteger(0)
