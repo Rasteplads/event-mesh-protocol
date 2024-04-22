@@ -44,7 +44,6 @@ private constructor(
         } else msgId.getRight()!!
 
     init {
-
         fun scanningCallback(msg: ByteArray) {
             // TODO: cache check before or after relay? Relay if in cache?
             require(msg.size >= 1 + ID_MAX_SIZE) {
@@ -710,13 +709,6 @@ private constructor(
                 msgCacheLimit = l
                 return this
             }
-
-            /*
-            override fun withDevice(d: Device): Builder<ID, Data> {
-                device = d
-                return this
-            }
-             */
         }
     }
 }
