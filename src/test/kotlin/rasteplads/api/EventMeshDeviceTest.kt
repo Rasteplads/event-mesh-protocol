@@ -150,7 +150,6 @@ class EventMeshDeviceTest {
         delay(1200)
         assertFalse(device.transmitting.get())
         assertFalse(device.receiving.get())
-        // TODO: This fails on macos-latest on github actions - why? idk
         // 1000 / 100 = 10 (+1 cuz it does it on time 0)
         assertEquals(
             (tx.transmitTimeout.floorDiv(T_INTERVAL) + 1).toInt(),

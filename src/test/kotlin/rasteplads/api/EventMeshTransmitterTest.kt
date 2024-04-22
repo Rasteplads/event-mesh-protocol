@@ -33,7 +33,6 @@ class EventMeshTransmitterTest {
         // Sleep here to ensure that additional messages are not sent, and it stops transmitting
         delay(1000)
         assertFalse(device.transmitting.get())
-        // TODO: This fails on macos-latest on github actions - why? idk
         assertEquals(
             (tx.transmitTimeout / TX_INTERVAL), device.transmittedMessages.get().size.toLong())
         assert(device.transmittedMessages.get().all { it.contentEquals(b) })
@@ -46,7 +45,6 @@ class EventMeshTransmitterTest {
         delay(1200)
         assertFalse(device.transmitting.get())
 
-        // TODO: This fails on macos-latest on github actions - why? idk
         assertEquals(
             (tx.transmitTimeout / TX_INTERVAL), device.transmittedMessages.get().size.toLong())
         assert(device.transmittedMessages.get().all { it.contentEquals(b) })
