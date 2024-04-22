@@ -14,19 +14,19 @@ class MessageCache<T>(private var cacheTimeInSeconds: Long) {
     }
 
     private fun checkForOutdatedMessages() {
-        val msg = cacheID.iterator()
         val time = LocalTime.now()
-        while (msg.next().second.compareTo(time) ==
-            -1) { // While message exceeded its cacheTime remove them
-            msg.remove()
-        }
+        // While message exceeded its cacheTime remove them
+        while (cacheID.peek()?.second?.isBefore(time) == true) cacheID.remove()
     }
 
     fun changeCacheTime(cacheTime: Long) {
         cacheTimeInSeconds = cacheTime
     }
 
-    fun containsMessage(msg: T): Boolean = cacheID.any { it.first == msg }
+    fun containsMessage(msg: T): Boolean {
+        checkForOutdatedMessages()
+        return cacheID.any { it.first == msg }
+    }
 
     fun getSize(): Int = cacheID.size
 

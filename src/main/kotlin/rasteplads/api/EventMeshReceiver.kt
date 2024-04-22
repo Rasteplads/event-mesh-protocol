@@ -58,7 +58,14 @@ class EventMeshReceiver(private val device: TransportDevice) {
 
     private fun startDevice() {
         if (scannerCount.getAndIncrement() <= 0)
-            runner.set(GlobalScope.launch { device.beginReceiving(::scanForMessagesCallback) })
+            runner.set(
+                GlobalScope.launch {
+                    try {
+                        device.beginReceiving(::scanForMessagesCallback)
+                    } catch (_: IllegalArgumentException) {
+                        println("NNNN") // TODO: Handle (`check` from callback)
+                    }
+                })
     }
 
     private fun stopDevice() {

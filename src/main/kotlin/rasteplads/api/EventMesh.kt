@@ -55,8 +55,10 @@ private constructor(
 
             // CACHE CHECK
             if (messageCache?.containsMessage(id) == false && filterID.all { f -> f(id) }) {
+                messageCache.cacheMessage(id)
                 callback(id, decodeData(dataB))
             }
+            // Relay
             if (msg[0].toUByte() > 0u) {
                 msg[0]--
                 messageCache?.cacheMessage(id)
@@ -133,17 +135,17 @@ private constructor(
     fun start() = runBlocking {
         btSender =
             GlobalScope.launch(Dispatchers.IO) {
-                try {
-                    do {
-                        delay(msgSendInterval.toMillis())
-                        val id = msgId()
-                        val data = msgData()
-                        messageCache?.cacheMessage(id)
-                        device.startTransmitting(msgTTL.toByte(), encodeID(id), encodeData(data))
-                    } while (isActive)
-                } finally {
-                    // TODO: Handle cancel?
-                }
+                // try {
+                do {
+                    delay(msgSendInterval.toMillis())
+                    val id = msgId()
+                    val data = msgData()
+                    messageCache?.cacheMessage(id)
+                    device.startTransmitting(msgTTL.toByte(), encodeID(id), encodeData(data))
+                } while (isActive)
+                //   } finally {
+                //       // TODO: Handle cancel?
+                //   }
             }
         btScanner =
             GlobalScope.launch(Dispatchers.IO) {
@@ -187,6 +189,13 @@ private constructor(
         const val ID_MAX_SIZE = 4
 
         /**
+         * Default value for the duration a message is saved in teh cache.
+         *
+         * The default value is 60 seconds.
+         */
+        const val MESSAGE_CACHE_TIME: Long = 60
+
+        /**
          * Creates a [Builder] for [EventMesh] with the default message cache ([MessageCache]) and
          * [EventMeshDevice].
          *
@@ -194,7 +203,7 @@ private constructor(
          * @param Data The messages' content
          */
         fun <ID, Data> builder(): Builder<ID, Data> =
-            BuilderImpl(EventMeshDevice.Builder(), MessageCache(60))
+            BuilderImpl(EventMeshDevice.Builder(), MessageCache(MESSAGE_CACHE_TIME))
 
         /**
          * Creates a [Builder] for [EventMesh] with a provided message cache (set to `null` to
@@ -217,7 +226,8 @@ private constructor(
          * @param device The instance of the [EventMeshDevice] (Or derivative)
          */
         fun <ID, Data> builder(device: TransportDevice): Builder<ID, Data> =
-            BuilderImpl(EventMeshDevice.Builder().withDevice(device), MessageCache(60))
+            BuilderImpl(
+                EventMeshDevice.Builder().withDevice(device), MessageCache(MESSAGE_CACHE_TIME))
 
         /**
          * Creates a [Builder] for [EventMesh] with a provided [TransportDevice]. This device is
@@ -243,7 +253,8 @@ private constructor(
          */
         fun <ID, Data> builder(rx: EventMeshReceiver, tx: EventMeshTransmitter): Builder<ID, Data> =
             BuilderImpl(
-                EventMeshDevice.Builder().withReceiver(rx).withTransmitter(tx), MessageCache(60))
+                EventMeshDevice.Builder().withReceiver(rx).withTransmitter(tx),
+                MessageCache(MESSAGE_CACHE_TIME))
 
         /**
          * Creates a [Builder] for [EventMesh] with a provided [EventMeshReceiver] and
@@ -525,7 +536,7 @@ private constructor(
              * @param f The function
              * @return The modified [Builder]
              */
-            fun withNoEchoCallback(f: (() -> Unit)?): Builder<ID, Data>
+            fun withEchoCallback(f: (() -> Unit)?): Builder<ID, Data>
 
             /**
              * Builds the [Builder]
@@ -584,7 +595,7 @@ private constructor(
                 return EventMesh(this)
             }
 
-            override fun withNoEchoCallback(f: (() -> Unit)?): Builder<ID, Data> {
+            override fun withEchoCallback(f: (() -> Unit)?): Builder<ID, Data> {
                 device.withEchoCallback(f)
                 return this
             }
@@ -683,9 +694,6 @@ private constructor(
              */
 
             override fun withMsgSendTimeout(d: Duration): Builder<ID, Data> {
-                check(d.isZero || d >= msgSendInterval) {
-                    "non-zero message duration cap cannot be less than the sending interval"
-                }
                 device.withTransmitTimeout(d)
                 return this
             }

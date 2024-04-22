@@ -188,6 +188,7 @@ class EventMeshDeviceTest {
         fun `Missing receiver`() {
             val tx = EventMeshTransmitter(device)
             assertFails { EventMeshDevice.Builder().withTransmitter(tx).build() }
+            assertFails { EventMeshDevice.Builder().withTransmitter(tx).withReceiveMsgCallback {} }
         }
 
         @Test

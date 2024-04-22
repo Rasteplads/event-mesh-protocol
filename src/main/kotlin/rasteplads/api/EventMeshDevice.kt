@@ -24,12 +24,10 @@ class EventMeshDevice(
         val tx = launch { transmitter.transmit(combinedMsg) }
 
         try {
-            // withTimeout(transmitter.transmitTimeout) {
             receiver.scanForID(id, transmitter.transmitTimeout) { tx.cancel() }
-            // }
         } catch (e: TimeoutCancellationException) {
             echo?.invoke()
-        } finally {}
+        }
     }
 
     fun startReceiving() = receiver.scanForMessages()
@@ -77,6 +75,9 @@ class EventMeshDevice(
         }
 
         fun withReceiveMsgCallback(f: suspend (ByteArray) -> Unit): Builder {
+            check(::receiver.isInitialized) {
+                "A receiver must be specified when using the EventMeshDevice.Builder."
+            }
             receiver.setReceivedMessageCallback(f)
             return this
         }
