@@ -133,6 +133,7 @@ private constructor(
 
     /** TODO */
     fun start() = runBlocking {
+        messageCache?.clearCache()
         btSender =
             GlobalScope.launch(Dispatchers.IO) {
                 // try {
@@ -191,7 +192,7 @@ private constructor(
          *
          * The default value is 60 seconds.
          */
-        const val MESSAGE_CACHE_TIME: Long = 60
+        const val MESSAGE_CACHE_TIME: Long = 60_000
 
         /**
          * Creates a [Builder] for [EventMesh] with the default message cache ([MessageCache]) and
@@ -669,7 +670,7 @@ private constructor(
             }
 
             override fun withMsgCacheDelete(d: Duration): Builder<ID, Data> {
-                msgCache?.changeCacheTime(d.toSeconds())
+                msgCache?.changeCacheTime(d.toMillis())
                 return this
             }
 

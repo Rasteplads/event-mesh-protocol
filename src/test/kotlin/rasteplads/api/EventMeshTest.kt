@@ -496,26 +496,27 @@ class EventMeshTest {
         fun `overriding message cache`() {
             val name = "messageCache"
 
+            val ms = "cacheTimeInMilliseconds"
             val f = correct()
             var mc = getValueFromClass<EventMesh<Int, Byte>, MessageCache<Int>?>(f.build(), name)
             Assertions.assertNotNull(mc)
-            var time = getValueFromClass<MessageCache<Int>, Long>(mc!!, "cacheTimeInSeconds")
+            var time = getValueFromClass<MessageCache<Int>, Long>(mc!!, ms)
             assertEquals(MESSAGE_CACHE_TIME, time)
 
-            var new_time: Long = 30
+            var new_time: Long = 30_000
             mc =
                 getValueFromClass<EventMesh<Int, Byte>, MessageCache<Int>?>(
-                    f.withMsgCacheDelete(Duration.ofSeconds(new_time)).build(), name)
+                    f.withMsgCacheDelete(Duration.ofMillis(new_time)).build(), name)
             Assertions.assertNotNull(mc)
-            time = getValueFromClass<MessageCache<Int>, Long>(mc!!, "cacheTimeInSeconds")
+            time = getValueFromClass<MessageCache<Int>, Long>(mc!!, ms)
             assertEquals(new_time, time)
 
-            new_time = 15
+            new_time = 15_000
             mc =
                 getValueFromClass<EventMesh<Int, Byte>, MessageCache<Int>?>(
                     f.setMessageCache(MessageCache(new_time)).build(), name)
             Assertions.assertNotNull(mc)
-            time = getValueFromClass<MessageCache<Int>, Long>(mc!!, "cacheTimeInSeconds")
+            time = getValueFromClass<MessageCache<Int>, Long>(mc!!, ms)
             assertEquals(new_time, time)
         }
 
