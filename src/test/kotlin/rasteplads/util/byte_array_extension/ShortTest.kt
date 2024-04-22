@@ -14,7 +14,7 @@ class ShortTest {
         assertEquals(v.toList(), v.toShort().toByteArray().toList())
 
     @Test
-    fun fromShortReflexive() {
+    fun `from short reflexive`() {
         testEq(0)
         testEq(1)
         testEq(-1)
@@ -30,7 +30,7 @@ class ShortTest {
     }
 
     @Test
-    fun fromUShortReflexive() {
+    fun `from unsigned short reflexive`() {
         testEq(0u)
         testEq(1u)
 
@@ -43,7 +43,7 @@ class ShortTest {
     }
 
     @Test
-    fun fromByteArrayReflexive() {
+    fun `from byte array reflexive`() {
         testEq(byteArrayOf(-1, 2))
         testEq(byteArrayOf(0, 1))
         testEq(byteArrayOf(1, 1))
@@ -61,7 +61,7 @@ class ShortTest {
     }
 
     @Test
-    fun generatedTestsReflexive() {
+    fun `generated tests reflexive`() {
         val num = 10_000
         (0..num).forEach { _ ->
             generateRands(Short.SIZE_BYTES).permutations().forEach { testEq(it.toByteArray()) }
@@ -71,7 +71,7 @@ class ShortTest {
     }
 
     @Test
-    fun throwsOnSmallArray() {
+    fun `throws on small array`() {
         val i = Short.SIZE_BYTES
         (0..i).forEach { num ->
             if (num != Short.SIZE_BYTES) {
@@ -82,7 +82,7 @@ class ShortTest {
     }
 
     @Test
-    fun redundancyInArraysIsIgnored() {
+    fun `redundancy in arrays is ignored`() {
         val i = 1000
         (0..i).forEach { _ ->
             val arr = generateRands(Short.SIZE_BYTES * 2).toByteArray()

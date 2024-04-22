@@ -7,7 +7,7 @@ import rasteplads.messageCache.MessageCache
 
 class MessageCacheTest {
     @Test
-    fun testOutdatedStringMessage() {
+    fun `test outdated string message`() {
         val cache = MessageCache<String>(6)
         cache.cacheMessage("first")
         Thread.sleep(6_100L)
@@ -19,7 +19,7 @@ class MessageCacheTest {
     }
 
     @Test
-    fun testLifeTimeMessage() {
+    fun `test lifetime message`() {
         val cache1 = MessageCache<String>(3)
         val cache2 = MessageCache<String>(6)
         cache1.cacheMessage("first")
@@ -37,7 +37,7 @@ class MessageCacheTest {
     }
 
     @Test
-    fun testChangeCacheTime() {
+    fun `test change cache time`() {
         val cache = MessageCache<String>(3)
         cache.cacheMessage("first")
         cache.changeCacheTime(6)
@@ -52,7 +52,7 @@ class MessageCacheTest {
     }
 
     @Test
-    fun testNoOutdatedStringMessage() {
+    fun `test no outdated string message`() {
         val cache = MessageCache<String>(6)
         cache.cacheMessage("first")
         cache.cacheMessage("second")
@@ -63,7 +63,7 @@ class MessageCacheTest {
     }
 
     @Test
-    fun testDuplicateStringKey() {
+    fun `test duplicate string key`() {
         val cache = MessageCache<String>(6)
         cache.cacheMessage("first")
         cache.cacheMessage("first")
@@ -72,7 +72,7 @@ class MessageCacheTest {
     }
 
     @Test
-    fun testDuplicateIntKey() {
+    fun `test duplicate int key`() {
         val cache = MessageCache<Int>(6)
         cache.cacheMessage(1)
         cache.cacheMessage(1)
@@ -81,7 +81,7 @@ class MessageCacheTest {
     }
 
     @Test
-    fun testNoOutdatedIntMessage() {
+    fun `test no outdated int message`() {
         val cache = MessageCache<Int>(6)
         cache.cacheMessage(1)
         cache.cacheMessage(2)
@@ -92,7 +92,7 @@ class MessageCacheTest {
     }
 
     @Test
-    fun testOutdatedIntMessage() {
+    fun `test outdated int message`() {
         val cache = MessageCache<Int>(6)
         cache.cacheMessage(1)
         Thread.sleep(6_100L)
