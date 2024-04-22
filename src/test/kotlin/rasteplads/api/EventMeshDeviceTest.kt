@@ -52,13 +52,6 @@ class MockDevice(override val transmissionInterval: Long) : TransportDevice {
         while (receiving.get()) {
             receivedMsg.getAndSet(null)?.let { callback(it) }
             yield()
-            /*
-            val iter = receivedPool.get().iterator()
-            for (i in iter) {
-                callback(i)
-                iter.remove()
-            }
-             */
             delay(50) // 1 sec
             yield()
         }
@@ -67,19 +60,18 @@ class MockDevice(override val transmissionInterval: Long) : TransportDevice {
     override fun stopReceiving(): Unit = receiving.set(false)
 
     fun receiveMessage(b: ByteArray) = runBlocking {
-        if (receiving.get()) {
-            receivedMsg.set(b)
-            while (receiving.get() && receivedMsg.get() != null) {
-                delay(50)
-                yield()
-            }
+        if (!receiving.get()) return@runBlocking
+        receivedMsg.set(b)
+        while (receiving.get() && receivedMsg.get() != null) {
+            delay(50)
+            yield()
         }
+
         // receivedPool.get().add(b)
     }
 }
 
 class EventMeshDeviceTest {
-
     private val launchPool = mutableListOf<Job>()
     // @BeforeTest
     @AfterTest
@@ -129,9 +121,7 @@ class EventMeshDeviceTest {
         delay(50)
         assert(device.receiving.get())
         device.receiveMessage(b)
-        delay(100)
         device.receiveMessage(b)
-        delay(100)
         device.receiveMessage(b)
         delay(1000)
         assertFalse(device.receiving.get())
