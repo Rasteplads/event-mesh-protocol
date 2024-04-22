@@ -35,3 +35,6 @@ fun Long.toByteArray(): ByteArray = ByteBuffer.allocate(Long.SIZE_BYTES).putLong
 fun ULong.toByteArray(): ByteArray = this.toLong().toByteArray()
 
 operator fun Byte.plus(other: ByteArray): ByteArray = byteArrayOf(this) + other
+
+fun ByteArray.split(i: Int): Pair<ByteArray, ByteArray> =
+    Pair(this.sliceArray(0 until i), this.sliceArray(i until this.size))

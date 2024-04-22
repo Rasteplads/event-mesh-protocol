@@ -76,6 +76,11 @@ class EventMeshDevice(
             return this
         }
 
+        fun withReceiveMsgCallback(f: suspend (ByteArray) -> Unit): Builder {
+            receiver.setReceivedMessageCallback(f)
+            return this
+        }
+
         fun build(): EventMeshDevice {
             check(::transmitter.isInitialized) {
                 "A transmitter must be specified when using the EventMeshDevice.Builder."

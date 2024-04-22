@@ -4,6 +4,7 @@ import java.time.Duration
 import kotlinx.coroutines.*
 import rasteplads.messageCache.MessageCache
 import rasteplads.util.Either
+import rasteplads.util.split
 
 /**
  * This class handles communicating messages to the dynamic mesh network.
@@ -21,21 +22,54 @@ import rasteplads.util.Either
  */
 final class EventMesh<ID, Data>
 private constructor(
-    private val device: EventMeshDevice,
+    deviceBuilder: EventMeshDevice.Builder,
     private val messageCache: MessageCache<ID>?,
-    private val callback: (ID, Data) -> Unit,
-    private val decodeID: (ByteArray) -> ID,
-    private val decodeData: (ByteArray) -> Data,
+    callback: (ID, Data) -> Unit,
+    decodeID: (ByteArray) -> ID,
+    decodeData: (ByteArray) -> Data,
     private val encodeID: (ID) -> ByteArray,
     private val encodeData: (Data) -> ByteArray,
-    private val msgData: Either<Data, () -> Data>,
-    private val msgId: Either<ID, () -> ID>,
-    private val filterID: List<(ID) -> Boolean>,
+    msgData: Either<Data, () -> Data>,
+    msgId: Either<ID, () -> ID>,
+    filterID: List<(ID) -> Boolean>,
 ) {
+    private val device: EventMeshDevice
+    private val msgData: () -> Data =
+        if (msgData.isLeft()) {
+            { msgData.getLeft()!! }
+        } else msgData.getRight()!!
+    private val msgId: () -> ID =
+        if (msgId.isLeft()) {
+            { msgId.getLeft()!! }
+        } else msgId.getRight()!!
+
+    init {
+
+        fun scanningCallback(msg: ByteArray) {
+            // TODO: cache check before or after relay? Relay if in cache?
+            require(msg.size >= 1 + ID_MAX_SIZE) {
+                "Message does not conform with the minimum requirement (TTL + ID)"
+            }
+
+            val (idB, dataB) = msg.sliceArray(1 until msg.size).split(ID_MAX_SIZE)
+            val id = decodeID(idB)
+
+            // CACHE CHECK
+            if (messageCache?.containsMessage(id) == false && filterID.all { f -> f(id) }) {
+                callback(id, decodeData(dataB))
+            }
+            if (msg[0].toUByte() > 0u) {
+                msg[0]--
+                messageCache?.cacheMessage(id)
+                relay(msg)
+            }
+        }
+        device = deviceBuilder.withReceiveMsgCallback(::scanningCallback).build()
+    }
 
     // TODO: set correct default values
     /** Time a message is stored in the cache */
-    private var msgDelete: Duration = Duration.ofSeconds(30)
+    // private var msgDelete: Duration = Duration.ofSeconds(30)
 
     /** Time TO Live (TTL) for the messages. */
     private var msgTTL: UInt = 10u
@@ -51,10 +85,10 @@ private constructor(
 
     /**
      * The duration the messages from [msgData] will be sent. A message session will only be this
-     * lon, or until an echo. If `Duration.ZERO`, then there is no cap. This corresponds to
+     * long, or until an echo. If `Duration.ZERO`, then there is no cap. This corresponds to
      * 'Advertising Timeout' in Bluetooth
      */
-    private var msgSendTimeout: Duration = Duration.ofSeconds(1)
+    // private var msgSendTimeout: Duration = Duration.ofSeconds(1)
 
     /** The interval incoming messages will be scanned for. */
     private var msgScanInterval: Duration = Duration.ofSeconds(5)
@@ -62,16 +96,18 @@ private constructor(
     /** The duration incoming messages will be scanned for. */
     // private var msgScanDuration: Duration = Duration.ofSeconds(1)
 
+    // TODO: rm?
     /** The maximum number of elements stored in the cache */
     private var msgCacheLimit: Long = 32
 
-    private lateinit var btScanner: Job
+    // TODO: Test what is best
+    private var btScanner: Job = Job()
     private lateinit var btSender: Job
 
     private constructor(
         builder: BuilderImpl<ID, Data>
     ) : this(
-        builder.device.build(),
+        builder.device,
         builder.msgCache,
         builder.callback,
         builder.decodeID,
@@ -82,15 +118,12 @@ private constructor(
         builder.msgID,
         builder.filterID,
     ) {
-        builder.msgDelete?.let { msgDelete = it }
+        // builder.device.withReceiveMsgCallback(::scanningCallback2)
+        // builder.msgDelete?.let { msgDelete = it }
         builder.msgTTL?.let { msgTTL = it }
 
         builder.msgSendInterval?.let { msgSendInterval = it }
-        builder.msgSendTimeout?.let { msgSendTimeout = it }
-
-        check(msgSendTimeout.isZero || msgSendTimeout >= msgSendInterval) {
-            "non-zero message duration cap cannot be less than the sending interval"
-        }
+        // builder.msgSendTimeout?.let { msgSendTimeout = it }
 
         builder.msgScanInterval?.let { msgScanInterval = it }
 
@@ -99,15 +132,14 @@ private constructor(
 
     /** TODO */
     fun start() = runBlocking {
-        // TODO: SETUP BT TO HANDLE MESSAGES (CONVERT, FILTER, CALLBACK)
-        // TODO: Setup callback
         btSender =
             GlobalScope.launch(Dispatchers.IO) {
                 try {
                     do {
                         delay(msgSendInterval.toMillis())
-                        val id = msgId.getLeft() ?: msgId.getRight()!!()
-                        val data = msgData.getLeft() ?: msgData.getRight()!!()
+                        val id = msgId()
+                        val data = msgData()
+                        messageCache?.cacheMessage(id)
                         device.startTransmitting(msgTTL.toByte(), encodeID(id), encodeData(data))
                     } while (isActive)
                 } finally {
@@ -133,30 +165,9 @@ private constructor(
         if (btScanner.isActive) btScanner.cancel()
     }
 
-    private fun ByteArray.split(i: Int): Pair<ByteArray, ByteArray> =
-        Pair(this.sliceArray(0 until i), this.sliceArray(i until this.size))
-
-    private fun scanningCallback(msg: ByteArray) {
-        // TODO: cache check before or after relay?
-        require(msg.size >= 1 + ID_MAX_SIZE) {
-            "Message does not conform with the minimum requirement (TTL + ID)"
-        }
-
-        if (msg[0] > Byte.MIN_VALUE) relay(msg) // TTL
-
-        val (idB, dataB) = msg.sliceArray(1 until msg.size).split(ID_MAX_SIZE)
-        val id = decodeID(idB)
-
-        // TODO: CACHE CHECK
-
-        if (filterID.any { f -> !f(id) }) return // FILTER
-
-        callback(id, decodeData(dataB))
-    }
-
     private fun relay(msg: ByteArray) {
         println(msg.toList())
-        msg[0]--
+        msg[0]-- // TODO: Here or in callback?
         println(msg.toList())
         // TODO: Mod TTL, then send
     }
@@ -195,7 +206,7 @@ private constructor(
          * @param mc The instance of the [MessageCache] (set to `null` to disable)
          */
         fun <ID, Data> builder(mc: MessageCache<ID>?): Builder<ID, Data> =
-            BuilderImpl(EventMeshDevice.Builder(), mc) // TODO: REAL TYPE AND INITIALISATION
+            BuilderImpl(EventMeshDevice.Builder(), mc)
 
         /**
          * Creates a [Builder] for [EventMesh] with a provided [TransportDevice]. This device is
@@ -306,7 +317,6 @@ private constructor(
              */
             fun setIDDecodeFunction(f: (ByteArray) -> ID): Builder<ID, Data>
 
-            // TODO: MAKE SURE THE LENGTH IS CORRECT
             /**
              * Sets a function that converts a binary representation into an `ID`. This is what is
              * read from the other nodes. The array will always have the length [DATA_MAX_SIZE],
@@ -343,7 +353,6 @@ private constructor(
              */
             fun setIDEncodeFunction(f: (ID) -> ByteArray): Builder<ID, Data>
 
-            // TODO: MAKE SURE THE LENGTH IS CORRECT
             /**
              * Sets a function that converts the `Data` into a binary representation. This is needed
              * for transmitting the data. The array returned should have length [DATA_MAX_SIZE],
@@ -449,14 +458,15 @@ private constructor(
              */
             fun withMsgSendInterval(d: Duration): Builder<ID, Data>
 
+            /*
             /**
              * Sets the message sending interval, I.E. the discrete events of transmissions.
              *
              * @param d Waiting time
              * @return The modified [Builder]
              */
-            // fun withMsgSendTransmissionInterval(d: Duration): Builder<ID, Data>
-
+             fun withMsgSendTransmissionInterval(d: Duration): Builder<ID, Data>
+            */
             /**
              * Sets the sending duration timeout (cap). This is the max time duration the message
              * defined in either [setDataConstant] or [setDataGenerator] will be transmitted. It
@@ -510,6 +520,15 @@ private constructor(
             */
 
             /**
+             * Sets a callback function for when an echo is not received when transmitting your
+             * message. Set to null to omit.
+             *
+             * @param f The function
+             * @return The modified [Builder]
+             */
+            fun withNoEchoCallback(f: (() -> Unit)?): Builder<ID, Data>
+
+            /**
              * Builds the [Builder]
              *
              * @return [EventMesh] with the needed properties
@@ -519,7 +538,7 @@ private constructor(
         }
 
         private class BuilderImpl<ID, Data>(
-            val device: EventMeshDevice.Builder, // TODO SIMON
+            val device: EventMeshDevice.Builder,
             var msgCache: MessageCache<ID>? = null,
         ) : Builder<ID, Data> {
             lateinit var callback: (ID, Data) -> Unit
@@ -532,11 +551,12 @@ private constructor(
 
             val filterID: MutableList<(ID) -> Boolean> = mutableListOf()
 
-            var msgDelete: Duration? = null
+            // var msgDelete: Duration? = null
             var msgTTL: UInt? = null
 
             var msgSendInterval: Duration? = null
-            var msgSendTimeout: Duration? = null
+
+            // var msgSendTimeout: Duration? = null
             var msgScanInterval: Duration? = null
             var msgCacheLimit: Long? = null
 
@@ -563,6 +583,11 @@ private constructor(
                 }
 
                 return EventMesh(this)
+            }
+
+            override fun withNoEchoCallback(f: (() -> Unit)?): Builder<ID, Data> {
+                device.withEchoCallback(f)
+                return this
             }
 
             override fun setIDDecodeFunction(f: (ByteArray) -> ID): Builder<ID, Data> {
@@ -611,7 +636,7 @@ private constructor(
             }
 
             override fun setMessageCallback(f: (ID, Data) -> Unit): Builder<ID, Data> {
-                callback = f // TODO: should end in the receiver somehow
+                callback = f
                 return this
             }
 
@@ -636,7 +661,7 @@ private constructor(
             }
 
             override fun withMsgCacheDelete(d: Duration): Builder<ID, Data> {
-                msgDelete = d // TODO: Handle this
+                msgCache?.changeCacheTime(d.toSeconds())
                 return this
             }
 
@@ -646,7 +671,7 @@ private constructor(
             }
 
             override fun withMsgSendInterval(d: Duration): Builder<ID, Data> {
-                msgSendInterval = d // TODO
+                msgSendInterval = d
                 return this
             }
 
@@ -659,6 +684,9 @@ private constructor(
              */
 
             override fun withMsgSendTimeout(d: Duration): Builder<ID, Data> {
+                check(d.isZero || d >= msgSendInterval) {
+                    "non-zero message duration cap cannot be less than the sending interval"
+                }
                 device.withTransmitTimeout(d)
                 return this
             }
