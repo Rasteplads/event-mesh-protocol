@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 
 class EitherTest {
     @Test
-    fun eitherTest() {
+    fun `either test`() {
         var e = Either.left<Int, UInt>(8)
         assert(e.isLeft())
         assertFalse(e.isRight())

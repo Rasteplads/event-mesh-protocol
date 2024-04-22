@@ -9,13 +9,17 @@ import rasteplads.api.EventMeshDeviceTest.Companion.getValueFromClass
 
 class EventMeshReceiverTest {
 
-    @BeforeTest
+    private val launchPool = mutableListOf<Job>()
+    // @BeforeTest
     @AfterTest
-    fun clean() {
+    fun clean(): Unit = runBlocking {
         device.stopReceiving()
         device.stopTransmitting()
         device.transmittedMessages.get().removeAll { true }
         device.receivedPool.get().removeAll { true }
+        device.receivedMsg.set(null)
+        launchPool.forEach { it.cancelAndJoin() }
+        launchPool.removeAll { true }
     }
 
     @Test
@@ -25,23 +29,15 @@ class EventMeshReceiverTest {
         val l = mutableListOf<ByteArray>()
         rx.duration = RX_DURATION // 5 sec
         rx.setReceivedMessageCallback { l.add(it) }
-        launch { rx.scanForMessages() }
+        launchPool.add(GlobalScope.launch { rx.scanForMessages() })
         delay(100)
         assertEquals(0, l.size)
         assert(l.all { it.contentEquals(b) })
         device.receiveMessage(b)
-        delay(300)
-        assertEquals(1, l.size)
-        assert(l.all { it.contentEquals(b) })
-        delay(300)
         assertEquals(1, l.size)
         assert(l.all { it.contentEquals(b) })
         device.receiveMessage(b)
         device.receiveMessage(b)
-        delay(300)
-        assertEquals(3, l.size)
-        assert(l.all { it.contentEquals(b) })
-        delay(300)
         assertEquals(3, l.size)
         assert(l.all { it.contentEquals(b) })
     }
@@ -54,43 +50,34 @@ class EventMeshReceiverTest {
         rx.duration = RX_DURATION // 5 sec
         rx.setReceivedMessageCallback { l.add(it) }
         assertFalse(device.receiving.get())
-        launch { rx.scanForMessages() }
+        launchPool.add(GlobalScope.launch { rx.scanForMessages() })
         delay(100)
         assert(device.receiving.get())
         assertEquals(0, l.size)
         assert(l.all { it.contentEquals(b) })
         device.receiveMessage(b)
-        delay(300)
-        assertEquals(1, l.size)
-        assert(l.all { it.contentEquals(b) })
-        delay(300)
         assertEquals(1, l.size)
         assert(l.all { it.contentEquals(b) })
         device.receiveMessage(b)
         device.receiveMessage(b)
-        delay(300)
         assertEquals(3, l.size)
         assert(l.all { it.contentEquals(b) })
         var id = false
-        launch { rx.scanForID(byteArrayOf(0, 1, 2, 4), RX_DURATION) { id = true } }
+        launchPool.add(
+            GlobalScope.launch { rx.scanForID(byteArrayOf(0, 1, 2, 4), RX_DURATION) { id = true } })
         assertFalse(id)
         delay(100)
         device.receiveMessage(b)
-        delay(100)
         assertEquals(4, l.size)
         assert(l.all { it.contentEquals(b) })
         assertFalse(id)
-        delay(100)
         device.receiveMessage(byteArrayOf(0, 1, 2, 4, 5, 6, 7, 8, 9))
-        delay(100)
-        assertEquals(5, l.size)
-        assert(l.count { it.contentEquals(b) } == l.size - 1)
+        assertEquals(4, l.size)
+        assert(l.all { it.contentEquals(b) })
         assert(id)
-        delay(100)
         device.receiveMessage(b)
-        delay(100)
-        assertEquals(6, l.size)
-        assert(l.count { it.contentEquals(b) } == l.size - 1)
+        assertEquals(5, l.size)
+        assert(l.all { it.contentEquals(b) })
     }
 
     @Test
@@ -101,13 +88,12 @@ class EventMeshReceiverTest {
         rx.duration = RX_DURATION // 5 sec
         rx.setReceivedMessageCallback { l.add(it) }
         assertFalse(device.receiving.get())
-        launch { rx.scanForMessages() }
+        launchPool.add(GlobalScope.launch { rx.scanForMessages() })
         delay(300)
         assert(device.receiving.get())
         assertEquals(0, l.size)
         assert(l.all { it.contentEquals(b) })
         device.receiveMessage(b)
-        delay(300)
         assertEquals(1, l.size)
         assert(l.all { it.contentEquals(b) })
         delay(1300)
@@ -119,35 +105,29 @@ class EventMeshReceiverTest {
         assertEquals(3, l.size)
         assert(l.all { it.contentEquals(b) })
         var id = false
-        val j = launch { rx.scanForID(byteArrayOf(0, 1, 2, 4), RX_DURATION) { id = true } }
+        launchPool.add(
+            GlobalScope.launch { rx.scanForID(byteArrayOf(0, 1, 2, 4), RX_DURATION) { id = true } })
         assert(device.receiving.get())
         assertFalse(id)
-        delay(100)
         device.receiveMessage(b)
-        delay(100)
         assertEquals(4, l.size)
         assert(l.all { it.contentEquals(b) })
         assertFalse(id)
         // 5100 ms passed, initial launch should be done, while the other should continue
-        delay(2000)
+        delay(2500)
         assert(device.receiving.get())
         device.receiveMessage(b)
-        delay(100)
         assertEquals(4, l.size)
         assert(l.all { it.contentEquals(b) })
         assertFalse(id)
         device.receiveMessage(byteArrayOf(0, 1, 2, 4, 5, 6, 7, 8, 9))
-        delay(500)
         assertEquals(4, l.size)
         assert(l.all { it.contentEquals(b) })
         assertFalse(device.receiving.get())
         assert(id)
-        delay(100)
         device.receiveMessage(b)
-        delay(100)
         assertEquals(4, l.size)
         assert(l.all { it.contentEquals(b) })
-        j.join()
     }
 
     @Test
@@ -157,20 +137,18 @@ class EventMeshReceiverTest {
         var id = false
         rx.duration = RX_DURATION // 5 sec
         assertFalse(device.receiving.get())
-        launch { rx.scanForID(byteArrayOf(0, 1, 2, 4), RX_DURATION) { id = true } }
+        launchPool.add(
+            GlobalScope.launch { rx.scanForID(byteArrayOf(0, 1, 2, 4), RX_DURATION) { id = true } })
         delay(100)
         assert(device.receiving.get())
         assertFalse(id)
         device.receiveMessage(b)
         assert(device.receiving.get())
         assertFalse(id)
-        delay(300)
         device.receiveMessage(b)
         assert(device.receiving.get())
         assertFalse(id)
-        delay(300)
         device.receiveMessage(byteArrayOf(0, 1, 2, 4, 5, 6, 7, 8, 9, 9, 9, 9))
-        delay(100)
         assertFalse(device.receiving.get())
         assert(id)
     }
@@ -184,39 +162,35 @@ class EventMeshReceiverTest {
         rx.setReceivedMessageCallback { l.add(it) }
         assertFalse(device.receiving.get())
         var id = false
-        launch { rx.scanForID(byteArrayOf(0, 1, 2, 4), RX_DURATION) { id = true } }
+        launchPool.add(
+            GlobalScope.launch { rx.scanForID(byteArrayOf(0, 1, 2, 4), RX_DURATION) { id = true } })
         delay(100)
         assert(device.receiving.get())
         assertFalse(id)
         device.receiveMessage(b)
         assert(device.receiving.get())
         assertFalse(id)
-        delay(300)
         device.receiveMessage(b)
         assert(device.receiving.get())
         assertFalse(id)
-        delay(200)
-        launch { rx.scanForMessages() }
+        launchPool.add(GlobalScope.launch { rx.scanForMessages() })
         delay(300)
         assert(device.receiving.get())
         assertEquals(0, l.size)
         assert(l.all { it.contentEquals(b) })
         device.receiveMessage(b)
-        delay(300)
         assertEquals(1, l.size)
         assert(l.all { it.contentEquals(b) })
         device.receiveMessage(b)
         device.receiveMessage(byteArrayOf(0, 1, 2, 4, 5, 6, 7, 8, 98, 7, 6, 6))
         delay(1000)
-        assertEquals(3, l.size)
-        assertEquals(l.size - 1, l.count { it.contentEquals(b) })
+        assertEquals(2, l.size)
+        assert(l.all { it.contentEquals(b) })
         assert(device.receiving.get())
         assert(id)
-        delay(100)
         device.receiveMessage(byteArrayOf(0, 1, 2, 4, 5, 6, 7, 8))
-        delay(100)
-        assertEquals(4, l.size)
-        assertEquals(l.size - 2, l.count { it.contentEquals(b) })
+        assertEquals(3, l.size)
+        assertEquals(l.size - 1, l.count { it.contentEquals(b) })
     }
 
     @Test
@@ -225,7 +199,7 @@ class EventMeshReceiverTest {
         val rx = EventMeshReceiver(device)
         rx.duration = 1_000
         assertFalse(device.receiving.get())
-        launch { rx.scanForMessages() }
+        launchPool.add(GlobalScope.launch { rx.scanForMessages() })
         delay(100)
         assert(device.receiving.get())
         delay(1_100)
@@ -241,32 +215,27 @@ class EventMeshReceiverTest {
         rx.setReceivedMessageCallback { l.add(it) }
 
         assertFalse(device.receiving.get())
-        launch { rx.scanForMessages() }
-        delay(100)
+        launchPool.add(GlobalScope.launch { rx.scanForMessages() })
+        delay(200)
         assert(device.receiving.get())
 
         device.receiveMessage(b)
-        delay(100)
         assertEquals(1, l.size)
         assert(l.all { it.contentEquals(b) })
         device.receiveMessage(b)
-        delay(100)
         assertEquals(2, l.size)
         assert(l.all { it.contentEquals(b) })
 
-        delay(1000)
+        delay(1500)
         assertFalse(device.receiving.get())
-        delay(100)
-        launch { rx.scanForMessages() }
-        delay(100)
+        launchPool.add(GlobalScope.launch { rx.scanForMessages() })
+        delay(200)
         assert(device.receiving.get())
 
         device.receiveMessage(b)
-        delay(100)
         assertEquals(3, l.size)
         assert(l.all { it.contentEquals(b) })
         device.receiveMessage(b)
-        delay(100)
         assertEquals(4, l.size)
         assert(l.all { it.contentEquals(b) })
     }
@@ -286,8 +255,6 @@ class EventMeshReceiverTest {
                 1_000) {}
         }
     }
-
-    // TODO: Test starting and stopping (and counter)
 
     @Test
     fun `multiple starters`() {

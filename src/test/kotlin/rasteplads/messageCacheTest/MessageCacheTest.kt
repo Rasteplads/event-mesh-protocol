@@ -7,10 +7,10 @@ import rasteplads.messageCache.MessageCache
 
 class MessageCacheTest {
     @Test
-    fun testOutdatedStringMessage() {
-        val cache = MessageCache<String>(60)
+    fun `test outdated string message`() {
+        val cache = MessageCache<String>(6)
         cache.cacheMessage("first")
-        Thread.sleep(60000L)
+        Thread.sleep(6_100L)
         cache.cacheMessage("second")
 
         assertFalse(cache.containsMessage("first"))
@@ -19,12 +19,12 @@ class MessageCacheTest {
     }
 
     @Test
-    fun testLifeTimeMessage() {
-        val cache1 = MessageCache<String>(30)
-        val cache2 = MessageCache<String>(60)
+    fun `test lifetime message`() {
+        val cache1 = MessageCache<String>(3)
+        val cache2 = MessageCache<String>(6)
         cache1.cacheMessage("first")
         cache2.cacheMessage("first2")
-        Thread.sleep(30000L)
+        Thread.sleep(3_100L)
         cache1.cacheMessage("second")
         cache2.cacheMessage("second2")
 
@@ -37,12 +37,12 @@ class MessageCacheTest {
     }
 
     @Test
-    fun testChangeCacheTime() {
-        val cache = MessageCache<String>(30)
+    fun `test change cache time`() {
+        val cache = MessageCache<String>(3)
         cache.cacheMessage("first")
-        cache.changeCacheTime(60)
+        cache.changeCacheTime(6)
         cache.cacheMessage("second")
-        Thread.sleep(30000L)
+        Thread.sleep(3_100L)
         cache.cacheMessage("third")
 
         assertFalse(cache.containsMessage("first"))
@@ -52,8 +52,8 @@ class MessageCacheTest {
     }
 
     @Test
-    fun testNoOutdatedStringMessage() {
-        val cache = MessageCache<String>(60)
+    fun `test no outdated string message`() {
+        val cache = MessageCache<String>(6)
         cache.cacheMessage("first")
         cache.cacheMessage("second")
 
@@ -63,8 +63,8 @@ class MessageCacheTest {
     }
 
     @Test
-    fun testDuplicateStringKey() {
-        val cache = MessageCache<String>(60)
+    fun `test duplicate string key`() {
+        val cache = MessageCache<String>(6)
         cache.cacheMessage("first")
         cache.cacheMessage("first")
 
@@ -72,8 +72,8 @@ class MessageCacheTest {
     }
 
     @Test
-    fun testDuplicateIntKey() {
-        val cache = MessageCache<Int>(60)
+    fun `test duplicate int key`() {
+        val cache = MessageCache<Int>(6)
         cache.cacheMessage(1)
         cache.cacheMessage(1)
 
@@ -81,8 +81,8 @@ class MessageCacheTest {
     }
 
     @Test
-    fun testNoOutdatedIntMessage() {
-        val cache = MessageCache<Int>(60)
+    fun `test no outdated int message`() {
+        val cache = MessageCache<Int>(6)
         cache.cacheMessage(1)
         cache.cacheMessage(2)
 
@@ -92,10 +92,10 @@ class MessageCacheTest {
     }
 
     @Test
-    fun testOutdatedIntMessage() {
-        val cache = MessageCache<Int>(60)
+    fun `test outdated int message`() {
+        val cache = MessageCache<Int>(6)
         cache.cacheMessage(1)
-        Thread.sleep(60000L)
+        Thread.sleep(6_100L)
         cache.cacheMessage(2)
 
         assertFalse(cache.containsMessage(1))

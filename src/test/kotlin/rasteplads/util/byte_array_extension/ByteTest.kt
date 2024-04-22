@@ -14,7 +14,7 @@ class ByteTest {
         assertEquals(v.toList(), v.toByte().toByteArray().toList())
 
     @Test
-    fun fromByteReflexive() {
+    fun `from byte reflexive`() {
         testEq(-1)
         testEq(0)
         testEq(1)
@@ -30,7 +30,7 @@ class ByteTest {
     }
 
     @Test
-    fun fromUByteReflexive() {
+    fun `from unsigned byte reflexive`() {
         testEq(0u)
         testEq(1u)
 
@@ -43,7 +43,7 @@ class ByteTest {
     }
 
     @Test
-    fun fromByteArrayReflexive() {
+    fun `from byte array reflexive`() {
         testEq(byteArrayOf(-1))
         testEq(byteArrayOf(0))
         testEq(byteArrayOf(1))
@@ -61,7 +61,7 @@ class ByteTest {
     }
 
     @Test
-    fun generatedTestsReflexive() {
+    fun `generated tests reflexive`() {
         val num = 100_000
         (0..num).forEach { _ ->
             generateRands(Byte.SIZE_BYTES).permutations().forEach { testEq(it.toByteArray()) }
@@ -71,7 +71,7 @@ class ByteTest {
     }
 
     @Test
-    fun throwsOnSmallArray() {
+    fun `throws on small array`() {
         val i = Byte.SIZE_BYTES
         (0..i).forEach { num ->
             if (num != Byte.SIZE_BYTES) {
@@ -82,7 +82,7 @@ class ByteTest {
     }
 
     @Test
-    fun redundancyInArraysIsIgnored() {
+    fun `redundancy in arrays is ignored`() {
         val i = 1000
         (0..i).forEach { _ ->
             val arr = generateRands(Byte.SIZE_BYTES * 2).toByteArray()
