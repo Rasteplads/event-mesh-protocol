@@ -135,7 +135,7 @@ private constructor(
         btSender
             .compareAndExchange(
                 null,
-                GlobalScope.launch(Dispatchers.Unconfined) {
+                GlobalScope.launch {
                     do {
                         delay(msgSendInterval.toMillis())
                         val id = msgId()
@@ -151,7 +151,7 @@ private constructor(
         btScanner
             .compareAndExchange(
                 null,
-                GlobalScope.launch(Dispatchers.Unconfined) {
+                GlobalScope.launch {
                     do {
                         delay(msgScanInterval.toMillis())
                         device.startReceiving()

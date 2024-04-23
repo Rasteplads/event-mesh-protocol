@@ -31,13 +31,17 @@ class EventMeshTest {
                 .find { m -> m.name == field }!!
                 .apply { isAccessible = true }
                 .call(target) as R
+
+        fun delay(ms: Long) {
+            Thread.sleep(ms)
+        }
     }
 
     @Nested
     inner class Receiving {
         @BeforeTest
         @AfterTest
-        fun clean(): Unit = runBlocking {
+        fun clean(): Unit  {
             testDevice.stopReceiving()
             testDevice.stopTransmitting()
             testDevice.receivedMsg.set(null)
@@ -47,7 +51,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `messages get passed through`(): Unit = runBlocking {
+        fun `messages get passed through`() {
             val l = mutableListOf<Int>()
             val f =
                 correct()
@@ -82,7 +86,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `works with message cache`(): Unit = runBlocking {
+        fun `works with message cache`() {
             val l = mutableListOf<Int>()
             val f =
                 correct()
@@ -119,7 +123,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `relays correctly`(): Unit = runBlocking {
+        fun `relays correctly`() {
             val l = mutableListOf<Int>()
             val f =
                 correct()
@@ -185,7 +189,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `relays correctly without cache`(): Unit = runBlocking {
+        fun `relays correctly without cache`(): Unit  {
             val f =
                 correct()
                     .setDataConstant(0)
@@ -295,7 +299,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `filters correctly with multiple`(): Unit = runBlocking {
+        fun `filters correctly with multiple`(): Unit  {
             val l = mutableListOf<Int>()
             val f =
                 correct()
@@ -354,7 +358,7 @@ class EventMeshTest {
 
         /* TODO: Not detecting exceptions
         @Test
-        fun `return arrays too large`(): Unit = runBlocking {
+        fun `return arrays too large`(): Unit  {
             val f =
                 correct()
                     // .withMsgScanInterval(Duration.ofMillis(100))
@@ -405,7 +409,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `testing data generator`(): Unit = runBlocking {
+        fun `testing data generator`(): Unit  {
             var d: Byte = 0
             val f =
                 correct()
@@ -445,7 +449,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `testing id generator`(): Unit = runBlocking {
+        fun `testing id generator`(): Unit  {
             var d = 0
             val f =
                 correct()
@@ -494,7 +498,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `testing data const`(): Unit = runBlocking {
+        fun `testing data const`(): Unit  {
             val d: Byte = 10
             val f =
                 correct()
@@ -524,7 +528,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `testing id const`(): Unit = runBlocking {
+        fun `testing id const`(): Unit  {
             val d = 10
             val f =
                 correct()
@@ -554,7 +558,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `testing correct ttl`(): Unit = runBlocking {
+        fun `testing correct ttl`(): Unit  {
             val d: Byte = 10
             val f =
                 correct()
