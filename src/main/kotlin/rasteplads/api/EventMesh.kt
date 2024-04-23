@@ -1,6 +1,7 @@
 package rasteplads.api
 
 import java.time.Duration
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.*
 import rasteplads.messageCache.MessageCache
 import rasteplads.util.Either
@@ -62,7 +63,7 @@ private constructor(
             if (msg[0].toUByte() > 0u) {
                 msg[0]--
                 messageCache?.cacheMessage(id)
-                relay(msg)
+                relay(msgTTL, idB, dataB)
             }
         }
         device = deviceBuilder.withReceiveMsgCallback(::scanningCallback).build()
@@ -73,7 +74,7 @@ private constructor(
     // private var msgDelete: Duration = Duration.ofSeconds(30)
 
     /** Time TO Live (TTL) for the messages. */
-    private var msgTTL: UInt = 10u
+    private var msgTTL: UByte = 10u
 
     /**
      * The interval the messages from [msgData] will be sent. This corresponds to 'Advertising
@@ -97,13 +98,11 @@ private constructor(
     /** The duration incoming messages will be scanned for. */
     // private var msgScanDuration: Duration = Duration.ofSeconds(1)
 
-    // TODO: rm?
     /** The maximum number of elements stored in the cache */
-    private var msgCacheLimit: Long = 32
+    // private var msgCacheLimit: Long = 32
 
-    // TODO: Test what is best
-    private var btScanner: Job = Job()
-    private lateinit var btSender: Job
+    private val btScanner: AtomicReference<Job?> = AtomicReference(null)
+    private val btSender: AtomicReference<Job?> = AtomicReference(null)
 
     private constructor(
         builder: BuilderImpl<ID, Data>
@@ -119,60 +118,72 @@ private constructor(
         builder.msgID,
         builder.filterID,
     ) {
-        // builder.device.withReceiveMsgCallback(::scanningCallback2)
-        // builder.msgDelete?.let { msgDelete = it }
         builder.msgTTL?.let { msgTTL = it }
 
         builder.msgSendInterval?.let { msgSendInterval = it }
-        // builder.msgSendTimeout?.let { msgSendTimeout = it }
 
         builder.msgScanInterval?.let { msgScanInterval = it }
 
-        builder.msgCacheLimit?.let { msgCacheLimit = it }
+        // builder.msgCacheLimit?.let { msgCacheLimit = it }
     }
 
-    /** TODO */
+    /**
+     * This function starts the device, and will launch to sub-processes; one for transmitting and
+     * one for receiving. If it has already been started, it will not overwrite the already started
+     * process.
+     *
+     * @see stop
+     */
     fun start() = runBlocking {
         messageCache?.clearCache()
-        btSender =
-            GlobalScope.launch(Dispatchers.IO) {
-                // try {
-                do {
-                    delay(msgSendInterval.toMillis())
-                    val id = msgId()
-                    val data = msgData()
-                    messageCache?.cacheMessage(id)
-                    device.startTransmitting(msgTTL.toByte(), encodeID(id), encodeData(data))
-                } while (isActive)
-                //   } finally {
-                //       // TODO: Handle cancel?
-                //   }
-            }
-        btScanner =
-            GlobalScope.launch(Dispatchers.IO) {
-                try {
+        btSender
+            .compareAndExchange(
+                null,
+                GlobalScope.launch {
+                    do {
+                        delay(msgSendInterval.toMillis())
+                        val id = msgId()
+                        val data = msgData()
+                        messageCache?.cacheMessage(id)
+                        device.startTransmitting(msgTTL.toByte(), encodeID(id), encodeData(data))
+                        yield()
+                    } while (isActive)
+                })
+            ?.join()
+
+        btScanner
+            .compareAndExchange(
+                null,
+                GlobalScope.launch {
                     do {
                         delay(msgScanInterval.toMillis())
                         device.startReceiving()
+                        yield()
                     } while (isActive)
-                } finally {
-                    // TODO: Handle cancel?
-                }
-            }
+                })
+            ?.join()
     }
 
-    /** TODO */
+    /**
+     * This function stops the device, waiting for it to finish its iteration.
+     *
+     * @see start
+     */
     fun stop() = runBlocking {
-        if (btSender.isActive) btSender.cancel()
-        if (btScanner.isActive) btScanner.cancel()
+        btSender.getAndSet(null)?.cancelAndJoin()
+        btScanner.getAndSet(null)?.cancelAndJoin()
     }
 
-    private fun relay(msg: ByteArray) {
-        println(msg.toList())
-        // TODO: Mod TTL, then send
-    }
+    private fun relay(ttl: UByte, id: ByteArray, data: ByteArray) =
+        device.startTransmitting(ttl.toByte(), id, data)
 
     companion object {
+
+        val exceptionHandler = CoroutineExceptionHandler { ctx, exception ->
+            // println("Caught an exception: ${exception.message}")
+            ctx.cancel()
+            // throw exception
+        }
         /**
          * Default value for the size of a message's data/content (when converted to buffer).
          *
@@ -457,7 +468,7 @@ private constructor(
              * @param t Number of relays
              * @return The modified [Builder]
              */
-            fun withMsgTTL(t: UInt): Builder<ID, Data>
+            fun withMsgTTL(t: UByte): Builder<ID, Data>
 
             /**
              * Sets the interval between message sending sessions
@@ -510,6 +521,7 @@ private constructor(
              */
             fun withMsgCache(b: MessageCache<ID>?): Builder<ID, Data>
 
+            /*
             /**
              * Sets the limit of elements saved in the message cache
              *
@@ -517,6 +529,7 @@ private constructor(
              * @return The modified [Builder]
              */
             fun withMsgCacheLimit(l: Long): Builder<ID, Data>
+             */
 
             /*
             /**
@@ -561,7 +574,7 @@ private constructor(
             val filterID: MutableList<(ID) -> Boolean> = mutableListOf()
 
             // var msgDelete: Duration? = null
-            var msgTTL: UInt? = null
+            var msgTTL: UByte? = null
 
             var msgSendInterval: Duration? = null
 
@@ -674,7 +687,7 @@ private constructor(
                 return this
             }
 
-            override fun withMsgTTL(t: UInt): Builder<ID, Data> {
+            override fun withMsgTTL(t: UByte): Builder<ID, Data> {
                 msgTTL = t
                 return this
             }
@@ -712,10 +725,12 @@ private constructor(
                 return this
             }
 
+            /*
             override fun withMsgCacheLimit(l: Long): Builder<ID, Data> {
                 msgCacheLimit = l
                 return this
             }
+             */
         }
     }
 }
