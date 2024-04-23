@@ -41,7 +41,7 @@ class EventMeshTest {
     inner class Receiving {
         @BeforeTest
         @AfterTest
-        fun clean(): Unit  {
+        fun clean(): Unit {
             testDevice.stopReceiving()
             testDevice.stopTransmitting()
             testDevice.receivedMsg.set(null)
@@ -189,7 +189,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `relays correctly without cache`(): Unit  {
+        fun `relays correctly without cache`(): Unit {
             val f =
                 correct()
                     .setDataConstant(0)
@@ -299,7 +299,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `filters correctly with multiple`(): Unit  {
+        fun `filters correctly with multiple`(): Unit {
             val l = mutableListOf<Int>()
             val f =
                 correct()
@@ -409,7 +409,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `testing data generator`(): Unit  {
+        fun `testing data generator`(): Unit {
             var d: Byte = 0
             val f =
                 correct()
@@ -449,7 +449,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `testing id generator`(): Unit  {
+        fun `testing id generator`(): Unit {
             var d = 0
             val f =
                 correct()
@@ -498,7 +498,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `testing data const`(): Unit  {
+        fun `testing data const`(): Unit {
             val d: Byte = 10
             val f =
                 correct()
@@ -528,7 +528,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `testing id const`(): Unit  {
+        fun `testing id const`(): Unit {
             val d = 10
             val f =
                 correct()
@@ -558,7 +558,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `testing correct ttl`(): Unit  {
+        fun `testing correct ttl`(): Unit {
             val d: Byte = 10
             val f =
                 correct()
