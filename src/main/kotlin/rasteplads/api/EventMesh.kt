@@ -144,7 +144,8 @@ private constructor(
                         device.startTransmitting(msgTTL.toByte(), encodeID(id), encodeData(data))
                         yield()
                     } while (isActive)
-                })
+                }
+            )
             ?.join()
 
         btScanner
@@ -156,7 +157,8 @@ private constructor(
                         device.startReceiving()
                         yield()
                     } while (isActive)
-                })
+                }
+            )
             ?.join()
     }
 
@@ -219,7 +221,7 @@ private constructor(
         /**
          * Creates a [Builder] for [EventMesh] with a provided [TransportDevice]. This device is
          * used for both the [EventMeshReceiver] and [EventMeshTransmitter]. The default message
-         * cache ([MessageCache]) is used.
+         * cache ( [MessageCache]) is used.
          *
          * @param ID The messages' ID
          * @param Data The messages' content
@@ -227,13 +229,14 @@ private constructor(
          */
         fun <ID, Data> builder(device: TransportDevice): Builder<ID, Data> =
             BuilderImpl(
-                EventMeshDevice.Builder().withDevice(device), MessageCache(MESSAGE_CACHE_TIME)
+                EventMeshDevice.Builder().withDevice(device),
+                MessageCache(MESSAGE_CACHE_TIME)
             )
 
         /**
          * Creates a [Builder] for [EventMesh] with a provided [TransportDevice]. This device is
          * used for both the [EventMeshReceiver] and [EventMeshTransmitter]. The provided message
-         * cache ([MessageCache]) is used (set to `null` to disable).
+         * cache ( [MessageCache]) is used (set to `null` to disable).
          *
          * @param ID The messages' ID
          * @param Data The messages' content

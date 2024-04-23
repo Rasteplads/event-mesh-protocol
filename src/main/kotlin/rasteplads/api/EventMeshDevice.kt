@@ -92,7 +92,12 @@ class EventMeshDevice(
             // val transmitter = this.transmitter ?: EventMeshTransmitter<T>()
 
             return EventMeshDevice(
-                receiver, transmitter, rxDuration = rxDuration, txTimeout = txTimeout, echo = echo)
+                receiver,
+                transmitter,
+                rxDuration = rxDuration,
+                txTimeout = txTimeout,
+                echo = echo
+            )
         }
 
         fun withDevice(device: TransportDevice): Builder {

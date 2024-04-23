@@ -99,7 +99,10 @@ class EventMeshDeviceTest {
     fun `throws with small id`(): Unit = runBlocking {
         val e =
             EventMeshDevice(
-                EventMeshReceiver(device), EventMeshTransmitter(device), Duration.ofMillis(100))
+                EventMeshReceiver(device),
+                EventMeshTransmitter(device),
+                Duration.ofMillis(100)
+            )
 
         for (i in ID_MAX_SIZE + 1..Short.MAX_VALUE) { // Arbitrary big value
             assertFails { e.startTransmitting(0, generateRands(i).toByteArray(), byteArrayOf()) }
@@ -148,7 +151,8 @@ class EventMeshDeviceTest {
         // 1000 / 100 = 10 (+1 cuz it does it on time 0)
         assertEquals(
             (tx.transmitTimeout.floorDiv(T_INTERVAL) + 1).toInt(),
-            device.transmittedMessages.get().size)
+            device.transmittedMessages.get().size
+        )
 
         val combined = ttl + byteArrayOf(0, 1, 2, 3) + b
         assert(device.transmittedMessages.get().all { it.contentEquals(combined) })
@@ -162,7 +166,8 @@ class EventMeshDeviceTest {
         val e = EventMeshDevice(rx, tx, txTimeout = Duration.ofMillis(1000), echo = { echo = true })
 
         launchPool.add(
-            GlobalScope.launch { e.startTransmitting(2, byteArrayOf(0, 1, 2, 3), byteArrayOf()) })
+            GlobalScope.launch { e.startTransmitting(2, byteArrayOf(0, 1, 2, 3), byteArrayOf()) }
+        )
         delay(100)
         assert(device.transmitting.get())
         assert(device.receiving.get())
@@ -187,7 +192,8 @@ class EventMeshDeviceTest {
         val e = EventMeshDevice(rx, tx, txTimeout = Duration.ofMillis(1001), echo = { echo = true })
 
         launchPool.add(
-            GlobalScope.launch { e.startTransmitting(2, byteArrayOf(0, 1, 2, 3), byteArrayOf()) })
+            GlobalScope.launch { e.startTransmitting(2, byteArrayOf(0, 1, 2, 3), byteArrayOf()) }
+        )
         delay(100)
         assertFalse(echo)
         assert(device.transmitting.get())

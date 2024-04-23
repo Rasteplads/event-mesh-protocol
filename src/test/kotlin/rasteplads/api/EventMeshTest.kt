@@ -135,7 +135,8 @@ class EventMeshTest {
                     .get()
                     .distinct()
                     .filter { b -> !b.all { i -> i == (0).toByte() } }
-                    .size)
+                    .size
+            )
 
             testDevice.receiveMessage(byteArrayOf(Byte.MIN_VALUE, 0, 0, 0, 3, 6, 7))
             delay(500)
@@ -145,7 +146,8 @@ class EventMeshTest {
                     .get()
                     .distinct()
                     .filter { b -> !b.all { i -> i == (0).toByte() } }
-                    .size)
+                    .size
+            )
 
             testDevice.receiveMessage(byteArrayOf(Byte.MIN_VALUE.inc(), 0, 0, 0, 4, 6, 7))
             delay(500)
@@ -155,7 +157,8 @@ class EventMeshTest {
                     .get()
                     .distinct()
                     .filter { b -> !b.all { i -> i == (0).toByte() } }
-                    .size)
+                    .size
+            )
 
             // NO DOUBLE RELAY
             testDevice.receiveMessage(byteArrayOf(Byte.MIN_VALUE.inc(), 0, 0, 0, 4, 6, 7))
@@ -166,7 +169,8 @@ class EventMeshTest {
                     .get()
                     .distinct()
                     .filter { b -> !b.all { i -> i == (0).toByte() } }
-                    .size)
+                    .size
+            )
             f.stop()
         }
 
@@ -184,7 +188,6 @@ class EventMeshTest {
                     .withMsgCache(null)
                     .build()
 
-
             f.start()
             delay(500)
             assertEquals(
@@ -192,8 +195,9 @@ class EventMeshTest {
                 testDevice.transmittedMessages
                     .get()
                     .distinct()
-                    .filterNot { b -> b.slice(1..<b.size).all { i -> i == (0).toByte() } }
-                    .size)
+                    .filterNot { b -> b.slice(1 ..< b.size).all { i -> i == (0).toByte() } }
+                    .size
+            )
 
             testDevice.receiveMessage(byteArrayOf(Byte.MIN_VALUE, 0, 0, 0, 3, 6, 7))
             delay(500)
@@ -202,11 +206,10 @@ class EventMeshTest {
                 testDevice.transmittedMessages
                     .get()
                     .map(ByteArray::toList)
-                    //.distinct()
-                    .filterNot { b -> b.slice(1..<b.size).all { i ->
-                        i == (0).toByte()
-                    } }
-                    .size)
+                    // .distinct()
+                    .filterNot { b -> b.slice(1 ..< b.size).all { i -> i == (0).toByte() } }
+                    .size
+            )
 
             val b = byteArrayOf(Byte.MIN_VALUE.inc(), 0, 0, 0, 4, 6, 7)
             testDevice.receiveMessage(b)
@@ -217,8 +220,9 @@ class EventMeshTest {
                     .get()
                     .map(ByteArray::toList)
                     .distinct()
-                    .filterNot { bp -> bp.slice(1..<bp.size).all { i -> i == (0).toByte() } }
-                    .size)
+                    .filterNot { bp -> bp.slice(1 ..< bp.size).all { i -> i == (0).toByte() } }
+                    .size
+            )
 
             val bEx = byteArrayOf(Byte.MIN_VALUE, 0, 0, 0, 4, 6, 7)
 
@@ -228,8 +232,9 @@ class EventMeshTest {
             assert(
                 testDevice.transmittedMessages
                     .get()
-                    .filterNot { bp -> bp.slice(1..<bp.size).all { i -> i == (0).toByte() } }
-                    .all { l -> bEx.contentEquals(l) })
+                    .filterNot { bp -> bp.slice(1 ..< bp.size).all { i -> i == (0).toByte() } }
+                    .all { l -> bEx.contentEquals(l) }
+            )
             f.stop()
         }
 
@@ -279,7 +284,10 @@ class EventMeshTest {
                     .withMsgSendInterval(Duration.ofMillis(50))
                     .withMsgSendTimeout(Duration.ofMillis(10))
                     .addFilterFunction(
-                        { i -> i % 2 == 0 }, { i -> i > 5 }, { i -> i < 15 }) // Only even numbers
+                        { i -> i % 2 == 0 },
+                        { i -> i > 5 },
+                        { i -> i < 15 }
+                    ) // Only even numbers
                     .withMsgCacheDelete(Duration.ofSeconds(1))
                     .setIDConstant(0)
                     .setDataConstant(0)
@@ -294,8 +302,9 @@ class EventMeshTest {
                 0,
                 testDevice.transmittedMessages
                     .get()
-                    .filterNot { i -> i.slice(1..<i.size).all { it == (0).toByte() } }
-                    .size)
+                    .filterNot { i -> i.slice(1 ..< i.size).all { it == (0).toByte() } }
+                    .size
+            )
 
             testDevice.receiveMessage(byteArrayOf(Byte.MIN_VALUE, 0, 0, 0, 6, 6, 7))
             delay(100)
@@ -392,7 +401,8 @@ class EventMeshTest {
 
             assertEquals(
                 d.get(),
-                testDevice.transmittedMessages.get().map(ByteArray::toList).distinct().size)
+                testDevice.transmittedMessages.get().map(ByteArray::toList).distinct().size
+            )
             assertEquals(
                 0,
                 testDevice.transmittedMessages
@@ -400,15 +410,12 @@ class EventMeshTest {
                     .map(ByteArray::toList)
                     .distinct()
                     .first()
-                    .last())
+                    .last()
+            )
             assertEquals(
                 (d.get() - 1).toByte(),
-                testDevice.transmittedMessages
-                    .get()
-                    .map(ByteArray::toList)
-                    .distinct()
-                    .last()
-                    .last())
+                testDevice.transmittedMessages.get().map(ByteArray::toList).distinct().last().last()
+            )
         }
 
         @Test
@@ -431,7 +438,8 @@ class EventMeshTest {
 
             assertEquals(
                 d.get(),
-                testDevice.transmittedMessages.get().map(ByteArray::toList).distinct().size)
+                testDevice.transmittedMessages.get().map(ByteArray::toList).distinct().size
+            )
             assertEquals(
                 (d.get() - 1),
                 testDevice.transmittedMessages
@@ -441,7 +449,8 @@ class EventMeshTest {
                     .last()
                     .slice(1..5)
                     .toByteArray()
-                    .toInt())
+                    .toInt()
+            )
             assertEquals(
                 0,
                 testDevice.transmittedMessages
@@ -451,7 +460,8 @@ class EventMeshTest {
                     .first()
                     .slice(1..5)
                     .toByteArray()
-                    .toInt())
+                    .toInt()
+            )
         }
 
         @Test
@@ -476,7 +486,8 @@ class EventMeshTest {
             assert(
                 testDevice.transmittedMessages.get().map(ByteArray::toList).all { b ->
                     b.last() == d
-                })
+                }
+            )
         }
 
         @Test
@@ -501,7 +512,8 @@ class EventMeshTest {
             assert(
                 testDevice.transmittedMessages.get().map(ByteArray::toList).all { b ->
                     b.slice(1..5).toByteArray().toInt() == d
-                })
+                }
+            )
         }
 
         @Test
@@ -520,10 +532,7 @@ class EventMeshTest {
             delay(1000)
             f.stop()
 
-            assert(
-                testDevice.transmittedMessages.get().distinct().all { i ->
-                    i.first() == d
-                })
+            assert(testDevice.transmittedMessages.get().distinct().all { i -> i.first() == d })
         }
     }
 
@@ -663,14 +672,18 @@ class EventMeshTest {
             var default = getValueFromClass<EventMesh<Int, Byte>, Duration>(f.build(), name)
             var modded =
                 getValueFromClass<EventMesh<Int, Byte>, Duration>(
-                    f.withMsgSendInterval(default.plusMinutes(10)).build(), name)
+                    f.withMsgSendInterval(default.plusMinutes(10)).build(),
+                    name
+                )
             Assertions.assertNotEquals(modded, default)
 
             name = "msgScanInterval"
             default = getValueFromClass<EventMesh<Int, Byte>, Duration>(f.build(), name)
             modded =
                 getValueFromClass<EventMesh<Int, Byte>, Duration>(
-                    f.withMsgScanInterval(default.plusMinutes(10)).build(), name)
+                    f.withMsgScanInterval(default.plusMinutes(10)).build(),
+                    name
+                )
             Assertions.assertNotEquals(modded, default)
 
             /*
@@ -686,7 +699,9 @@ class EventMeshTest {
             val deff: Byte = getValueFromClass<EventMesh<Int, Byte>, Byte>(f.build(), name)
             val modd =
                 getValueFromClass<EventMesh<Int, Byte>, Byte>(
-                    f.withMsgTTL((deff + 10).toByte()).build(), name)
+                    f.withMsgTTL((deff + 10).toByte()).build(),
+                    name
+                )
             Assertions.assertNotEquals(modd, deff)
 
             name = "device"
@@ -695,14 +710,18 @@ class EventMeshTest {
             assertNull(echo)
             device =
                 getValueFromClass<EventMesh<Int, Byte>, EventMeshDevice>(
-                    f.withEchoCallback {}.build(), name)
+                    f.withEchoCallback {}.build(),
+                    name
+                )
             echo = getValueFromClass<EventMeshDevice, (() -> Unit)?>(device, "echo")
             assertNotNull(echo)
 
             val rxDuration: Long = 50
             device =
                 getValueFromClass<EventMesh<Int, Byte>, EventMeshDevice>(
-                    f.withMsgScanDuration(Duration.ofMillis(rxDuration)).build(), name)
+                    f.withMsgScanDuration(Duration.ofMillis(rxDuration)).build(),
+                    name
+                )
             val rx = getValueFromClass<EventMeshDevice, EventMeshReceiver>(device, "receiver")
             assertEquals(rxDuration, getValueFromClass<EventMeshReceiver, Long>(rx, "duration"))
         }
@@ -722,10 +741,14 @@ class EventMeshTest {
                     .setDataEncodeFunction { b -> byteArrayOf(b) }
             // .build()
             Assertions.assertNotNull(
-                getValueFromClass<EventMesh<Int, Byte>, MessageCache<Int>?>(f.build(), name))
+                getValueFromClass<EventMesh<Int, Byte>, MessageCache<Int>?>(f.build(), name)
+            )
             Assertions.assertNull(
                 getValueFromClass<EventMesh<Int, Byte>, MessageCache<Int>?>(
-                    f.withMsgCache(null).build(), name))
+                    f.withMsgCache(null).build(),
+                    name
+                )
+            )
 
             val g =
                 EventMesh.builder<Int, Byte>(testDevice)
@@ -739,7 +762,10 @@ class EventMeshTest {
             // .build()
             Assertions.assertNull(
                 getValueFromClass<EventMesh<Int, Byte>, MessageCache<*>?>(
-                    g.withMsgCache(null).build(), name))
+                    g.withMsgCache(null).build(),
+                    name
+                )
+            )
         }
 
         @Test
@@ -756,7 +782,9 @@ class EventMeshTest {
             var newTime: Long = 30_000
             mc =
                 getValueFromClass<EventMesh<Int, Byte>, MessageCache<Int>?>(
-                    f.withMsgCacheDelete(Duration.ofMillis(newTime)).build(), name)
+                    f.withMsgCacheDelete(Duration.ofMillis(newTime)).build(),
+                    name
+                )
             Assertions.assertNotNull(mc)
             time = getValueFromClass<MessageCache<Int>, Long>(mc!!, ms)
             assertEquals(newTime, time)
@@ -764,7 +792,9 @@ class EventMeshTest {
             newTime = 15_000
             mc =
                 getValueFromClass<EventMesh<Int, Byte>, MessageCache<Int>?>(
-                    f.setMessageCache(MessageCache(newTime)).build(), name)
+                    f.setMessageCache(MessageCache(newTime)).build(),
+                    name
+                )
             Assertions.assertNotNull(mc)
             time = getValueFromClass<MessageCache<Int>, Long>(mc!!, ms)
             assertEquals(newTime, time)
@@ -857,7 +887,10 @@ class EventMeshTest {
 
             b =
                 EventMesh.builder(
-                    EventMeshReceiver(testDevice), EventMeshTransmitter(testDevice), null)
+                    EventMeshReceiver(testDevice),
+                    EventMeshTransmitter(testDevice),
+                    null
+                )
             assertFails { b.build() }
             b.setDataConstant(0)
                 .setIDGenerator { 10 }
@@ -872,7 +905,8 @@ class EventMeshTest {
                 EventMesh.builder(
                     EventMeshReceiver(testDevice),
                     EventMeshTransmitter(testDevice),
-                    MessageCache(MESSAGE_CACHE_TIME))
+                    MessageCache(MESSAGE_CACHE_TIME)
+                )
             assertFails { b.build() }
             b.setDataConstant(0)
                 .setIDGenerator { 10 }

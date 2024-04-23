@@ -16,7 +16,8 @@ class EventMeshReceiver(private val device: TransportDevice) {
     private val handle:
         Pair<
             AtomicReference<suspend (ByteArray) -> Unit?>,
-            AtomicReference<suspend (ByteArray) -> Boolean?>> =
+            AtomicReference<suspend (ByteArray) -> Boolean?>
+        > =
         Pair(AtomicReference(null), AtomicReference(null))
 
     fun scanForID(id: ByteArray, timeout: Long, callback: suspend () -> Unit) = runBlocking {

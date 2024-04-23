@@ -63,7 +63,8 @@ class EventMeshReceiverTest {
         assert(l.all { it.contentEquals(b) })
         var id = false
         launchPool.add(
-            GlobalScope.launch { rx.scanForID(byteArrayOf(0, 1, 2, 4), RX_DURATION) { id = true } })
+            GlobalScope.launch { rx.scanForID(byteArrayOf(0, 1, 2, 4), RX_DURATION) { id = true } }
+        )
         assertFalse(id)
         delay(100)
         device.receiveMessage(b)
@@ -105,7 +106,8 @@ class EventMeshReceiverTest {
         assert(l.all { it.contentEquals(b) })
         var id = false
         launchPool.add(
-            GlobalScope.launch { rx.scanForID(byteArrayOf(0, 1, 2, 4), RX_DURATION) { id = true } })
+            GlobalScope.launch { rx.scanForID(byteArrayOf(0, 1, 2, 4), RX_DURATION) { id = true } }
+        )
         assert(device.receiving.get())
         assertFalse(id)
         device.receiveMessage(b)
@@ -137,7 +139,8 @@ class EventMeshReceiverTest {
         rx.duration = RX_DURATION // 5 sec
         assertFalse(device.receiving.get())
         launchPool.add(
-            GlobalScope.launch { rx.scanForID(byteArrayOf(0, 1, 2, 4), RX_DURATION) { id = true } })
+            GlobalScope.launch { rx.scanForID(byteArrayOf(0, 1, 2, 4), RX_DURATION) { id = true } }
+        )
         delay(100)
         assert(device.receiving.get())
         assertFalse(id)
@@ -162,7 +165,8 @@ class EventMeshReceiverTest {
         assertFalse(device.receiving.get())
         var id = false
         launchPool.add(
-            GlobalScope.launch { rx.scanForID(byteArrayOf(0, 1, 2, 4), RX_DURATION) { id = true } })
+            GlobalScope.launch { rx.scanForID(byteArrayOf(0, 1, 2, 4), RX_DURATION) { id = true } }
+        )
         delay(100)
         assert(device.receiving.get())
         assertFalse(id)
@@ -251,7 +255,8 @@ class EventMeshReceiverTest {
                     5,
                     6,
                 ),
-                1_000) {}
+                1_000
+            ) {}
         }
     }
 

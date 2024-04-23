@@ -2,7 +2,7 @@ val kotlinVersion: String = "1.9.23"
 
 plugins {
     kotlin("jvm") version "1.9.23"
-    id("com.diffplug.spotless") version "6.25.0"
+    id("com.ncorti.ktfmt.gradle") version "0.11.0"
 }
 
 group = "org.rasteplads"
@@ -24,8 +24,7 @@ tasks.test {
     useJUnitPlatform()
 }
 
-spotless {
-    kotlin {
-        ktfmt("0.44").dropboxStyle()
-    }
+ktfmt {
+    // KotlinLang style - 4 space indentation - From kotlinlang.org/docs/coding-conventions.html
+    kotlinLangStyle()
 }
