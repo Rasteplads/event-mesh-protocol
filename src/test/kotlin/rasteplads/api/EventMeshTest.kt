@@ -253,7 +253,10 @@ class EventMeshTest {
         }
 
         @Test
-        fun `filters correctly with one`(): Unit = runBlocking {
+        fun `filters correctly with one`() {
+            fun delay(ms: Long) {
+                Thread.sleep(ms)
+            }
             val l = mutableListOf<Int>()
             val f =
                 correct()
