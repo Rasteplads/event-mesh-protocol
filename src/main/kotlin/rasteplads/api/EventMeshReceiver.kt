@@ -6,8 +6,6 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.max
 import kotlinx.coroutines.*
 
-// TODO: Handling of timeouts should be reconsidered (or maybe implement a counter of sorts)
-
 class EventMeshReceiver(private val device: TransportDevice) {
     var duration: Long = 10_000 // 10 sec //TODO: Default val
     private val scannerCount: AtomicInteger = AtomicInteger(0)
@@ -18,7 +16,8 @@ class EventMeshReceiver(private val device: TransportDevice) {
     private val handle:
         Pair<
             AtomicReference<suspend (ByteArray) -> Unit?>,
-            AtomicReference<suspend (ByteArray) -> Boolean?>> =
+            AtomicReference<suspend (ByteArray) -> Boolean?>
+        > =
         Pair(AtomicReference(null), AtomicReference(null))
 
     fun scanForID(id: ByteArray, timeout: Long, callback: suspend () -> Unit) = runBlocking {
@@ -58,15 +57,14 @@ class EventMeshReceiver(private val device: TransportDevice) {
     }
 
     private fun startDevice() {
-        if (scannerCount.getAndIncrement() <= 0) {
+        if (scannerCount.getAndIncrement() <= 0)
             runner.set(GlobalScope.launch { device.beginReceiving(::scanForMessagesCallback) })
-        }
     }
 
-    private fun stopDevice() {
+    private fun stopDevice() = runBlocking {
         if (scannerCount.updateAndGet { old -> max(old - 1, 0) } == 0) {
             device.stopReceiving()
-            runner.getAndSet(null)?.cancel() // .set(device.stopReceiving()) ?: Unit
+            runner.getAndSet(null)?.join() // .set(device.stopReceiving()) ?: Unit
         }
     }
 

@@ -24,22 +24,17 @@ class EventMeshDevice(
         val tx = launch { transmitter.transmit(combinedMsg) }
 
         try {
-            // tx.ensureActive()
-            // withTimeout(transmitter.transmitTimeout) {
             receiver.scanForID(id, transmitter.transmitTimeout) { tx.cancel() }
-            // }
         } catch (e: TimeoutCancellationException) {
             echo?.invoke()
-        } // catch (e:  CancellationException) {
-        //    // Hvad
-        // }
+        }
     }
 
     fun startReceiving() = receiver.scanForMessages()
 
     class Builder {
-        private var receiver: EventMeshReceiver? = null
-        private var transmitter: EventMeshTransmitter? = null
+        private lateinit var receiver: EventMeshReceiver
+        private lateinit var transmitter: EventMeshTransmitter
         private var txTimeout: Duration? = null
         private var rxDuration: Duration? = null
         private var echo: (() -> Unit)? = null
@@ -79,22 +74,36 @@ class EventMeshDevice(
             return this
         }
 
-        fun build(): EventMeshDevice {
-            check(transmitter != null) {
-                "A transmitter must be specified when using the EventMeshDevice.Builder."
-            }
-            check(receiver != null) {
+        fun withReceiveMsgCallback(f: suspend (ByteArray) -> Unit): Builder {
+            check(::receiver.isInitialized) {
                 "A receiver must be specified when using the EventMeshDevice.Builder."
             }
-            // TODO: Construct tx and rx if none are provided.
+            receiver.setReceivedMessageCallback(f)
+            return this
+        }
+
+        fun build(): EventMeshDevice {
+            check(::transmitter.isInitialized) {
+                "A transmitter must be specified when using the EventMeshDevice.Builder."
+            }
+            check(::receiver.isInitialized) {
+                "A receiver must be specified when using the EventMeshDevice.Builder."
+            }
             // val transmitter = this.transmitter ?: EventMeshTransmitter<T>()
 
             return EventMeshDevice(
-                receiver!!,
-                transmitter!!,
+                receiver,
+                transmitter,
                 rxDuration = rxDuration,
                 txTimeout = txTimeout,
-                echo = echo)
+                echo = echo
+            )
+        }
+
+        fun withDevice(device: TransportDevice): Builder {
+            receiver = EventMeshReceiver(device)
+            transmitter = EventMeshTransmitter(device)
+            return this
         }
     }
 }

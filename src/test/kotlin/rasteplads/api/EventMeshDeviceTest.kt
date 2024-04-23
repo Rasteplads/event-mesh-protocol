@@ -14,16 +14,14 @@ import rasteplads.util.plus
 class MockDevice(override val transmissionInterval: Long) : TransportDevice {
     val transmittedMessages: AtomicReference<MutableList<ByteArray>> =
         AtomicReference(mutableListOf())
-    val receivedPool: AtomicReference<MutableList<ByteArray>> = AtomicReference(mutableListOf())
     val receivedMsg: AtomicReference<ByteArray?> = AtomicReference(null)
 
     val transmitting: AtomicBoolean = AtomicBoolean(false)
     val receiving: AtomicBoolean = AtomicBoolean(false)
 
-    var tx: Job? = null
+    private var tx: Job? = null
 
     override fun beginTransmitting(message: ByteArray): Unit = runBlocking {
-        transmittedMessages.get().removeAll { true }
         transmitting.set(true)
 
         tx =
@@ -31,7 +29,7 @@ class MockDevice(override val transmissionInterval: Long) : TransportDevice {
                 try {
                     while (isActive) {
                         yield()
-                        transmittedMessages.get().add(message)
+                        transmittedMessages.get().add(message.clone())
                         yield()
                         delay(transmissionInterval)
                         yield()
@@ -73,15 +71,15 @@ class MockDevice(override val transmissionInterval: Long) : TransportDevice {
 
 class EventMeshDeviceTest {
     private val launchPool = mutableListOf<Job>()
-    // @BeforeTest
+
+    @BeforeTest
     @AfterTest
     fun clean(): Unit = runBlocking {
         device.stopReceiving()
         device.stopTransmitting()
-        // device.transmittedMessages.get().removeAll { true }
+        device.transmittedMessages.get().removeAll { true }
         device.receivedMsg.set(null)
-        device.receivedPool.get().removeAll { true }
-        launchPool.forEach { it.cancelAndJoin() }
+        launchPool.forEach { it.cancel() }
         launchPool.removeAll { true }
     }
 
@@ -101,7 +99,10 @@ class EventMeshDeviceTest {
     fun `throws with small id`(): Unit = runBlocking {
         val e =
             EventMeshDevice(
-                EventMeshReceiver(device), EventMeshTransmitter(device), Duration.ofMillis(100))
+                EventMeshReceiver(device),
+                EventMeshTransmitter(device),
+                Duration.ofMillis(100)
+            )
 
         for (i in ID_MAX_SIZE + 1..Short.MAX_VALUE) { // Arbitrary big value
             assertFails { e.startTransmitting(0, generateRands(i).toByteArray(), byteArrayOf()) }
@@ -137,13 +138,10 @@ class EventMeshDeviceTest {
         val tx = EventMeshTransmitter(device)
         val l = mutableListOf<ByteArray>()
         rx.setReceivedMessageCallback(l::add)
-        val e = EventMeshDevice(rx, tx, txTimeout = Duration.ofMillis(1045))
+        val e = EventMeshDevice(rx, tx, txTimeout = Duration.ofMillis(1030))
 
         val ttl: Byte = 2
-        launchPool.add(
-            GlobalScope.launch(Dispatchers.IO) {
-                e.startTransmitting(ttl, byteArrayOf(0, 1, 2, 3), b)
-            })
+        launchPool.add(GlobalScope.launch { e.startTransmitting(ttl, byteArrayOf(0, 1, 2, 3), b) })
         delay(200)
         assert(device.transmitting.get())
         assert(device.receiving.get())
@@ -153,7 +151,8 @@ class EventMeshDeviceTest {
         // 1000 / 100 = 10 (+1 cuz it does it on time 0)
         assertEquals(
             (tx.transmitTimeout.floorDiv(T_INTERVAL) + 1).toInt(),
-            device.transmittedMessages.get().size)
+            device.transmittedMessages.get().size
+        )
 
         val combined = ttl + byteArrayOf(0, 1, 2, 3) + b
         assert(device.transmittedMessages.get().all { it.contentEquals(combined) })
@@ -167,7 +166,8 @@ class EventMeshDeviceTest {
         val e = EventMeshDevice(rx, tx, txTimeout = Duration.ofMillis(1000), echo = { echo = true })
 
         launchPool.add(
-            GlobalScope.launch { e.startTransmitting(2, byteArrayOf(0, 1, 2, 3), byteArrayOf()) })
+            GlobalScope.launch { e.startTransmitting(2, byteArrayOf(0, 1, 2, 3), byteArrayOf()) }
+        )
         delay(100)
         assert(device.transmitting.get())
         assert(device.receiving.get())
@@ -192,7 +192,8 @@ class EventMeshDeviceTest {
         val e = EventMeshDevice(rx, tx, txTimeout = Duration.ofMillis(1001), echo = { echo = true })
 
         launchPool.add(
-            GlobalScope.launch { e.startTransmitting(2, byteArrayOf(0, 1, 2, 3), byteArrayOf()) })
+            GlobalScope.launch { e.startTransmitting(2, byteArrayOf(0, 1, 2, 3), byteArrayOf()) }
+        )
         delay(100)
         assertFalse(echo)
         assert(device.transmitting.get())
@@ -218,6 +219,7 @@ class EventMeshDeviceTest {
         fun `Missing receiver`() {
             val tx = EventMeshTransmitter(device)
             assertFails { EventMeshDevice.Builder().withTransmitter(tx).build() }
+            assertFails { EventMeshDevice.Builder().withTransmitter(tx).withReceiveMsgCallback {} }
         }
 
         @Test

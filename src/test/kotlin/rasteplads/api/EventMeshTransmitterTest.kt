@@ -16,7 +16,6 @@ class EventMeshTransmitterTest {
         device.stopReceiving()
         device.stopTransmitting()
         device.transmittedMessages.get().removeAll { true }
-        device.receivedPool.get().removeAll { true }
         device.receivedMsg.set(null)
         launchPool.forEach { it.cancelAndJoin() }
         launchPool.removeAll { true }
@@ -34,9 +33,12 @@ class EventMeshTransmitterTest {
         delay(1000)
         assertFalse(device.transmitting.get())
         assertEquals(
-            (tx.transmitTimeout / TX_INTERVAL), device.transmittedMessages.get().size.toLong())
+            (tx.transmitTimeout / TX_INTERVAL),
+            device.transmittedMessages.get().size.toLong()
+        )
         assert(device.transmittedMessages.get().all { it.contentEquals(b) })
 
+        device.transmittedMessages.get().removeAll { true }
         tx.transmitTimeout = 1000
         launchPool.add(GlobalScope.launch { tx.transmit(b) })
         delay(150)
@@ -46,7 +48,9 @@ class EventMeshTransmitterTest {
         assertFalse(device.transmitting.get())
 
         assertEquals(
-            (tx.transmitTimeout / TX_INTERVAL), device.transmittedMessages.get().size.toLong())
+            (tx.transmitTimeout / TX_INTERVAL),
+            device.transmittedMessages.get().size.toLong()
+        )
         assert(device.transmittedMessages.get().all { it.contentEquals(b) })
     }
 

@@ -1,56 +1,17 @@
 package rasteplads.api
 
 import java.time.Duration
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.*
 import rasteplads.messageCache.MessageCache
 import rasteplads.util.Either
-import rasteplads.util.toInt
-
-val temp: AtomicReference<MutableList<(ByteArray) -> Unit>> = AtomicReference(mutableListOf())
-val i: AtomicInteger = AtomicInteger(10)
-
-fun main() {
-    println("start")
-
-    val f =
-        EventMesh.builder<Int, Byte>()
-            .setDataConstant(0)
-            .setIDGenerator { 10 }
-            .setHandleMessage { _, _ -> }
-            .setIntoIDFunction { it.toInt() }
-            .setIntoDataFunction { _ -> 0 }
-            .setFromIDFunction { _ -> byteArrayOf(0, 1, 2, 3) }
-            .setFromDataFunction { byteArrayOf(it) }
-            .addFilterFunction { id -> id and 1 == 0 } // isEven
-            .addFilterFunction { id -> id < 5_000_000 } // isEven
-            .addFilterFunction { id -> id > 1_000_000 } // isEven
-            .build()
-
-    val b = byteArrayOf(0, 3, 5, 6, 8, 0)
-    println(i.decrementAndGet())
-    /*
-    println(b.toList())
-    // f.scanningCallback(b)
-    println(b.toList())
-
-    println("f")
-    f.start()
-    println("MAIN")
-
-    // delay(1000)
-    println("I want it to stop")
-    f.stop()
-
-    println("works I guess")
-     */
-}
+import rasteplads.util.split
 
 /**
- * This class handles communicating messages to the dynamic mesh network. `ID` represents the IDs
- * for each message, `Data` represents the message itself, and `MC` is the message cache for storing
- * already known messages.
+ * This class handles communicating messages to the dynamic mesh network.
+ *
+ * `ID` represents the IDs for each message, `Data` represents the message itself, and `MC` is the
+ * message cache for storing already known messages.
  *
  * If the default message cache is used, `ID` must af [equals] overridden.
  *
@@ -60,54 +21,84 @@ fun main() {
  *
  * @author t-lohse
  */
-final class EventMesh<ID, Data> // TODO EventMeshDevice interface pls
+final class EventMesh<ID, Data>
 private constructor(
-    private val device: Int, // TODO: EVENTMESHDEVICE
+    deviceBuilder: EventMeshDevice.Builder,
     private val messageCache: MessageCache<ID>?,
-    private val callback: (ID, Data) -> Unit,
-    private val intoID: (ByteArray) -> ID,
-    private val intoData: (ByteArray) -> Data,
-    private val fromID: (ID) -> ByteArray,
-    private val fromData: (Data) -> ByteArray,
-    private val msgData: Either<Data, () -> Data>,
-    private val msgId: Either<ID, () -> ID>,
-    private val filterID: List<(ID) -> Boolean>,
+    callback: (ID, Data) -> Unit,
+    decodeID: (ByteArray) -> ID,
+    decodeData: (ByteArray) -> Data,
+    private val encodeID: (ID) -> ByteArray,
+    private val encodeData: (Data) -> ByteArray,
+    msgData: Either<Data, () -> Data>,
+    msgId: Either<ID, () -> ID>,
+    filterID: List<(ID) -> Boolean>,
 ) {
+    private val device: EventMeshDevice
+    private val msgData: () -> Data =
+        if (msgData.isLeft()) {
+            { msgData.getLeft()!! }
+        } else msgData.getRight()!!
+    private val msgId: () -> ID =
+        if (msgId.isLeft()) {
+            { msgId.getLeft()!! }
+        } else msgId.getRight()!!
+
+    init {
+        fun scanningCallback(msg: ByteArray) {
+            require(msg.size >= 1 + ID_MAX_SIZE) {
+                "Message does not conform with the minimum requirement (TTL + ID)"
+            }
+
+            val (idB, dataB) = msg.sliceArray(1 until msg.size).split(ID_MAX_SIZE)
+            val id = decodeID(idB)
+
+            if (messageCache == null || !messageCache.containsMessage(id)) {
+                messageCache?.cacheMessage(id)
+                if (filterID.all { f -> f(id) }) callback(id, decodeData(dataB))
+
+                if (msg[0] > Byte.MIN_VALUE) {
+                    relay(msg[0].dec(), idB, dataB)
+                }
+            }
+        }
+        device = deviceBuilder.withReceiveMsgCallback(::scanningCallback).build()
+    }
 
     // TODO: set correct default values
     /** Time a message is stored in the cache */
-    private var msgDelete: Duration = Duration.ofSeconds(30)
+    // private var msgDelete: Duration = Duration.ofSeconds(30)
 
     /** Time TO Live (TTL) for the messages. */
-    private var msgTTL: Long = 10
+    private var msgTTL: Byte = 10
 
     /**
      * The interval the messages from [msgData] will be sent. This corresponds to 'Advertising
      * Interval' in Bluetooth
      */
-    private var msgSendInterval: Duration = Duration.ofMillis(100)
+    // private var msgSendInterval: Duration = Duration.ofMillis(100)
 
     /** The interval the between a message session. */
-    private var msgSendSessionInterval: Duration = Duration.ofSeconds(10)
+    private var msgSendInterval: Duration = Duration.ofSeconds(10)
 
     /**
      * The duration the messages from [msgData] will be sent. A message session will only be this
-     * lon, or until an echo. If `Duration.ZERO`, then there is no cap. This corresponds to
+     * long, or until an echo. If `Duration.ZERO`, then there is no cap. This corresponds to
      * 'Advertising Timeout' in Bluetooth
      */
-    private var msgSendTimeout: Duration = Duration.ofSeconds(1)
+    // private var msgSendTimeout: Duration = Duration.ofSeconds(1)
 
     /** The interval incoming messages will be scanned for. */
     private var msgScanInterval: Duration = Duration.ofSeconds(5)
 
     /** The duration incoming messages will be scanned for. */
-    private var msgScanDuration: Duration = Duration.ofSeconds(1)
+    // private var msgScanDuration: Duration = Duration.ofSeconds(1)
 
     /** The maximum number of elements stored in the cache */
-    private var msgCacheLimit: Long = 32
+    // private var msgCacheLimit: Long = 32
 
-    private lateinit var btScanner: Job
-    private lateinit var btSender: Job
+    private val btScanner: AtomicReference<Job?> = AtomicReference(null)
+    private val btSender: AtomicReference<Job?> = AtomicReference(null)
 
     private constructor(
         builder: BuilderImpl<ID, Data>
@@ -115,108 +106,74 @@ private constructor(
         builder.device,
         builder.msgCache,
         builder.callback,
-        builder.intoID,
-        builder.intoData,
-        builder.fromID,
-        builder.fromData,
+        builder.decodeID,
+        builder.decodeData,
+        builder.encodeID,
+        builder.encodeData,
         builder.msgData,
         builder.msgID,
         builder.filterID,
     ) {
-        builder.msgDelete?.let { msgDelete = it }
         builder.msgTTL?.let { msgTTL = it }
 
-        builder.msgSendSessionInterval?.let { msgSendSessionInterval = it }
         builder.msgSendInterval?.let { msgSendInterval = it }
-        builder.msgSendTimeout?.let { msgSendTimeout = it }
-
-        check(msgSendTimeout.isZero || msgSendTimeout >= msgSendInterval) {
-            "non-zero message duration cap cannot be less than the sending interval"
-        }
 
         builder.msgScanInterval?.let { msgScanInterval = it }
-        builder.msgScanDuration?.let { msgScanDuration = it }
 
-        builder.msgCacheLimit?.let { msgCacheLimit = it }
+        // builder.msgCacheLimit?.let { msgCacheLimit = it }
     }
 
-    /** TODO */
+    /**
+     * This function starts the device, and will launch to sub-processes; one for transmitting and
+     * one for receiving. If it has already been started, it will not overwrite the already started
+     * process.
+     *
+     * @see stop
+     */
     fun start() = runBlocking {
-        // TODO: SETUP BT TO HANDLE MESSAGES (CONVERT, FILTER, CALLBACK)
-        println("START HW (IF GLOBAL)")
-        btSender =
-            GlobalScope.launch(Dispatchers.Default) {
-                try {
-                    println("START HW (IF LOCAL)")
+        messageCache?.clearCache()
+        btSender
+            .compareAndExchange(
+                null,
+                GlobalScope.launch(Dispatchers.Unconfined) {
                     do {
-                        delay(msgSendSessionInterval.toMillis())
-                        val data = msgData.getLeft() ?: msgData.getRight()!!()
-                        // TODO: SEND BYTES WITH TTL
+                        delay(msgSendInterval.toMillis())
+                        val id = msgId()
+                        val data = msgData()
+                        messageCache?.cacheMessage(id)
+                        device.startTransmitting(msgTTL, encodeID(id), encodeData(data))
+                        yield()
                     } while (isActive)
-                } finally {
-                    println("STOP HW (IF LOCAL)")
                 }
-            }
-        btScanner =
-            GlobalScope.launch(Dispatchers.Default) {
-                try {
-                    println("START HW (IF LOCAL)")
+            )
+            ?.join()
+
+        btScanner
+            .compareAndExchange(
+                null,
+                GlobalScope.launch(Dispatchers.Unconfined) {
                     do {
                         delay(msgScanInterval.toMillis())
-                        val k =
-                            withTimeout(msgScanDuration.toMillis()) {
-                                // TODO: CALL DEVICE.FUNC WITH [scanningCallback]
-                                // TODO: HANDLE RELAYING
-                            }
+                        device.startReceiving()
+                        yield()
                     } while (isActive)
-                } finally {
-                    println("STOP HW (IF LOCAL)")
                 }
-            }
-        delay(3000)
-        println("FUNC")
+            )
+            ?.join()
     }
 
-    /** TODO */
+    /**
+     * This function stops the device, waiting for it to finish its iteration.
+     *
+     * @see start
+     */
     fun stop() = runBlocking {
-        if (btSender.isActive) btSender.cancelAndJoin()
-        if (btScanner.isActive) btScanner.cancelAndJoin()
-        println("STOP HW (IF GLOBAL)")
+        btSender.getAndSet(null)?.cancel()
+        btScanner.getAndSet(null)?.cancel()
     }
 
-    private fun ByteArray.split(i: Int): Pair<ByteArray, ByteArray> =
-        Pair(this.sliceArray(0 until i), this.sliceArray(i until this.size))
-
-    private fun scanningCallback(msg: ByteArray) {
-        // TODO: cache check before or after relay?
-        require(msg.size >= 1 + ID_MAX_SIZE) {
-            "Message does not conform with the minimum requirement (TTL + ID)"
-        }
-
-        if (msg[0] > Byte.MIN_VALUE) relay(msg) // TTL
-
-        val (idB, dataB) = msg.sliceArray(1 until msg.size).split(ID_MAX_SIZE)
-        val id = intoID(idB)
-
-        // TODO: CACHE CHECK
-
-        if (filterID.any { f -> !f(id) }) return // FILTER
-
-        callback(id, intoData(dataB))
-    }
-
-    private fun relay(msg: ByteArray) {
-        /*
-        val out = msg.copyOf()
-        println(out.toList())
-        out[0]--
-        println(out.toList())
-         */
-        println(msg.toList())
-        msg[0]--
-        println(msg.toList())
-        // TODO: Mod TTL, then send
-    }
+    private fun relay(ttl: Byte, id: ByteArray, data: ByteArray) =
+        device.startTransmitting(ttl, id, data)
 
     companion object {
         /**
@@ -234,6 +191,13 @@ private constructor(
         const val ID_MAX_SIZE = 4
 
         /**
+         * Default value for the duration a message is saved in teh cache.
+         *
+         * The default value is 60 seconds.
+         */
+        const val MESSAGE_CACHE_TIME: Long = 60_000
+
+        /**
          * Creates a [Builder] for [EventMesh] with the default message cache ([MessageCache]) and
          * [EventMeshDevice].
          *
@@ -241,7 +205,7 @@ private constructor(
          * @param Data The messages' content
          */
         fun <ID, Data> builder(): Builder<ID, Data> =
-            BuilderImpl(7, MessageCache(60)) // TODO: REAL TYPE AND INITIALISATION
+            BuilderImpl(EventMeshDevice.Builder(), MessageCache(MESSAGE_CACHE_TIME))
 
         /**
          * Creates a [Builder] for [EventMesh] with a provided message cache (set to `null` to
@@ -252,123 +216,179 @@ private constructor(
          * @param mc The instance of the [MessageCache] (set to `null` to disable)
          */
         fun <ID, Data> builder(mc: MessageCache<ID>?): Builder<ID, Data> =
-            BuilderImpl(7, mc) // TODO: REAL TYPE AND INITIALISATION
+            BuilderImpl(EventMeshDevice.Builder(), mc)
 
         /**
-         * Creates a [Builder] for [EventMesh] with a provided [EventMeshDevice]. Uses the default
-         * message cache ([MessageCache]).
+         * Creates a [Builder] for [EventMesh] with a provided [TransportDevice]. This device is
+         * used for both the [EventMeshReceiver] and [EventMeshTransmitter]. The default message
+         * cache ( [MessageCache]) is used.
          *
          * @param ID The messages' ID
          * @param Data The messages' content
          * @param device The instance of the [EventMeshDevice] (Or derivative)
          */
-        fun <ID, Data> builder(
-            device: Int // TODO: SIMON
-        ): Builder<ID, Data> =
-            BuilderImpl(device, MessageCache(60)) // TODO: REAL TYPE AND INITIALISATION
+        fun <ID, Data> builder(device: TransportDevice): Builder<ID, Data> =
+            BuilderImpl(
+                EventMeshDevice.Builder().withDevice(device),
+                MessageCache(MESSAGE_CACHE_TIME)
+            )
 
         /**
-         * Creates a [Builder] for [EventMesh] with a provided message cache (set to `null` to
-         * disable) and [EventMeshDevice].
+         * Creates a [Builder] for [EventMesh] with a provided [TransportDevice]. This device is
+         * used for both the [EventMeshReceiver] and [EventMeshTransmitter]. The provided message
+         * cache ( [MessageCache]) is used (set to `null` to disable).
          *
          * @param ID The messages' ID
          * @param Data The messages' content
          * @param device The instance of the [EventMeshDevice] (Or derivative)
          * @param mc The instance of the [MessageCache] (Or derivative) (set to `null` to disable)
          */
+        fun <ID, Data> builder(device: TransportDevice, mc: MessageCache<ID>?): Builder<ID, Data> =
+            BuilderImpl(EventMeshDevice.Builder().withDevice(device), mc)
+
+        /**
+         * Creates a [Builder] for [EventMesh] with a provided [EventMeshReceiver] and
+         * [EventMeshTransmitter]. The default message cache ([MessageCache]) is used.
+         *
+         * @param ID The messages' ID
+         * @param Data The messages' content
+         * @param rx The [EventMeshReceiver] used
+         * @param tx The [EventMeshTransmitter] used
+         */
+        fun <ID, Data> builder(rx: EventMeshReceiver, tx: EventMeshTransmitter): Builder<ID, Data> =
+            BuilderImpl(
+                EventMeshDevice.Builder().withReceiver(rx).withTransmitter(tx),
+                MessageCache(MESSAGE_CACHE_TIME)
+            )
+
+        /**
+         * Creates a [Builder] for [EventMesh] with a provided [EventMeshReceiver] and
+         * [EventMeshTransmitter]. The provided message cache ([MessageCache]) is used (set to
+         * `null` to disable).
+         *
+         * @param ID The messages' ID
+         * @param Data The messages' content
+         * @param rx The [EventMeshReceiver] used
+         * @param tx The [EventMeshTransmitter] used
+         * @param mc The instance of the [MessageCache] (Or derivative) (set to `null` to disable)
+         */
         fun <ID, Data> builder(
-            device: Int, // TODO: SIMON
+            rx: EventMeshReceiver,
+            tx: EventMeshTransmitter,
             mc: MessageCache<ID>?
-        ): Builder<ID, Data> = BuilderImpl(device, mc)
+        ): Builder<ID, Data> =
+            BuilderImpl(EventMeshDevice.Builder().withReceiver(rx).withTransmitter(tx), mc)
 
         interface Builder<ID, Data> {
+
+            /**
+             * Sets the [EventMeshReceiver] in [EventMeshDevice].
+             *
+             * @param rx The [EventMeshReceiver]
+             * @return the modified [Builder]
+             */
+            fun setReceiver(rx: EventMeshReceiver): Builder<ID, Data>
+
+            /**
+             * Sets the [EventMeshTransmitter] in [EventMeshDevice].
+             *
+             * @param tx The [EventMeshTransmitter]
+             * @return the modified [Builder]
+             */
+            fun setTransmitter(tx: EventMeshTransmitter): Builder<ID, Data>
+
+            /**
+             * Sets the [MessageCache] (`null` to disable).
+             *
+             * @param mc The [MessageCache]
+             * @return the modified [Builder]
+             */
+            fun setMessageCache(mc: MessageCache<ID>?): Builder<ID, Data>
 
             /**
              * Sets a function that will be called on every message that is not filtered.
              *
              * @param f The function
-             * @return the modified [Builder]]
+             * @return the modified [Builder]
              * @see addFilterFunction
              */
-            fun setHandleMessage(f: (ID, Data) -> Unit): Builder<ID, Data>
+            fun setMessageCallback(f: (ID, Data) -> Unit): Builder<ID, Data>
 
             /**
              * Sets a function that converts a binary representation into an `ID`. This is what is
              * read from the other nodes. The array will always have the length [ID_MAX_SIZE],
              * otherwise an exception will be thrown. This function should uphold have the same
-             * identity when using the function set in [setFromIDFunction], meaning:
+             * identity when using the function set in [setIDEncodeFunction], meaning:
              * ```
              * x = g(f(x))
              * ```
              *
              * where `f` is the function set here, and `g` is the function set in
-             * [setFromIDFunction] Some functions have been made that may be of use, see
+             * [setIDEncodeFunction] Some functions have been made that may be of use, see
              * [rasteplads.util]
              *
              * @param f The function
              * @return The modified [Builder]
              */
-            fun setIntoIDFunction(f: (ByteArray) -> ID): Builder<ID, Data>
+            fun setIDDecodeFunction(f: (ByteArray) -> ID): Builder<ID, Data>
 
-            // TODO: MAKE SURE THE LENGTH IS CORRECT
             /**
              * Sets a function that converts a binary representation into an `ID`. This is what is
              * read from the other nodes. The array will always have the length [DATA_MAX_SIZE],
              * otherwise an exception will be thrown. This function should uphold have the same
-             * identity when using the function set in [setFromDataFunction], meaning:
+             * identity when using the function set in [setDataEncodeFunction], meaning:
              * ```
              * x = g(f(x))
              * ```
              *
              * where `f` is the function set here, and `g` is the function set in
-             * [setFromDataFunction] Some functions have been made that may be of use, see
+             * [setDataEncodeFunction] Some functions have been made that may be of use, see
              * [rasteplads.util]
              *
              * @param f The function
              * @return The modified [Builder]
              */
-            fun setIntoDataFunction(f: (ByteArray) -> Data): Builder<ID, Data>
+            fun setDataDecodeFunction(f: (ByteArray) -> Data): Builder<ID, Data>
 
             /**
              * Sets a function that converts the `ID` into a binary representation. This is needed
              * for transmitting the data. The array returned should have length [ID_MAX_SIZE],
              * otherwise an exception will be thrown. This function should uphold have the same
-             * identity when using the function set in [setIntoIDFunction], meaning:
+             * identity when using the function set in [setIDDecodeFunction], meaning:
              * ```
              * x = g(f(x))
              * ```
              *
              * where `f` is the function set here, and `g` is the function set in
-             * [setIntoIDFunction] Some functions have been made that may be of use, see
+             * [setIDDecodeFunction] Some functions have been made that may be of use, see
              * [rasteplads.util]
              *
              * @param f The function
              * @return The modified [Builder]
              */
-            fun setFromIDFunction(f: (ID) -> ByteArray): Builder<ID, Data>
+            fun setIDEncodeFunction(f: (ID) -> ByteArray): Builder<ID, Data>
 
-            // TODO: MAKE SURE THE LENGTH IS CORRECT
             /**
              * Sets a function that converts the `Data` into a binary representation. This is needed
              * for transmitting the data. The array returned should have length [DATA_MAX_SIZE],
              * otherwise an exception will be thrown. This function should uphold have the same
-             * identity when using the function set in [setIntoDataFunction], meaning:
+             * identity when using the function set in [setDataDecodeFunction], meaning:
              * ```
              * x = g(f(x))
              * ```
              *
              * where `f` is the function set here, and `g` is the function set in
-             * [setIntoDataFunction] Some functions have been made that may be of use, see
+             * [setDataDecodeFunction] Some functions have been made that may be of use, see
              * [rasteplads.util]
              *
              * @param f The function
              * @return The modified [Builder]
              */
-            fun setFromDataFunction(f: (Data) -> ByteArray): Builder<ID, Data>
+            fun setDataEncodeFunction(f: (Data) -> ByteArray): Builder<ID, Data>
 
             /**
              * Sets a constant message that will be sent out from the device at every interval (see
-             * [withMsgSendInterval]). This function overrides any value set through
+             * [withMsgSendTransmissionInterval]). This function overrides any value set through
              * [setDataGenerator].
              *
              * @param c The data to be sent
@@ -378,8 +398,8 @@ private constructor(
 
             /**
              * Sets a function for generating the messages that will be sent out from the device at
-             * every interval (see [withMsgSendInterval]). This function overrides any value set
-             * through [setDataConstant].
+             * every interval (see [withMsgSendTransmissionInterval]). This function overrides any
+             * value set through [setDataConstant].
              *
              * @param f The generator-function
              * @return The modified [Builder]
@@ -410,7 +430,7 @@ private constructor(
             /**
              * Adds a filtering function. These functions filter messages by their ID. Only IDs that
              * return `true` from the filters will be sent called with the handle function (See
-             * [setHandleMessage]). The filters are applied in the order they are set.
+             * [setMessageCallback]). The filters are applied in the order they are set.
              *
              * @param f The filter-function
              * @return The modified [Builder]
@@ -420,7 +440,7 @@ private constructor(
             /**
              * Adds multiple filtering functions. These functions filter messages by their ID. Only
              * IDs that return `true` from the filters will be sent called with the handle function
-             * (See [setHandleMessage]). The filters are applied in the order they are set.
+             * (See [setMessageCallback]). The filters are applied in the order they are set.
              *
              * @param fs The filter-functions
              * @return The modified [Builder]
@@ -443,7 +463,7 @@ private constructor(
              * @param t Number of relays
              * @return The modified [Builder]
              */
-            fun withMsgTTL(t: Long): Builder<ID, Data>
+            fun withMsgTTL(t: Byte): Builder<ID, Data>
 
             /**
              * Sets the interval between message sending sessions
@@ -451,16 +471,17 @@ private constructor(
              * @param d Waiting time
              * @return The modified [Builder]
              */
-            fun withMsgSendSessionInterval(d: Duration): Builder<ID, Data>
+            fun withMsgSendInterval(d: Duration): Builder<ID, Data>
 
+            /*
             /**
-             * Sets the message sending interval
+             * Sets the message sending interval, I.E. the discrete events of transmissions.
              *
              * @param d Waiting time
              * @return The modified [Builder]
              */
-            fun withMsgSendInterval(d: Duration): Builder<ID, Data>
-
+             fun withMsgSendTransmissionInterval(d: Duration): Builder<ID, Data>
+            */
             /**
              * Sets the sending duration timeout (cap). This is the max time duration the message
              * defined in either [setDataConstant] or [setDataGenerator] will be transmitted. It
@@ -490,11 +511,12 @@ private constructor(
             /**
              * Sets a message cache. If `null`, it disables the message cache
              *
-             * @param b Boolean enabling/disabling the message cache
+             * @param mc Boolean enabling/disabling the message cache
              * @return The modified [Builder]
              */
-            fun withMsgCache(b: MessageCache<ID>?): Builder<ID, Data>
+            fun withMsgCache(mc: MessageCache<ID>?): Builder<ID, Data>
 
+            /*
             /**
              * Sets the limit of elements saved in the message cache
              *
@@ -502,6 +524,7 @@ private constructor(
              * @return The modified [Builder]
              */
             fun withMsgCacheLimit(l: Long): Builder<ID, Data>
+             */
 
             /*
             /**
@@ -514,6 +537,15 @@ private constructor(
             */
 
             /**
+             * Sets a callback function for when an echo is not received when transmitting your
+             * message. Set to null to omit.
+             *
+             * @param f The function
+             * @return The modified [Builder]
+             */
+            fun withEchoCallback(f: (() -> Unit)?): Builder<ID, Data>
+
+            /**
              * Builds the [Builder]
              *
              * @return [EventMesh] with the needed properties
@@ -523,42 +555,41 @@ private constructor(
         }
 
         private class BuilderImpl<ID, Data>(
-            val device: Int, // TODO SIMON
+            val device: EventMeshDevice.Builder,
             var msgCache: MessageCache<ID>? = null,
         ) : Builder<ID, Data> {
             lateinit var callback: (ID, Data) -> Unit
-            lateinit var intoID: (ByteArray) -> ID
-            lateinit var intoData: (ByteArray) -> Data
-            lateinit var fromID: (ID) -> ByteArray
-            lateinit var fromData: (Data) -> ByteArray
+            lateinit var decodeID: (ByteArray) -> ID
+            lateinit var decodeData: (ByteArray) -> Data
+            lateinit var encodeID: (ID) -> ByteArray
+            lateinit var encodeData: (Data) -> ByteArray
             lateinit var msgData: Either<Data, () -> Data>
             lateinit var msgID: Either<ID, () -> ID>
 
             val filterID: MutableList<(ID) -> Boolean> = mutableListOf()
 
-            var msgDelete: Duration? = null
-            var msgTTL: Long? = null
+            // var msgDelete: Duration? = null
+            var msgTTL: Byte? = null
 
-            var msgSendSessionInterval: Duration? = null
             var msgSendInterval: Duration? = null
-            var msgSendTimeout: Duration? = null
+
+            // var msgSendTimeout: Duration? = null
             var msgScanInterval: Duration? = null
-            var msgScanDuration: Duration? = null
-            var msgCacheLimit: Long? = null
+            // var msgCacheLimit: Long? = null
 
             override fun build(): EventMesh<ID, Data> {
                 // check(device != null) { "EventMesh Device is needed" }
                 check(::callback.isInitialized) { "Function for callbacks is necessary" }
-                check(::intoID.isInitialized) {
+                check(::decodeID.isInitialized) {
                     "Function to convert binary data into `ID` is necessary"
                 }
-                check(::intoData.isInitialized) {
+                check(::decodeData.isInitialized) {
                     "Function to convert binary data into `Data` is necessary"
                 }
-                check(::fromID.isInitialized) {
+                check(::encodeID.isInitialized) {
                     "Function to convert `ID` into binary data is necessary"
                 }
-                check(::fromData.isInitialized) {
+                check(::encodeData.isInitialized) {
                     "Function to convert `Data` into binary data is necessary"
                 }
                 check(::msgData.isInitialized) {
@@ -571,23 +602,28 @@ private constructor(
                 return EventMesh(this)
             }
 
-            override fun setIntoIDFunction(f: (ByteArray) -> ID): Builder<ID, Data> {
-                intoID = f
+            override fun withEchoCallback(f: (() -> Unit)?): Builder<ID, Data> {
+                device.withEchoCallback(f)
                 return this
             }
 
-            override fun setIntoDataFunction(f: (ByteArray) -> Data): Builder<ID, Data> {
-                intoData = f
+            override fun setIDDecodeFunction(f: (ByteArray) -> ID): Builder<ID, Data> {
+                decodeID = f
                 return this
             }
 
-            override fun setFromIDFunction(f: (ID) -> ByteArray): Builder<ID, Data> {
-                fromID = f
+            override fun setDataDecodeFunction(f: (ByteArray) -> Data): Builder<ID, Data> {
+                decodeData = f
                 return this
             }
 
-            override fun setFromDataFunction(f: (Data) -> ByteArray): Builder<ID, Data> {
-                fromData = f
+            override fun setIDEncodeFunction(f: (ID) -> ByteArray): Builder<ID, Data> {
+                encodeID = f
+                return this
+            }
+
+            override fun setDataEncodeFunction(f: (Data) -> ByteArray): Builder<ID, Data> {
+                encodeData = f
                 return this
             }
 
@@ -616,7 +652,7 @@ private constructor(
                 return this
             }
 
-            override fun setHandleMessage(f: (ID, Data) -> Unit): Builder<ID, Data> {
+            override fun setMessageCallback(f: (ID, Data) -> Unit): Builder<ID, Data> {
                 callback = f
                 return this
             }
@@ -626,18 +662,28 @@ private constructor(
                 return this
             }
 
+            override fun setReceiver(rx: EventMeshReceiver): Builder<ID, Data> {
+                device.withReceiver(rx)
+                return this
+            }
+
+            override fun setTransmitter(tx: EventMeshTransmitter): Builder<ID, Data> {
+                device.withTransmitter(tx)
+                return this
+            }
+
+            override fun setMessageCache(mc: MessageCache<ID>?): Builder<ID, Data> {
+                msgCache = mc
+                return this
+            }
+
             override fun withMsgCacheDelete(d: Duration): Builder<ID, Data> {
-                msgDelete = d
+                msgCache?.changeCacheTime(d.toMillis())
                 return this
             }
 
-            override fun withMsgTTL(t: Long): Builder<ID, Data> {
+            override fun withMsgTTL(t: Byte): Builder<ID, Data> {
                 msgTTL = t
-                return this
-            }
-
-            override fun withMsgSendSessionInterval(d: Duration): Builder<ID, Data> {
-                msgSendSessionInterval = d
                 return this
             }
 
@@ -646,8 +692,16 @@ private constructor(
                 return this
             }
 
+            /*
+            // TODO: IS bad with BT android
+            override fun withMsgSendTransmissionInterval(d: Duration): Builder<ID, Data> {
+                msgSendInterval = d // TODO: skal i device
+                return this
+            }
+             */
+
             override fun withMsgSendTimeout(d: Duration): Builder<ID, Data> {
-                msgSendTimeout = d
+                device.withTransmitTimeout(d)
                 return this
             }
 
@@ -657,26 +711,20 @@ private constructor(
             }
 
             override fun withMsgScanDuration(d: Duration): Builder<ID, Data> {
-                msgScanDuration = d
+                device.withReceiveDuration(d)
                 return this
             }
 
             override fun withMsgCache(mc: MessageCache<ID>?): Builder<ID, Data> {
-                this.msgCache = mc
-                return this
-            }
-
-            override fun withMsgCacheLimit(l: Long): Builder<ID, Data> {
-                msgCacheLimit = l
+                msgCache = mc
                 return this
             }
 
             /*
-            override fun withDevice(d: Device): Builder<ID, Data> {
-                device = d
+            override fun withMsgCacheLimit(l: Long): Builder<ID, Data> {
+                msgCacheLimit = l
                 return this
             }
-
              */
         }
     }
