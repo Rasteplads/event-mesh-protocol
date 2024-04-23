@@ -227,7 +227,8 @@ private constructor(
          */
         fun <ID, Data> builder(device: TransportDevice): Builder<ID, Data> =
             BuilderImpl(
-                EventMeshDevice.Builder().withDevice(device), MessageCache(MESSAGE_CACHE_TIME))
+                EventMeshDevice.Builder().withDevice(device), MessageCache(MESSAGE_CACHE_TIME)
+            )
 
         /**
          * Creates a [Builder] for [EventMesh] with a provided [TransportDevice]. This device is
@@ -254,7 +255,8 @@ private constructor(
         fun <ID, Data> builder(rx: EventMeshReceiver, tx: EventMeshTransmitter): Builder<ID, Data> =
             BuilderImpl(
                 EventMeshDevice.Builder().withReceiver(rx).withTransmitter(tx),
-                MessageCache(MESSAGE_CACHE_TIME))
+                MessageCache(MESSAGE_CACHE_TIME)
+            )
 
         /**
          * Creates a [Builder] for [EventMesh] with a provided [EventMeshReceiver] and
