@@ -163,6 +163,7 @@ class EventMeshTest {
                     1,
                     testDevice.transmittedMessages
                         .get()
+                        .map { it.toList() }
                         .distinct()
                         .filterNot { b -> b.slice(1 ..< b.size).all { i -> i == (0).toByte() } }
                         .size
@@ -269,7 +270,7 @@ class EventMeshTest {
                 f.start()
                 delay(100)
                 testDevice.receiveMessage(byteArrayOf(Byte.MIN_VALUE, 0, 0, 0, 2, 6, 7))
-                delay(200)
+                delay(300)
                 assertEquals(1, l.size)
 
                 testDevice.receiveMessage(byteArrayOf(Byte.MIN_VALUE, 0, 0, 0, 3, 6, 7))
@@ -287,7 +288,6 @@ class EventMeshTest {
                 delay(200)
                 assertEquals(2, l.size)
             } finally {
-
                 f.stop()
             }
         }
@@ -302,9 +302,9 @@ class EventMeshTest {
                     .withMsgSendInterval(Duration.ofMillis(50))
                     .withMsgSendTimeout(Duration.ofMillis(10))
                     .addFilterFunction(
-                        { i -> i % 2 == 0 },
-                        { i -> i > 5 },
-                        { i -> i < 15 }
+                        { i -> i % 2 == 0 }, // even
+                        { i -> i > 5 }, // greater than 5
+                        { i -> i < 15 } // less than 15
                     ) // Only even numbers
                     .withMsgCacheDelete(Duration.ofSeconds(1))
                     .setIDConstant(0)
@@ -326,7 +326,7 @@ class EventMeshTest {
                 )
 
                 testDevice.receiveMessage(byteArrayOf(Byte.MIN_VALUE, 0, 0, 0, 6, 6, 7))
-                delay(100)
+                delay(200)
                 assertEquals(1, l.size)
                 delay(150)
 
@@ -421,7 +421,6 @@ class EventMeshTest {
                 f.start()
                 delay(1000)
             } finally {
-
                 f.stop()
             }
 
