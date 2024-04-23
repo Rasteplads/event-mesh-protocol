@@ -46,7 +46,6 @@ private constructor(
 
     init {
         fun scanningCallback(msg: ByteArray) {
-            // TODO: cache check before or after relay? Relay if in cache?
             require(msg.size >= 1 + ID_MAX_SIZE) {
                 "Message does not conform with the minimum requirement (TTL + ID)"
             }
@@ -54,16 +53,13 @@ private constructor(
             val (idB, dataB) = msg.sliceArray(1 until msg.size).split(ID_MAX_SIZE)
             val id = decodeID(idB)
 
-            // CACHE CHECK
-            if (messageCache?.containsMessage(id) == false && filterID.all { f -> f(id) }) {
-                messageCache.cacheMessage(id)
-                callback(id, decodeData(dataB))
-            }
-            // Relay
-            if (msg[0].toUByte() > 0u) {
-                msg[0]--
+            if (messageCache == null || !messageCache.containsMessage(id)) {
                 messageCache?.cacheMessage(id)
-                relay(msgTTL, idB, dataB)
+                if (filterID.all { f -> f(id) }) callback(id, decodeData(dataB))
+
+                if (msg[0] > Byte.MIN_VALUE) {
+                    relay(msg[0].dec(), idB, dataB)
+                }
             }
         }
         device = deviceBuilder.withReceiveMsgCallback(::scanningCallback).build()
@@ -74,7 +70,7 @@ private constructor(
     // private var msgDelete: Duration = Duration.ofSeconds(30)
 
     /** Time TO Live (TTL) for the messages. */
-    private var msgTTL: UByte = 10u
+    private var msgTTL: Byte = 10
 
     /**
      * The interval the messages from [msgData] will be sent. This corresponds to 'Advertising
@@ -170,20 +166,14 @@ private constructor(
      * @see start
      */
     fun stop() = runBlocking {
-        btSender.getAndSet(null)?.cancelAndJoin()
-        btScanner.getAndSet(null)?.cancelAndJoin()
+        btSender.getAndSet(null)?.cancel()
+        btScanner.getAndSet(null)?.cancel()
     }
 
-    private fun relay(ttl: UByte, id: ByteArray, data: ByteArray) =
-        device.startTransmitting(ttl.toByte(), id, data)
+    private fun relay(ttl: Byte, id: ByteArray, data: ByteArray) =
+        device.startTransmitting(ttl, id, data)
 
     companion object {
-
-        val exceptionHandler = CoroutineExceptionHandler { ctx, exception ->
-            // println("Caught an exception: ${exception.message}")
-            ctx.cancel()
-            // throw exception
-        }
         /**
          * Default value for the size of a message's data/content (when converted to buffer).
          *
@@ -468,7 +458,7 @@ private constructor(
              * @param t Number of relays
              * @return The modified [Builder]
              */
-            fun withMsgTTL(t: UByte): Builder<ID, Data>
+            fun withMsgTTL(t: Byte): Builder<ID, Data>
 
             /**
              * Sets the interval between message sending sessions
@@ -574,7 +564,7 @@ private constructor(
             val filterID: MutableList<(ID) -> Boolean> = mutableListOf()
 
             // var msgDelete: Duration? = null
-            var msgTTL: UByte? = null
+            var msgTTL: Byte? = null
 
             var msgSendInterval: Duration? = null
 
@@ -687,7 +677,7 @@ private constructor(
                 return this
             }
 
-            override fun withMsgTTL(t: UByte): Builder<ID, Data> {
+            override fun withMsgTTL(t: Byte): Builder<ID, Data> {
                 msgTTL = t
                 return this
             }
