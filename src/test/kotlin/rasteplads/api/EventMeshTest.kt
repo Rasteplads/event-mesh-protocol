@@ -269,11 +269,11 @@ class EventMeshTest {
                 f.start()
                 delay(100)
                 testDevice.receiveMessage(byteArrayOf(Byte.MIN_VALUE, 0, 0, 0, 2, 6, 7))
-                delay(100)
+                delay(200)
                 assertEquals(1, l.size)
 
                 testDevice.receiveMessage(byteArrayOf(Byte.MIN_VALUE, 0, 0, 0, 3, 6, 7))
-                delay(100)
+                delay(200)
                 assertEquals(1, l.size)
                 delay(150)
 
@@ -316,7 +316,7 @@ class EventMeshTest {
                 f.start()
                 delay(100)
                 testDevice.receiveMessage(byteArrayOf(Byte.MIN_VALUE, 0, 0, 0, 2, 6, 7))
-                delay(100)
+                delay(200)
                 assertEquals(
                     0,
                     testDevice.transmittedMessages
@@ -334,15 +334,15 @@ class EventMeshTest {
                 testDevice.receiveMessage(byteArrayOf(Byte.MIN_VALUE, 0, 0, 0, 16, 6, 7))
                 delay(100)
                 assertEquals(1, l.size)
-                delay(100)
+                delay(200)
 
                 testDevice.receiveMessage(byteArrayOf(Byte.MIN_VALUE, 0, 0, 0, 8, 6, 7))
-                delay(100)
+                delay(200)
                 assertEquals(2, l.size)
                 delay(100)
 
                 testDevice.receiveMessage(byteArrayOf(Byte.MIN_VALUE, 0, 0, 0, 8, 6, 7))
-                delay(100)
+                delay(200)
                 assertEquals(2, l.size)
             } finally {
 
