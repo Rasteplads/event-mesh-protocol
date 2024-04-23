@@ -51,7 +51,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `messages get passed through`() {
+        fun `messages get passed through`() = runBlocking {
             val l = mutableListOf<Int>()
             val f =
                 correct()
