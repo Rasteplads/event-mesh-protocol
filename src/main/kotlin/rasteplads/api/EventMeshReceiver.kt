@@ -18,17 +18,18 @@ class EventMeshReceiver(private val device: TransportDevice) {
     private val handle:
         Pair<
             AtomicReference<suspend (ByteArray) -> Unit?>,
-            AtomicReference<suspend (ByteArray) -> Unit?>> =
+            AtomicReference<suspend (ByteArray) -> Boolean?>> =
         Pair(AtomicReference(null), AtomicReference(null))
 
     fun scanForID(id: ByteArray, timeout: Long, callback: suspend () -> Unit) = runBlocking {
         val found = AtomicBoolean(false)
-        val callbackWrap: suspend (ByteArray) -> Unit = { msg: ByteArray ->
+        val callbackWrap: suspend (ByteArray) -> Boolean = { msg: ByteArray ->
             if (id.zip(msg).all { (i, s) -> i == s }) {
                 callback()
                 found.set(true)
             }
             yield()
+            found.get()
         }
         try {
             withTimeout(timeout) {
@@ -70,8 +71,7 @@ class EventMeshReceiver(private val device: TransportDevice) {
     }
 
     private suspend fun scanForMessagesCallback(msg: ByteArray) {
-        handle.first.get()?.invoke(msg)
-        handle.second.get()?.invoke(msg)
+        if (handle.second.get()?.invoke(msg) != true) handle.first.get()?.invoke(msg)
     }
 
     fun setReceivedMessageCallback(f: suspend (ByteArray) -> Unit) = callback.set(f)

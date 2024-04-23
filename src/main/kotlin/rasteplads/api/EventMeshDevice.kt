@@ -24,12 +24,15 @@ class EventMeshDevice(
         val tx = launch { transmitter.transmit(combinedMsg) }
 
         try {
+            // tx.ensureActive()
             // withTimeout(transmitter.transmitTimeout) {
             receiver.scanForID(id, transmitter.transmitTimeout) { tx.cancel() }
             // }
         } catch (e: TimeoutCancellationException) {
             echo?.invoke()
-        } finally {}
+        } // catch (e:  CancellationException) {
+        //    // Hvad
+        // }
     }
 
     fun startReceiving() = receiver.scanForMessages()

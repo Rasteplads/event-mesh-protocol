@@ -14,7 +14,7 @@ class LongTest {
         assertEquals(v.toList(), v.toLong().toByteArray().toList())
 
     @Test
-    fun fromLongReflexive() {
+    fun `from long reflexive`() {
         testEq(-1)
         testEq(0)
         testEq(1)
@@ -30,7 +30,7 @@ class LongTest {
     }
 
     @Test
-    fun fromULongReflexive() {
+    fun `from unsigned long reflexive`() {
         testEq(0u)
         testEq(1u)
 
@@ -43,7 +43,7 @@ class LongTest {
     }
 
     @Test
-    fun fromByteArrayReflexive() {
+    fun `from byte array reflexive`() {
         for (a in cartesianProduct(Long.SIZE_BYTES)) {
             assertEquals(a.size, Long.SIZE_BYTES)
             testEq(a.toByteArray())
@@ -51,17 +51,18 @@ class LongTest {
     }
 
     @Test
-    fun generatedTestsReflexive() {
+    fun `generated tests reflexive`() {
         val num = 100
         (0..num).forEach { _ ->
             generateRands(Long.SIZE_BYTES).permutations().forEach { testEq(it.toByteArray()) }
         }
-        // (Long.MIN_VALUE..Long.MAX_VALUE).step(1000000).forEach { n -> testEq(n) }
+        // (`redundancy in arrays is ignored`Long.MIN_VALUE..Long.MAX_VALUE).step(1000000).forEach {
+        // n -> testEq(n) }
         // (ULong.MIN_VALUE..ULong.MAX_VALUE).step(1000000).forEach { n -> testEq(n) }
     }
 
     @Test
-    fun throwsOnSmallArray() {
+    fun `throws on small array`() {
         val i = Long.SIZE_BYTES
         (0..i).forEach { num ->
             if (num != Long.SIZE_BYTES) {
@@ -72,7 +73,7 @@ class LongTest {
     }
 
     @Test
-    fun redundancyInArraysIsIgnored() {
+    fun `redundancy in arrays is ignored`() {
         val i = 1000
         (0..i).forEach { _ ->
             val arr = generateRands(Long.SIZE_BYTES * 2).toByteArray()

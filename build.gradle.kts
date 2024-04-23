@@ -2,7 +2,7 @@ val kotlinVersion: String = "1.9.23"
 
 plugins {
     kotlin("jvm") version "1.9.23"
-    id("com.diffplug.spotless") version "6.19.0"
+    id("com.diffplug.spotless") version "6.25.0"
 }
 
 group = "org.rasteplads"
