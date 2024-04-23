@@ -1,7 +1,6 @@
 package rasteplads.api
 
 import java.time.Duration
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.jvm.isAccessible
 import kotlin.test.*
 import kotlin.test.Test
@@ -305,7 +304,7 @@ class EventMeshTest {
                         { i -> i % 2 == 0 }, // even
                         { i -> i > 5 }, // greater than 5
                         { i -> i < 15 } // less than 15
-                    ) // Only even numbers
+                    )
                     .withMsgCacheDelete(Duration.ofSeconds(1))
                     .setIDConstant(0)
                     .setDataConstant(0)
@@ -405,14 +404,14 @@ class EventMeshTest {
 
         @Test
         fun `testing data generator`(): Unit = runBlocking {
-            val d = AtomicInteger(0)
+            var d: Byte = 0
             val f =
                 correct()
                     .withMsgSendInterval(Duration.ofMillis(100))
                     .withMsgSendTimeout(Duration.ofMillis(10))
                     .setMessageCallback { _, _ -> }
                     .withMsgCacheDelete(Duration.ofSeconds(1))
-                    .setDataGenerator { d.getAndIncrement().toByte() }
+                    .setDataGenerator { d++ }
                     .setIDConstant(0)
                     .withMsgTTL(Byte.MIN_VALUE)
                     .build()
@@ -425,7 +424,7 @@ class EventMeshTest {
             }
 
             assertEquals(
-                d.get(),
+                d.toInt(),
                 testDevice.transmittedMessages.get().map(ByteArray::toList).distinct().size
             )
             assertEquals(
@@ -438,21 +437,21 @@ class EventMeshTest {
                     .last()
             )
             assertEquals(
-                (d.get() - 1).toByte(),
+                d.dec(),
                 testDevice.transmittedMessages.get().map(ByteArray::toList).distinct().last().last()
             )
         }
 
         @Test
         fun `testing id generator`(): Unit = runBlocking {
-            val d = AtomicInteger(0)
+            var d = 0
             val f =
                 correct()
                     .withMsgSendInterval(Duration.ofMillis(100))
                     .withMsgSendTimeout(Duration.ofMillis(10))
                     .setMessageCallback { _, _ -> }
                     .withMsgCacheDelete(Duration.ofSeconds(1))
-                    .setIDGenerator { d.getAndIncrement() }
+                    .setIDGenerator { d++ }
                     .setDataConstant(0)
                     .withMsgTTL(Byte.MIN_VALUE)
                     .build()
@@ -461,16 +460,15 @@ class EventMeshTest {
                 f.start()
                 delay(1000)
             } finally {
-
                 f.stop()
             }
 
             assertEquals(
-                d.get(),
+                d,
                 testDevice.transmittedMessages.get().map(ByteArray::toList).distinct().size
             )
             assertEquals(
-                (d.get() - 1),
+                d - 1,
                 testDevice.transmittedMessages
                     .get()
                     .map(ByteArray::toList)
