@@ -269,7 +269,7 @@ class EventMeshTest {
                 f.start()
                 delay(100)
                 testDevice.receiveMessage(byteArrayOf(Byte.MIN_VALUE, 0, 0, 0, 2, 6, 7))
-                delay(500)
+                Thread.sleep(500)
                 assertEquals(1, l.size)
 
                 testDevice.receiveMessage(byteArrayOf(Byte.MIN_VALUE, 0, 0, 0, 3, 6, 7))
