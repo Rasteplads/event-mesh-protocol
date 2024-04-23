@@ -21,7 +21,7 @@ class EventMeshDevice(
     fun startTransmitting(ttl: Byte, id: ByteArray, message: ByteArray) = runBlocking {
         check(id.size <= ID_MAX_SIZE) { "ID too big" }
         val combinedMsg = ttl + id + message
-        val tx = launch { transmitter.transmit(combinedMsg) }
+        val tx = launch(Dispatchers.IO) { transmitter.transmit(combinedMsg) }
 
         try {
             receiver.scanForID(id, transmitter.transmitTimeout) { tx.cancel() }
