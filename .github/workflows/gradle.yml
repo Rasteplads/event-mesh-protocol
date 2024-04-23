@@ -56,7 +56,7 @@ jobs:
       #- name: Grant execute permission for gradlew
       #  run: chmod +x gradlew
       - name: Build with Gradle
-        run: ./gradlew build
+        run: echo "no" | ./gradlew build --scan
       - name: Store reports
         if: failure()
         uses: actions/upload-artifact@v3
