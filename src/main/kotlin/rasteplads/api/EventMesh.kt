@@ -141,7 +141,7 @@ private constructor(
                         val id = msgId()
                         val data = msgData()
                         messageCache?.cacheMessage(id)
-                        device.startTransmitting(msgTTL.toByte(), encodeID(id), encodeData(data))
+                        device.startTransmitting(msgTTL, encodeID(id), encodeData(data))
                         yield()
                     } while (isActive)
                 }
@@ -511,10 +511,10 @@ private constructor(
             /**
              * Sets a message cache. If `null`, it disables the message cache
              *
-             * @param b Boolean enabling/disabling the message cache
+             * @param mc Boolean enabling/disabling the message cache
              * @return The modified [Builder]
              */
-            fun withMsgCache(b: MessageCache<ID>?): Builder<ID, Data>
+            fun withMsgCache(mc: MessageCache<ID>?): Builder<ID, Data>
 
             /*
             /**
@@ -575,7 +575,7 @@ private constructor(
 
             // var msgSendTimeout: Duration? = null
             var msgScanInterval: Duration? = null
-            var msgCacheLimit: Long? = null
+            // var msgCacheLimit: Long? = null
 
             override fun build(): EventMesh<ID, Data> {
                 // check(device != null) { "EventMesh Device is needed" }
