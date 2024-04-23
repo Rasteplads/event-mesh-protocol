@@ -164,7 +164,7 @@ class EventMeshTest {
                     testDevice.transmittedMessages
                         .get()
                         .distinct()
-                        .filter { b -> !b.all { i -> i == (0).toByte() } }
+                        .filterNot { b -> b.slice(1..<b.size).all { i -> i == (0).toByte() } }
                         .size
                 )
 
