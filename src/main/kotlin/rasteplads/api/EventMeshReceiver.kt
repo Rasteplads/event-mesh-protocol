@@ -19,8 +19,9 @@ class EventMeshReceiver(private val device: TransportDevice) {
             AtomicReference<suspend (ByteArray) -> Boolean?>
         > =
         Pair(AtomicReference(null), AtomicReference(null))
+    var coroutineScope = CoroutineScope(CoroutineName("EventMeshReceiverScope"))
 
-    fun scanForID(id: ByteArray, timeout: Long, callback: suspend () -> Unit) = runBlocking {
+    fun scanForID(id: ByteArray, timeout: Long, callback: suspend () -> Unit) = coroutineScope.launch {
         val found = AtomicBoolean(false)
         val callbackWrap: suspend (ByteArray) -> Boolean = { msg: ByteArray ->
             if (id.zip(msg).all { (i, s) -> i == s }) {
@@ -43,18 +44,19 @@ class EventMeshReceiver(private val device: TransportDevice) {
         }
     }
 
-    fun scanForMessages() = runBlocking {
-        try {
-            handle.first.set(callback.get())
-            withTimeout(duration) {
-                startDevice()
-                while (true) yield()
+    fun scanForMessages() =
+        coroutineScope.launch {
+            try {
+                handle.first.set(callback.get())
+                withTimeout(duration) {
+                    startDevice()
+                    while (true) yield()
+                }
+            } catch (_: TimeoutCancellationException) {} finally {
+                stopDevice()
+                handle.first.set(null)
             }
-        } catch (_: TimeoutCancellationException) {} finally {
-            stopDevice()
-            handle.first.set(null)
         }
-    }
 
     private fun startDevice() {
         if (scannerCount.getAndIncrement() <= 0)

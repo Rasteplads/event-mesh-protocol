@@ -97,6 +97,7 @@ class EventMeshDeviceTest {
 
     @Test
     fun `throws with small id`(): Unit = runBlocking {
+        val timeout = System.currentTimeMillis() + 5000
         val e =
             EventMeshDevice(
                 EventMeshReceiver(device),
@@ -105,7 +106,9 @@ class EventMeshDeviceTest {
             )
 
         for (i in ID_MAX_SIZE + 1..Short.MAX_VALUE) { // Arbitrary big value
-            assertFails { e.startTransmitting(0, generateRands(i).toByteArray(), byteArrayOf()) }
+            val job = e.startTransmitting(0, generateRands(i).toByteArray(), byteArrayOf())
+            // If transmitting fails, the job cancels.
+            while (!job.isCancelled) check(System.currentTimeMillis() < timeout)
         }
     }
 
@@ -141,7 +144,7 @@ class EventMeshDeviceTest {
         val e = EventMeshDevice(rx, tx, txTimeout = Duration.ofMillis(1030))
 
         val ttl: Byte = 2
-        launchPool.add(GlobalScope.launch { e.startTransmitting(ttl, byteArrayOf(0, 1, 2, 3), b) })
+        launchPool.add(e.startTransmitting(ttl, byteArrayOf(0, 1, 2, 3), b))
         delay(200)
         assert(device.transmitting.get())
         assert(device.receiving.get())
@@ -166,7 +169,7 @@ class EventMeshDeviceTest {
         val e = EventMeshDevice(rx, tx, txTimeout = Duration.ofMillis(1000), echo = { echo = true })
 
         launchPool.add(
-            GlobalScope.launch { e.startTransmitting(2, byteArrayOf(0, 1, 2, 3), byteArrayOf()) }
+            e.startTransmitting(2, byteArrayOf(0, 1, 2, 3), byteArrayOf())
         )
         delay(100)
         assert(device.transmitting.get())
@@ -192,7 +195,7 @@ class EventMeshDeviceTest {
         val e = EventMeshDevice(rx, tx, txTimeout = Duration.ofMillis(1001), echo = { echo = true })
 
         launchPool.add(
-            GlobalScope.launch { e.startTransmitting(2, byteArrayOf(0, 1, 2, 3), byteArrayOf()) }
+            e.startTransmitting(2, byteArrayOf(0, 1, 2, 3), byteArrayOf())
         )
         delay(100)
         assertFalse(echo)
