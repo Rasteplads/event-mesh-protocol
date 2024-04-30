@@ -1,6 +1,7 @@
 package rasteplads.api
 
 import java.time.Duration
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.jvm.isAccessible
 import kotlin.test.*
 import kotlin.test.Test
@@ -35,6 +36,82 @@ class EventMeshTest {
         // fun delay(ms: Long) {
         //    Thread.sleep(ms)
         // }
+    }
+
+    @Test
+    fun `multiple start`(): Unit = runBlocking {
+        val d: Byte = 10
+        val f =
+            correct()
+                .withMsgSendInterval(Duration.ofMillis(100))
+                .withMsgSendTimeout(Duration.ofMillis(10))
+                .setMessageCallback { _, _ -> }
+                .withMsgCacheDelete(Duration.ofSeconds(1))
+                .withMsgTTL(d)
+                .build()
+
+        try {
+            f.start()
+            f.start()
+            f.start()
+            f.start()
+            f.start()
+            f.start()
+            f.start()
+            delay(1000)
+            assertNotNull(
+                getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "btSender").get()
+            )
+            assertNotNull(
+                getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "btScanner").get()
+            )
+        } finally {
+            f.stop()
+        }
+        assertNull(
+            getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "btSender").get()
+        )
+        assertNull(
+            getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "btScanner").get()
+        )
+    }
+
+    @Test
+    fun `multiple stop`(): Unit = runBlocking {
+        val d: Byte = 10
+        val f =
+            correct()
+                .withMsgSendInterval(Duration.ofMillis(100))
+                .withMsgSendTimeout(Duration.ofMillis(10))
+                .setMessageCallback { _, _ -> }
+                .withMsgCacheDelete(Duration.ofSeconds(1))
+                .withMsgTTL(d)
+                .build()
+
+        try {
+            f.start()
+            delay(1000)
+            assertNotNull(
+                getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "btSender").get()
+            )
+            assertNotNull(
+                getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "btScanner").get()
+            )
+        } finally {
+            f.stop()
+            f.stop()
+            f.stop()
+            f.stop()
+            f.stop()
+            f.stop()
+            f.stop()
+        }
+        assertNull(
+            getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "btSender").get()
+        )
+        assertNull(
+            getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "btScanner").get()
+        )
     }
 
     @Nested

@@ -132,34 +132,36 @@ private constructor(
      */
     fun start() = runBlocking {
         messageCache?.clearCache()
-        btSender
-            .compareAndExchange(
-                null,
-                GlobalScope.launch(Dispatchers.Unconfined) {
-                    do {
-                        delay(msgSendInterval.toMillis())
-                        val id = msgId()
-                        val data = msgData()
-                        messageCache?.cacheMessage(id)
-                        device.startTransmitting(msgTTL, encodeID(id), encodeData(data))
-                        yield()
-                    } while (isActive)
-                }
-            )
-            ?.join()
+        btSender.updateAndGet {
+            when (it) {
+                null ->
+                    GlobalScope.launch(Dispatchers.Unconfined) {
+                        do {
+                            delay(msgSendInterval.toMillis())
+                            val id = msgId()
+                            val data = msgData()
+                            messageCache?.cacheMessage(id)
+                            device.startTransmitting(msgTTL, encodeID(id), encodeData(data))
+                            yield()
+                        } while (isActive)
+                    }
+                else -> it
+            }
+        }
 
-        btScanner
-            .compareAndExchange(
-                null,
-                GlobalScope.launch(Dispatchers.Unconfined) {
-                    do {
-                        delay(msgScanInterval.toMillis())
-                        device.startReceiving()
-                        yield()
-                    } while (isActive)
-                }
-            )
-            ?.join()
+        btScanner.updateAndGet {
+            when (it) {
+                null ->
+                    GlobalScope.launch(Dispatchers.Unconfined) {
+                        do {
+                            delay(msgScanInterval.toMillis())
+                            device.startReceiving()
+                            yield()
+                        } while (isActive)
+                    }
+                else -> it
+            }
+        }
     }
 
     /**
