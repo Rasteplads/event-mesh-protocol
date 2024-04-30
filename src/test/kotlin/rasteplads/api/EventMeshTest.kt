@@ -19,6 +19,7 @@ class EventMeshTest {
         fun correct() =
             EventMesh.builder<Int, Byte>(testDevice)
                 .setDataConstant(0)
+                .setDataSize(10)
                 .setIDConstant(10)
                 .setMessageCallback { _, _ -> }
                 .setIDDecodeFunction { b -> b.toInt() }
@@ -672,6 +673,7 @@ class EventMeshTest {
                 EventMesh.builder<Int, Byte>()
                     .setIDGenerator { 10 }
                     .setMessageCallback { _, _ -> }
+                    .setDataSize(10)
                     .setIDDecodeFunction { _ -> 9 }
                     .setDataDecodeFunction { _ -> 0 }
                     .setIDEncodeFunction { byteArrayOf(0, 1, 2, 3) }
@@ -685,6 +687,7 @@ class EventMeshTest {
                     .setMessageCallback { _, _ -> }
                     .setIDDecodeFunction { _ -> 9 }
                     .setDataDecodeFunction { _ -> 0 }
+                    .setDataSize(10)
                     .setIDEncodeFunction { byteArrayOf(0, 1, 2, 3) }
                     .setDataEncodeFunction { b -> byteArrayOf(b) }
                     .build()
@@ -694,6 +697,7 @@ class EventMeshTest {
                     .setDataConstant(0)
                     .setIDGenerator { 10 }
                     .setIDDecodeFunction { _ -> 9 }
+                    .setDataSize(10)
                     .setDataDecodeFunction { _ -> 0 }
                     .setIDEncodeFunction { byteArrayOf(0, 1, 2, 3) }
                     .setDataEncodeFunction { b -> byteArrayOf(b) }
@@ -705,6 +709,7 @@ class EventMeshTest {
                     .setIDGenerator { 10 }
                     .setIDDecodeFunction { _ -> 9 }
                     .setDataDecodeFunction { _ -> 0 }
+                    .setDataSize(10)
                     .setIDEncodeFunction { byteArrayOf(0, 1, 2, 3) }
                     .setDataEncodeFunction { b -> byteArrayOf(b) }
                     .build()
@@ -713,6 +718,7 @@ class EventMeshTest {
                 EventMesh.builder<Int, Byte>()
                     .setDataConstant(0)
                     .setIDGenerator { 10 }
+                    .setDataSize(10)
                     .setMessageCallback { _, _ -> }
                     .setDataDecodeFunction { _ -> 0 }
                     .setIDEncodeFunction { byteArrayOf(0, 1, 2, 3) }
@@ -725,6 +731,7 @@ class EventMeshTest {
                     .setIDGenerator { 10 }
                     .setMessageCallback { _, _ -> }
                     .setIDDecodeFunction { _ -> 9 }
+                    .setDataSize(10)
                     .setIDEncodeFunction { byteArrayOf(0, 1, 2, 3) }
                     .setDataEncodeFunction { b -> byteArrayOf(b) }
                     .build()
@@ -736,7 +743,19 @@ class EventMeshTest {
                     .setMessageCallback { _, _ -> }
                     .setIDDecodeFunction { _ -> 9 }
                     .setDataDecodeFunction { _ -> 0 }
+                    .setDataSize(10)
                     .setDataEncodeFunction { b -> byteArrayOf(b) }
+                    .build()
+            }
+            assertFails {
+                EventMesh.builder<Int, Byte>()
+                    .setDataConstant(0)
+                    .setDataSize(10)
+                    .setIDGenerator { 10 }
+                    .setMessageCallback { _, _ -> }
+                    .setIDDecodeFunction { _ -> 9 }
+                    .setDataDecodeFunction { _ -> 0 }
+                    .setIDEncodeFunction { byteArrayOf(0, 1, 2, 3) }
                     .build()
             }
             assertFails {
@@ -747,6 +766,7 @@ class EventMeshTest {
                     .setIDDecodeFunction { _ -> 9 }
                     .setDataDecodeFunction { _ -> 0 }
                     .setIDEncodeFunction { byteArrayOf(0, 1, 2, 3) }
+                    .setDataEncodeFunction { b -> byteArrayOf(b) }
                     .build()
             }
         }
@@ -856,6 +876,7 @@ class EventMeshTest {
                 EventMesh.builder<Int, Byte>(testDevice)
                     .setDataConstant(0)
                     .setIDGenerator { 10 }
+                    .setDataSize(10)
                     .setMessageCallback { _, _ -> }
                     .setIDDecodeFunction { _ -> 9 }
                     .setDataDecodeFunction { _ -> 0 }
@@ -876,6 +897,7 @@ class EventMeshTest {
                 EventMesh.builder<Int, Byte>(testDevice)
                     .setDataConstant(0)
                     .setIDGenerator { 10 }
+                    .setDataSize(10)
                     .setMessageCallback { _, _ -> }
                     .setIDDecodeFunction { _ -> 9 }
                     .setDataDecodeFunction { _ -> 0 }
@@ -929,6 +951,7 @@ class EventMeshTest {
             b.setDataConstant(0)
                 .setReceiver(EventMeshReceiver(testDevice))
                 .setTransmitter(EventMeshTransmitter(testDevice))
+                .setDataSize(10)
                 .setIDGenerator { 10 }
                 .setMessageCallback { _, _ -> }
                 .setIDDecodeFunction { _ -> 9 }
@@ -943,6 +966,7 @@ class EventMeshTest {
                 .setReceiver(EventMeshReceiver(testDevice))
                 .setTransmitter(EventMeshTransmitter(testDevice))
                 .setIDGenerator { 10 }
+                .setDataSize(10)
                 .setMessageCallback { _, _ -> }
                 .setIDDecodeFunction { _ -> 9 }
                 .setDataDecodeFunction { _ -> 0 }
@@ -957,6 +981,7 @@ class EventMeshTest {
                 .setTransmitter(EventMeshTransmitter(testDevice))
                 .setIDGenerator { 10 }
                 .setMessageCallback { _, _ -> }
+                .setDataSize(10)
                 .setIDDecodeFunction { _ -> 9 }
                 .setDataDecodeFunction { _ -> 0 }
                 .setIDEncodeFunction { _ -> byteArrayOf(0, 1, 2, 3) }
@@ -970,6 +995,7 @@ class EventMeshTest {
                 .setMessageCallback { _, _ -> }
                 .setIDDecodeFunction { _ -> 9 }
                 .setDataDecodeFunction { _ -> 0 }
+                .setDataSize(10)
                 .setIDEncodeFunction { _ -> byteArrayOf(0, 1, 2, 3) }
                 .setDataEncodeFunction { bp -> byteArrayOf(bp) }
                 .build()
@@ -980,6 +1006,7 @@ class EventMeshTest {
                 .setIDGenerator { 10 }
                 .setMessageCallback { _, _ -> }
                 .setIDDecodeFunction { _ -> 9 }
+                .setDataSize(10)
                 .setDataDecodeFunction { _ -> 0 }
                 .setIDEncodeFunction { _ -> byteArrayOf(0, 1, 2, 3) }
                 .setDataEncodeFunction { bp -> byteArrayOf(bp) }
@@ -993,12 +1020,14 @@ class EventMeshTest {
                 .setIDDecodeFunction { _ -> 9 }
                 .setDataDecodeFunction { _ -> 0 }
                 .setIDEncodeFunction { _ -> byteArrayOf(0, 1, 2, 3) }
+                .setDataSize(10)
                 .setDataEncodeFunction { bp -> byteArrayOf(bp) }
                 .build()
 
             b = EventMesh.builder(EventMeshReceiver(testDevice), EventMeshTransmitter(testDevice))
             assertFails { b.build() }
             b.setDataConstant(0)
+                .setDataSize(10)
                 .setIDGenerator { 10 }
                 .setMessageCallback { _, _ -> }
                 .setIDDecodeFunction { _ -> 9 }
@@ -1017,6 +1046,7 @@ class EventMeshTest {
             b.setDataConstant(0)
                 .setIDGenerator { 10 }
                 .setMessageCallback { _, _ -> }
+                .setDataSize(10)
                 .setIDDecodeFunction { _ -> 9 }
                 .setDataDecodeFunction { _ -> 0 }
                 .setIDEncodeFunction { _ -> byteArrayOf(0, 1, 2, 3) }
@@ -1034,6 +1064,7 @@ class EventMeshTest {
                 .setIDGenerator { 10 }
                 .setMessageCallback { _, _ -> }
                 .setIDDecodeFunction { _ -> 9 }
+                .setDataSize(10)
                 .setDataDecodeFunction { _ -> 0 }
                 .setIDEncodeFunction { _ -> byteArrayOf(0, 1, 2, 3) }
                 .setDataEncodeFunction { bp -> byteArrayOf(bp) }

@@ -33,6 +33,7 @@ private constructor(
     msgData: Either<Data, () -> Data>,
     msgId: Either<ID, () -> ID>,
     filterID: List<(ID) -> Boolean>,
+    dataSize: Int,
 ) {
     private val device: EventMeshDevice
     private val msgData: () -> Data =
@@ -55,7 +56,7 @@ private constructor(
 
             if (messageCache == null || !messageCache.containsMessage(id)) {
                 messageCache?.cacheMessage(id)
-                if (filterID.all { f -> f(id) }) callback(id, decodeData(dataB))
+                if (filterID.all { f -> f(id) }) callback(id, decodeData(dataB.take(dataSize).toByteArray()))
 
                 if (msg[0] > Byte.MIN_VALUE) {
                     relay(msg[0].dec(), idB, dataB)
@@ -113,6 +114,7 @@ private constructor(
         builder.msgData,
         builder.msgID,
         builder.filterID,
+        builder.dataSize,
     ) {
         builder.msgTTL?.let { msgTTL = it }
 
@@ -130,7 +132,7 @@ private constructor(
      *
      * @see stop
      */
-    fun start() = runBlocking {
+    fun start() {
         messageCache?.clearCache()
         btSender.updateAndGet {
             when (it) {
@@ -169,7 +171,7 @@ private constructor(
      *
      * @see start
      */
-    fun stop() = runBlocking {
+    fun stop() {
         btSender.getAndSet(null)?.cancel()
         btScanner.getAndSet(null)?.cancel()
     }
@@ -282,7 +284,6 @@ private constructor(
             BuilderImpl(EventMeshDevice.Builder().withReceiver(rx).withTransmitter(tx), mc)
 
         interface Builder<ID, Data> {
-
             /**
              * Sets the [EventMeshReceiver] in [EventMeshDevice].
              *
@@ -430,6 +431,13 @@ private constructor(
             fun setIDGenerator(f: () -> ID): Builder<ID, Data>
 
             /**
+             * Sets the size for `Data` in hte byte array. The decode function given in [setDataDecodeFunction] will be given an array of this size.
+             * @param size The size of `Data`
+             * @return The modified [Builder]
+             */
+            fun setDataSize(size: Int): Builder<ID, Data>
+
+            /**
              * Adds a filtering function. These functions filter messages by their ID. Only IDs that
              * return `true` from the filters will be sent called with the handle function (See
              * [setMessageCallback]). The filters are applied in the order they are set.
@@ -567,6 +575,7 @@ private constructor(
             lateinit var encodeData: (Data) -> ByteArray
             lateinit var msgData: Either<Data, () -> Data>
             lateinit var msgID: Either<ID, () -> ID>
+            var dataSize: Int = 0
 
             val filterID: MutableList<(ID) -> Boolean> = mutableListOf()
 
@@ -599,6 +608,9 @@ private constructor(
                 }
                 check(::msgID.isInitialized) {
                     "A generator function for the advertising `ID` must be set"
+                }
+                check(dataSize > 0) {
+                    "The size of `Data` must be set"
                 }
 
                 return EventMesh(this)
@@ -674,6 +686,11 @@ private constructor(
                 return this
             }
 
+            override fun setDataSize(size: Int): Builder<ID, Data> {
+                dataSize = size
+                return this
+            }
+
             override fun setMessageCache(mc: MessageCache<ID>?): Builder<ID, Data> {
                 msgCache = mc
                 return this
@@ -731,3 +748,4 @@ private constructor(
         }
     }
 }
+
