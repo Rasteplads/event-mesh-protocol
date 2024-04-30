@@ -56,7 +56,8 @@ private constructor(
 
             if (messageCache == null || !messageCache.containsMessage(id)) {
                 messageCache?.cacheMessage(id)
-                if (filterID.all { f -> f(id) }) callback(id, decodeData(dataB.take(dataSize).toByteArray()))
+                if (filterID.all { f -> f(id) })
+                    callback(id, decodeData(dataB.take(dataSize).toByteArray()))
 
                 if (msg[0] > Byte.MIN_VALUE) {
                     relay(msg[0].dec(), idB, dataB)
@@ -431,7 +432,8 @@ private constructor(
             fun setIDGenerator(f: () -> ID): Builder<ID, Data>
 
             /**
-             * Sets the size for `Data` in hte byte array. The decode function given in [setDataDecodeFunction] will be given an array of this size.
+             * Sets the size for `Data` in hte byte array. The decode function given in
+             * [setDataDecodeFunction] will be given an array of this size.
              * @param size The size of `Data`
              * @return The modified [Builder]
              */
@@ -609,9 +611,7 @@ private constructor(
                 check(::msgID.isInitialized) {
                     "A generator function for the advertising `ID` must be set"
                 }
-                check(dataSize > 0) {
-                    "The size of `Data` must be set"
-                }
+                check(dataSize > 0) { "The size of `Data` must be set" }
 
                 return EventMesh(this)
             }
@@ -748,4 +748,3 @@ private constructor(
         }
     }
 }
-
