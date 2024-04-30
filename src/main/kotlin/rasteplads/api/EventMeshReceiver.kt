@@ -23,7 +23,7 @@ class EventMeshReceiver(private val device: TransportDevice) {
     fun scanForID(id: ByteArray, timeout: Long, callback: suspend () -> Unit) = runBlocking {
         val found = AtomicBoolean(false)
         val callbackWrap: suspend (ByteArray) -> Boolean = { msg: ByteArray ->
-            if (id.zip(msg).all { (i, s) -> i == s }) {
+            if (id.zip(msg.drop(1)).all { (i, s) -> i == s }) {
                 callback()
                 found.set(true)
             }
