@@ -200,7 +200,7 @@ class EventMeshDeviceTest {
         assert(device.receiving.get())
         delay(500)
         assertFalse(echo)
-        device.receiveMessage(byteArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8))
+        device.receiveMessage(byteArrayOf(1, 0, 1, 2, 3, 4, 5, 6, 7, 8))
         delay(1000)
         assertFalse(echo)
         assertFalse(device.transmitting.get())
