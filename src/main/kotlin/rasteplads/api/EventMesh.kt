@@ -177,9 +177,14 @@ private constructor(
                         while (isActive) {
                             delay(250)
 
-                            for ((ttl, id, body) in relayQueue.get().iterator()) {
+                            println(relayQueue.get())
+                            val iter = relayQueue.get().iterator()
+                            while (iter.hasNext()) {
+                                val (ttl, id, body) = iter.next()
                                 device.startTransmitting(ttl, id, body)
+                                iter.remove()
                             }
+                            println(relayQueue.get())
                             yield()
                         }
                     }
