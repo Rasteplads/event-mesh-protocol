@@ -76,6 +76,7 @@ class EventMeshReceiverTest {
         assert(l.all { it.contentEquals(b) })
         assert(id)
         device.receiveMessage(b)
+        delay(100)
         assertEquals(5, l.size)
         assert(l.all { it.contentEquals(b) })
     }

@@ -222,6 +222,7 @@ class EventMeshTest {
                     0,
                     testDevice.transmittedMessages
                         .get()
+                        .map(ByteArray::toList)
                         .distinct()
                         .filter { b -> !b.all { i -> i == (0).toByte() } }
                         .size
@@ -233,6 +234,7 @@ class EventMeshTest {
                     0,
                     testDevice.transmittedMessages
                         .get()
+                        .map(ByteArray::toList)
                         .distinct()
                         .filter { b -> !b.all { i -> i == (0).toByte() } }
                         .size
@@ -244,6 +246,7 @@ class EventMeshTest {
                     1,
                     testDevice.transmittedMessages
                         .get()
+                        .map(ByteArray::toList)
                         .map { it.toList() }
                         .distinct()
                         .filterNot { b -> b.slice(1 ..< b.size).all { i -> i == (0).toByte() } }
@@ -257,6 +260,7 @@ class EventMeshTest {
                     1,
                     testDevice.transmittedMessages
                         .get()
+                        .map(ByteArray::toList)
                         .distinct()
                         .filter { b -> !b.all { i -> i == (0).toByte() } }
                         .size
@@ -287,6 +291,7 @@ class EventMeshTest {
                     0,
                     testDevice.transmittedMessages
                         .get()
+                        .map(ByteArray::toList)
                         .distinct()
                         .filterNot { b -> b.slice(1 ..< b.size).all { i -> i == (0).toByte() } }
                         .size

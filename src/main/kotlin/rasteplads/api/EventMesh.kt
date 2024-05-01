@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.*
 import rasteplads.messageCache.MessageCache
 import rasteplads.util.Either
+import rasteplads.util.plus
 import rasteplads.util.split
 
 /**
@@ -45,6 +46,8 @@ private constructor(
             { msgId.getLeft()!! }
         } else msgId.getRight()!!
 
+    private val relayQueue: AtomicReference<MutableList<Triple<Byte, ByteArray, ByteArray>>> =
+        AtomicReference(mutableListOf())
     init {
         fun scanningCallback(msg: ByteArray) {
             require(msg.size >= 1 + ID_MAX_SIZE + dataSize) {
@@ -60,7 +63,8 @@ private constructor(
                     callback(id, decodeData(dataB.take(dataSize).toByteArray()))
 
                 if (msg[0] > Byte.MIN_VALUE) {
-                    relay(msg[0].dec(), idB, dataB)
+                    relayQueue.get().add(Triple(msg[0].dec(), idB, dataB))
+                    // relay(msg[0].dec(), idB, dataB)
                 }
             }
         }
@@ -101,6 +105,7 @@ private constructor(
 
     private val btScanner: AtomicReference<Job?> = AtomicReference(null)
     private val btSender: AtomicReference<Job?> = AtomicReference(null)
+    private val relayJob: AtomicReference<Job?> = AtomicReference(null)
 
     private constructor(
         builder: BuilderImpl<ID, Data>
@@ -165,6 +170,22 @@ private constructor(
                 else -> it
             }
         }
+        relayJob.updateAndGet {
+            when (it) {
+                null ->
+                    GlobalScope.launch(Dispatchers.Unconfined) {
+                        while (isActive) {
+                            delay(250)
+
+                            for ((ttl, id, body) in relayQueue.get().iterator()) {
+                                device.startTransmitting(ttl, id, body)
+                            }
+                            yield()
+                        }
+                    }
+                else -> it
+            }
+        }
     }
 
     /**
@@ -175,10 +196,10 @@ private constructor(
     fun stop() {
         btSender.getAndSet(null)?.cancel()
         btScanner.getAndSet(null)?.cancel()
+        relayJob.getAndSet(null)?.cancel()
+        relayQueue.set(mutableListOf())
     }
 
-    private fun relay(ttl: Byte, id: ByteArray, data: ByteArray) =
-        device.startTransmitting(ttl, id, data)
 
     companion object {
         /**
