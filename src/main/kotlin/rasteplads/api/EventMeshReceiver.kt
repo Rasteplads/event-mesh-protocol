@@ -20,6 +20,7 @@ class EventMeshReceiver(private val device: TransportDevice) {
         > =
         Pair(AtomicReference(null), AtomicReference(null))
 
+    // BAD GUY
     fun scanForID(id: ByteArray, timeout: Long, callback: suspend () -> Unit) = runBlocking {
         val found = AtomicBoolean(false)
         val callbackWrap: suspend (ByteArray) -> Boolean = { msg: ByteArray ->
@@ -43,6 +44,7 @@ class EventMeshReceiver(private val device: TransportDevice) {
         }
     }
 
+    // BAD GUY
     fun scanForMessages() = runBlocking {
         try {
             handle.first.set(callback.get())
@@ -61,10 +63,10 @@ class EventMeshReceiver(private val device: TransportDevice) {
             runner.set(GlobalScope.launch { device.beginReceiving(::scanForMessagesCallback) })
     }
 
-    private fun stopDevice() = runBlocking {
+    private fun stopDevice() {
         if (scannerCount.updateAndGet { old -> max(old - 1, 0) } == 0) {
             device.stopReceiving()
-            runner.getAndSet(null)?.join() // .set(device.stopReceiving()) ?: Unit
+            runner.getAndSet(null)?.cancel() // .set(device.stopReceiving()) ?: Unit
         }
     }
 

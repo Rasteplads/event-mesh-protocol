@@ -12,16 +12,17 @@ class EventMeshDevice(
     rxDuration: Duration? = null,
     private val echo: (() -> Unit)? = null
 ) {
+    private val coroutineScope = CoroutineScope(CoroutineName("EventMeshDeviceScope"))
 
     init {
         txTimeout?.let { transmitter.transmitTimeout = it.toMillis() }
         rxDuration?.let { receiver.duration = it.toMillis() }
     }
 
-    fun startTransmitting(ttl: Byte, id: ByteArray, message: ByteArray) = runBlocking {
+    fun startTransmitting(ttl: Byte, id: ByteArray, message: ByteArray) {
         check(id.size <= ID_MAX_SIZE) { "ID too big" }
         val combinedMsg = ttl + id + message
-        val tx = launch { transmitter.transmit(combinedMsg) }
+        val tx = coroutineScope.launch { transmitter.transmit(combinedMsg) }
 
         try {
             receiver.scanForID(id, transmitter.transmitTimeout) { tx.cancel() }
