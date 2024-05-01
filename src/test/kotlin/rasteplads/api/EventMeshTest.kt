@@ -120,6 +120,7 @@ class EventMeshTest {
         @BeforeTest
         @AfterTest
         fun clean(): Unit = runBlocking {
+            GlobalScope.cancel()
             testDevice.stopReceiving()
             testDevice.stopTransmitting()
             testDevice.receivedMsg.set(null)
@@ -410,6 +411,7 @@ class EventMeshTest {
                     0,
                     testDevice.transmittedMessages
                         .get()
+                        .map(ByteArray::toList)
                         .filterNot { i -> i.slice(1 ..< i.size).all { it == (0).toByte() } }
                         .size
                 )
