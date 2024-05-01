@@ -120,7 +120,6 @@ class EventMeshTest {
         @BeforeTest
         @AfterTest
         fun clean(): Unit = runBlocking {
-            GlobalScope.cancel()
             testDevice.stopReceiving()
             testDevice.stopTransmitting()
             testDevice.receivedMsg.set(null)
