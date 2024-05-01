@@ -47,8 +47,8 @@ private constructor(
 
     init {
         fun scanningCallback(msg: ByteArray) {
-            require(msg.size >= 1 + ID_MAX_SIZE) {
-                "Message does not conform with the minimum requirement (TTL + ID)"
+            require(msg.size >= 1 + ID_MAX_SIZE + dataSize) {
+                "Message does not conform with the minimum requirement (TTL + ID + provided size)"
             }
 
             val (idB, dataB) = msg.sliceArray(1 until msg.size).split(ID_MAX_SIZE)
@@ -139,14 +139,14 @@ private constructor(
             when (it) {
                 null ->
                     GlobalScope.launch(Dispatchers.Unconfined) {
-                        do {
+                        while (isActive) {
                             delay(msgSendInterval.toMillis())
                             val id = msgId()
                             val data = msgData()
                             messageCache?.cacheMessage(id)
                             device.startTransmitting(msgTTL, encodeID(id), encodeData(data))
                             yield()
-                        } while (isActive)
+                        }
                     }
                 else -> it
             }
@@ -156,11 +156,11 @@ private constructor(
             when (it) {
                 null ->
                     GlobalScope.launch(Dispatchers.Unconfined) {
-                        do {
+                        while (isActive) {
                             delay(msgScanInterval.toMillis())
                             device.startReceiving()
                             yield()
-                        } while (isActive)
+                        }
                     }
                 else -> it
             }
@@ -687,6 +687,9 @@ private constructor(
             }
 
             override fun setDataSize(size: Int): Builder<ID, Data> {
+                check(size <= DATA_MAX_SIZE) {
+                    "Provided size too large, expected value equal to or less than $DATA_MAX_SIZE, got $size"
+                }
                 dataSize = size
                 return this
             }

@@ -19,7 +19,7 @@ class EventMeshTest {
         fun correct() =
             EventMesh.builder<Int, Byte>(testDevice)
                 .setDataConstant(0)
-                .setDataSize(10)
+                .setDataSize(1)
                 .setIDConstant(10)
                 .setMessageCallback { _, _ -> }
                 .setIDDecodeFunction { b -> b.toInt() }
