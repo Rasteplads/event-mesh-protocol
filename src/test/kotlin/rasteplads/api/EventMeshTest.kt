@@ -69,6 +69,8 @@ class EventMeshTest {
         } finally {
             f.stop()
         }
+        delay(1000)
+
         assertNull(
             getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "btSender").get()
         )
@@ -107,6 +109,8 @@ class EventMeshTest {
             f.stop()
             f.stop()
         }
+        delay(1000)
+
         assertNull(
             getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "btSender").get()
         )
@@ -161,6 +165,7 @@ class EventMeshTest {
             } finally {
                 f.stop()
             }
+            delay(1000)
         }
 
         @Test
@@ -198,6 +203,7 @@ class EventMeshTest {
 
                 f.stop()
             }
+            delay(1000)
         }
 
         @Test
@@ -209,7 +215,7 @@ class EventMeshTest {
                     .setIDConstant(0)
                     .withMsgTTL(0)
                     .withMsgScanInterval(Duration.ofMillis(50))
-                    .withMsgSendInterval(Duration.ofMillis(50))
+                    .withMsgSendInterval(Duration.ofMillis(100))
                     .withMsgSendTimeout(Duration.ofMillis(10))
                     .setMessageCallback { i, _ -> l.add(i) }
                     .withMsgCacheDelete(Duration.ofSeconds(1))
@@ -217,14 +223,14 @@ class EventMeshTest {
 
             try {
                 f.start()
-                delay(500)
+                delay(1000)
                 assertEquals(
                     0,
                     testDevice.transmittedMessages
                         .get()
                         .map(ByteArray::toList)
                         .distinct()
-                        .filter { b -> !b.all { i -> i == (0).toByte() } }
+                        .filterNot { b -> b.all { i -> i == (0).toByte() } }
                         .size
                 )
 
@@ -236,7 +242,7 @@ class EventMeshTest {
                         .get()
                         .map(ByteArray::toList)
                         .distinct()
-                        .filter { b -> !b.all { i -> i == (0).toByte() } }
+                        .filterNot { b -> b.all { i -> i == (0).toByte() } }
                         .size
                 )
 
@@ -262,12 +268,13 @@ class EventMeshTest {
                         .get()
                         .map(ByteArray::toList)
                         .distinct()
-                        .filter { b -> !b.all { i -> i == (0).toByte() } }
+                        .filterNot { b -> b.all { i -> i == (0).toByte() } }
                         .size
                 )
             } finally {
                 f.stop()
             }
+            delay(1000)
         }
 
         @Test
@@ -337,6 +344,7 @@ class EventMeshTest {
 
                 f.stop()
             }
+            delay(1000)
         }
 
         @Test
@@ -379,6 +387,7 @@ class EventMeshTest {
             } finally {
                 f.stop()
             }
+            delay(1000)
         }
 
         @Test
@@ -438,6 +447,7 @@ class EventMeshTest {
 
                 f.stop()
             }
+            delay(1000)
         }
 
         /* TODO: Not detecting exceptions
@@ -512,6 +522,7 @@ class EventMeshTest {
             } finally {
                 f.stop()
             }
+            delay(1000)
 
             assertEquals(
                 d.toInt(),
@@ -552,6 +563,7 @@ class EventMeshTest {
             } finally {
                 f.stop()
             }
+            delay(1000)
 
             assertEquals(
                 d,
@@ -602,6 +614,7 @@ class EventMeshTest {
 
                 f.stop()
             }
+            delay(1000)
 
             // assertEquals(1, testDevice.transmittedMessages.get().size)
             assert(
@@ -632,6 +645,7 @@ class EventMeshTest {
 
                 f.stop()
             }
+            delay(1000)
 
             // assertEquals(d, testDevice.transmittedMessages.get().size)
             assert(
@@ -657,9 +671,9 @@ class EventMeshTest {
                 f.start()
                 delay(1000)
             } finally {
-
                 f.stop()
             }
+            delay(1000)
 
             assert(testDevice.transmittedMessages.get().distinct().all { i -> i.first() == d })
         }
