@@ -200,7 +200,6 @@ private constructor(
         relayQueue.set(mutableListOf())
     }
 
-
     companion object {
         /**
          * Default value for the size of a message's data/content (when converted to buffer).
