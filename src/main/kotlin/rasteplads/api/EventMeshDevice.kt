@@ -26,6 +26,7 @@ class EventMeshDevice(
         try {
             receiver.scanForID(id, transmitter.transmitTimeout) { tx.cancel() }
         } catch (e: TimeoutCancellationException) {
+            tx.cancel()
             echo?.invoke()
         }
     }
