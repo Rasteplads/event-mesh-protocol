@@ -1,6 +1,7 @@
 package rasteplads.api
 
 import java.time.Duration
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.jvm.isAccessible
 import kotlin.test.*
@@ -83,6 +84,30 @@ class EventMeshTest {
         assertNull(
             getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "btScanner").get()
         )
+    }
+
+    @Test
+    fun `start and stop`(): Unit = runBlocking {
+        val f =
+            correct()
+                .first
+                .withMsgSendInterval(Duration.ofMillis(100))
+                .withMsgSendTimeout(Duration.ofMillis(10))
+                .setMessageCallback { _, _ -> }
+                .withMsgCacheDelete(Duration.ofSeconds(1))
+                .withMsgTTL(Byte.MIN_VALUE)
+                .build()
+
+        try {
+            f.start()
+            delay(1000)
+            f.stop()
+            delay(1000)
+            f.start()
+        } finally {
+            f.stop()
+        }
+        delay(1000)
     }
 
     @Test
@@ -544,7 +569,7 @@ class EventMeshTest {
 
         @Test
         fun `testing id generator`(): Unit = runBlocking {
-            var d = 0
+            val d = AtomicInteger(0)
             val (f, testDevice) =
                 correct().let { (f, de) ->
                     Pair(
@@ -552,7 +577,7 @@ class EventMeshTest {
                             .withMsgSendTimeout(Duration.ofMillis(10))
                             .setMessageCallback { _, _ -> }
                             .withMsgCacheDelete(Duration.ofSeconds(1))
-                            .setIDGenerator { d++ }
+                            .setIDGenerator { d.getAndIncrement() }
                             .setDataConstant(0)
                             .withMsgTTL(Byte.MIN_VALUE)
                             .build(),
@@ -569,11 +594,11 @@ class EventMeshTest {
             delay(1000)
 
             assertEquals(
-                d,
+                d.get(),
                 testDevice.transmittedMessages.get().map(ByteArray::toList).distinct().size
             )
             assertEquals(
-                d - 1,
+                d.get().dec(),
                 testDevice.transmittedMessages
                     .get()
                     .map(ByteArray::toList)

@@ -201,13 +201,10 @@ private constructor(
      * @see start
      */
     fun stop() {
-        if (coroutineScope.isActive) {
-            relayQueue.set(mutableListOf())
-            coroutineScope.cancel()
-        }
-        // btSender.getAndSet(null)?.cancel()
-        // btScanner.getAndSet(null)?.cancel()
-        // relayJob.getAndSet(null)?.cancel()
+        relayQueue.set(mutableListOf())
+        btSender.getAndSet(null)?.cancel()
+        btScanner.getAndSet(null)?.cancel()
+        relayJob.getAndSet(null)?.cancel()
     }
 
     companion object {
