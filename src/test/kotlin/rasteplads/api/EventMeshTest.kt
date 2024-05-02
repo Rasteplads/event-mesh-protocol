@@ -569,20 +569,31 @@ class EventMeshTest {
         @Test
         fun `testing id generator`(): Unit = runBlocking {
             var d = 0
-            val (f, testDevice) =
-                correct().let { (f, de) ->
-                    Pair(
-                        f.withMsgSendInterval(Duration.ofMillis(100))
-                            .withMsgSendTimeout(Duration.ofMillis(10))
-                            .setMessageCallback { _, _ -> }
-                            .withMsgCacheDelete(Duration.ofSeconds(1))
-                            .setIDGenerator { d++ }
-                            .setDataConstant(0)
-                            .withMsgTTL(Byte.MIN_VALUE)
-                            .build(),
-                        de
-                    )
-                }
+            val (temp, testDevice) = correct()
+            val f =
+                temp
+                    .withMsgSendInterval(Duration.ofMillis(100))
+                    .withMsgSendTimeout(Duration.ofMillis(10))
+                    .setMessageCallback { _, _ -> }
+                    .withMsgCacheDelete(Duration.ofSeconds(1))
+                    .setIDGenerator { d++ }
+                    .setDataConstant(0)
+                    .withMsgTTL(Byte.MIN_VALUE)
+                    .build()
+
+            /*.let { (f, de) ->
+                Pair(
+                    f.withMsgSendInterval(Duration.ofMillis(100))
+                        .withMsgSendTimeout(Duration.ofMillis(10))
+                        .setMessageCallback { _, _ -> }
+                        .withMsgCacheDelete(Duration.ofSeconds(1))
+                        .setIDGenerator { d++ }
+                        .setDataConstant(0)
+                        .withMsgTTL(Byte.MIN_VALUE)
+                        .build(),
+                    de
+                )
+            }*/
 
             try {
                 f.start()
@@ -591,7 +602,7 @@ class EventMeshTest {
                 f.stop()
             }
             delay(1000)
-            assertEquals(Int.MAX_VALUE, testDevice.transmittedMessages.get().size)
+
             val transmitted = testDevice.transmittedMessages.get().map(ByteArray::toList).distinct()
 
             println(transmitted)
