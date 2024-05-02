@@ -519,7 +519,7 @@ class EventMeshTest {
                         f.withMsgSendInterval(Duration.ofMillis(100))
                             .withMsgSendTimeout(Duration.ofMillis(10))
                             .setMessageCallback { _, _ -> }
-                            .withMsgCacheDelete(Duration.ofSeconds(1))
+                            .withMsgCache(null)
                             .setDataGenerator { d++ }
                             .setIDConstant(0)
                             .withMsgTTL(Byte.MIN_VALUE)
