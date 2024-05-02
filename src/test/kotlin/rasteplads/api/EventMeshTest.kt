@@ -45,7 +45,6 @@ class EventMeshTest {
     }
 
     @Test
-    @Order(0)
     fun `multiple start`(): Unit = runBlocking {
         val d: Byte = 10
         val f =
@@ -87,7 +86,6 @@ class EventMeshTest {
     }
 
     @Test
-    @Order(1)
     fun `start and stop`(): Unit = runBlocking {
         val f =
             correct()
@@ -112,7 +110,6 @@ class EventMeshTest {
     }
 
     @Test
-    @Order(2)
     fun `multiple stop`(): Unit = runBlocking {
         val d: Byte = 10
         val f =
@@ -154,7 +151,6 @@ class EventMeshTest {
     }
 
     @Test
-    @Order(3)
     fun `transmits, receives, and delays`(): Unit = runBlocking {
         val d: Byte = 10
         var i = 0
@@ -215,7 +211,6 @@ class EventMeshTest {
     @Nested
     inner class Receiving {
         @Test
-        @Order(4)
         fun `messages get passed through`() = runBlocking {
             val l = mutableListOf<Int>()
             val (f, testDevice) =
@@ -256,7 +251,6 @@ class EventMeshTest {
         }
 
         @Test
-        @Order(5)
         fun `works with message cache`() = runBlocking {
             val l = mutableListOf<Int>()
             val (f, testDevice) =
@@ -299,7 +293,6 @@ class EventMeshTest {
         }
 
         @Test
-        @Order(6)
         fun `relays correctly`(): Unit = runBlocking {
             val l = mutableListOf<Int>()
             val (f, testDevice) =
@@ -375,7 +368,6 @@ class EventMeshTest {
         }
 
         @Test
-        @Order(7)
         fun `relays correctly without cache`(): Unit = runBlocking {
             val (f, testDevice) =
                 correct().let { (f, d) ->
@@ -450,7 +442,6 @@ class EventMeshTest {
         }
 
         @Test
-        @Order(8)
         fun `filters correctly with one`() {
             fun delay(ms: Long) {
                 Thread.sleep(ms)
@@ -498,7 +489,6 @@ class EventMeshTest {
         }
 
         @Test
-        @Order(9)
         fun `filters correctly with multiple`(): Unit = runBlocking {
             val l = mutableListOf<Int>()
             val (f, testDevice) =
@@ -604,7 +594,6 @@ class EventMeshTest {
     @Nested
     inner class Transmitting {
         @Test
-        @Order(10)
         fun `testing data generator`(): Unit = runBlocking {
             var d: Byte = 0
             val (f, testDevice) =
@@ -637,7 +626,6 @@ class EventMeshTest {
         }
 
         @Test
-        @Order(11)
         fun `testing id generator`(): Unit = runBlocking {
             var d = 0
 
@@ -673,7 +661,6 @@ class EventMeshTest {
         }
 
         @Test
-        @Order(12)
         fun `testing data const`(): Unit = runBlocking {
             val d: Byte = 10
             val (f, testDevice) =
@@ -709,7 +696,6 @@ class EventMeshTest {
         }
 
         @Test
-        @Order(13)
         fun `testing id const`(): Unit = runBlocking {
             val d = 10
             val (f, testDevice) =
@@ -745,7 +731,6 @@ class EventMeshTest {
         }
 
         @Test
-        @Order(14)
         fun `testing correct ttl`(): Unit = runBlocking {
             val d: Byte = 10
             val (f, testDevice) =

@@ -200,11 +200,11 @@ private constructor(
      *
      * @see start
      */
-    fun stop() {
+    fun stop() = runBlocking {
         relayQueue.set(mutableListOf())
-        btSender.getAndSet(null)?.cancel()
-        btScanner.getAndSet(null)?.cancel()
-        relayJob.getAndSet(null)?.cancel()
+        btSender.getAndSet(null)?.cancelAndJoin()
+        btScanner.getAndSet(null)?.cancelAndJoin()
+        relayJob.getAndSet(null)?.cancelAndJoin()
     }
 
     companion object {
