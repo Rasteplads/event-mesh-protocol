@@ -22,7 +22,7 @@ class EventMeshTransmitterTest {
     }
 
     @Test
-    fun `transmitting correct through EventMeshTransmitter`() = runBlocking {
+    fun `transmitting correct through EventMeshTransmitter`() {
         val device = newDevice()
         val tx = EventMeshTransmitter(device)
         val b = byteArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
@@ -58,5 +58,6 @@ class EventMeshTransmitterTest {
     companion object {
         const val TX_INTERVAL: Long = 50
         fun newDevice() = MockDevice(TX_INTERVAL)
+        fun delay(ms: Long) = Thread.sleep(ms)
     }
 }

@@ -14,6 +14,7 @@ import rasteplads.util.*
 class EventMeshTest {
 
     companion object {
+        fun delay(ms: Long) = Thread.sleep(ms)
         // val testDevice = MockDevice(100)
 
         fun correct(): Pair<EventMesh.Companion.Builder<Int, Byte>, MockDevice> {
@@ -45,7 +46,7 @@ class EventMeshTest {
     }
 
     @Test
-    fun `multiple start`(): Unit = runBlocking {
+    fun `multiple start`() {
         val d: Byte = 10
         val f =
             correct()
@@ -86,7 +87,7 @@ class EventMeshTest {
     }
 
     @Test
-    fun `start and stop`(): Unit = runBlocking {
+    fun `start and stop`() {
         val f =
             correct()
                 .first
@@ -110,7 +111,7 @@ class EventMeshTest {
     }
 
     @Test
-    fun `multiple stop`(): Unit = runBlocking {
+    fun `multiple stop`() {
         val d: Byte = 10
         val f =
             correct()
@@ -151,7 +152,7 @@ class EventMeshTest {
     }
 
     @Test
-    fun `transmits, receives, and delays`(): Unit = runBlocking {
+    fun `transmits, receives, and delays`() {
         val d: Byte = 10
         var i = 0
         val (f, testDevice) =
@@ -211,7 +212,7 @@ class EventMeshTest {
     @Nested
     inner class Receiving {
         @Test
-        fun `messages get passed through`() = runBlocking {
+        fun `messages get passed through`() {
             val l = mutableListOf<Int>()
             val (f, testDevice) =
                 correct().let { (f, d) ->
@@ -251,7 +252,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `works with message cache`() = runBlocking {
+        fun `works with message cache`() {
             val l = mutableListOf<Int>()
             val (f, testDevice) =
                 correct().let { (f, d) ->
@@ -294,7 +295,6 @@ class EventMeshTest {
 
         @Test
         fun `relays correctly`() {
-            fun delay(ms: Long) = Thread.sleep(ms)
             val l = mutableListOf<Int>()
             val (f, testDevice) =
                 correct().let { (f, d) ->
@@ -369,7 +369,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `relays correctly without cache`(): Unit = runBlocking {
+        fun `relays correctly without cache`() {
             val (f, testDevice) =
                 correct().let { (f, d) ->
                     Pair(
@@ -490,7 +490,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `filters correctly with multiple`(): Unit = runBlocking {
+        fun `filters correctly with multiple`() {
             val l = mutableListOf<Int>()
             val (f, testDevice) =
                 correct().let { (f, d) ->
@@ -555,7 +555,7 @@ class EventMeshTest {
 
         /* TODO: Not detecting exceptions
         @Test
-        fun `return arrays too large`(): Unit = runBlocking {
+        fun `return arrays too large`() {
             val f =
                 correct()
                     // .withMsgScanInterval(Duration.ofMillis(100))
@@ -595,7 +595,7 @@ class EventMeshTest {
     @Nested
     inner class Transmitting {
         @Test
-        fun `testing data generator`(): Unit = runBlocking {
+        fun `testing data generator`() {
             var d: Byte = 0
             val (f, testDevice) =
                 correct().let { (f, de) ->
@@ -627,7 +627,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `testing id generator`(): Unit = runBlocking {
+        fun `testing id generator`() {
             var d = 0
 
             val (f, testDevice) =
@@ -655,14 +655,13 @@ class EventMeshTest {
 
             val transmitted = testDevice.transmittedMessages.get().map(ByteArray::toList).distinct()
 
-            println(transmitted)
             assertEquals(d, transmitted.size)
             assertEquals(d.dec(), transmitted.last().slice(1..5).toByteArray().toInt())
             assertEquals(0, transmitted.first().slice(1..5).toByteArray().toInt())
         }
 
         @Test
-        fun `testing data const`(): Unit = runBlocking {
+        fun `testing data const`() {
             val d: Byte = 10
             val (f, testDevice) =
                 correct().let { (f, de) ->
@@ -697,7 +696,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `testing id const`(): Unit = runBlocking {
+        fun `testing id const`() {
             val d = 10
             val (f, testDevice) =
                 correct().let { (f, de) ->
@@ -732,7 +731,7 @@ class EventMeshTest {
         }
 
         @Test
-        fun `testing correct ttl`(): Unit = runBlocking {
+        fun `testing correct ttl`() {
             val d: Byte = 10
             val (f, testDevice) =
                 correct().let { (f, de) ->

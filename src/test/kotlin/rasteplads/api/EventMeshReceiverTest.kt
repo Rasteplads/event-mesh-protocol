@@ -17,7 +17,7 @@ class EventMeshReceiverTest {
     }
 
     @Test
-    fun `receives correct messages`(): Unit = runBlocking {
+    fun `receives correct messages`() {
         val device = newDevice()
         val b = byteArrayOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 0)
         val rx = EventMeshReceiver(device)
@@ -38,7 +38,7 @@ class EventMeshReceiverTest {
     }
 
     @Test
-    fun `receives correct messages while scanning for ID`(): Unit = runBlocking {
+    fun `receives correct messages while scanning for ID`() {
         val device = newDevice()
         val b = byteArrayOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 0)
         val rx = EventMeshReceiver(device)
@@ -80,7 +80,7 @@ class EventMeshReceiverTest {
     }
 
     @Test
-    fun `receives correct messages while scanning for ID and stopping`(): Unit = runBlocking {
+    fun `receives correct messages while scanning for ID and stopping`() {
         val device = newDevice()
         val b = byteArrayOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 0)
         val rx = EventMeshReceiver(device)
@@ -132,7 +132,7 @@ class EventMeshReceiverTest {
     }
 
     @Test
-    fun `scanning for ID`(): Unit = runBlocking {
+    fun `scanning for ID`() {
         val device = newDevice()
         val b = byteArrayOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 0)
         val rx = EventMeshReceiver(device)
@@ -157,7 +157,7 @@ class EventMeshReceiverTest {
     }
 
     @Test
-    fun `scanning for ID then receiving messages and stopping`(): Unit = runBlocking {
+    fun `scanning for ID then receiving messages and stopping`() {
         val device = newDevice()
         val b = byteArrayOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 0)
         val rx = EventMeshReceiver(device)
@@ -199,7 +199,7 @@ class EventMeshReceiverTest {
     }
 
     @Test
-    fun `starts and stops`() = runBlocking {
+    fun `starts and stops`() {
         val device = newDevice()
         assertFalse(device.receiving.get())
         val rx = EventMeshReceiver(device)
@@ -213,7 +213,7 @@ class EventMeshReceiverTest {
     }
 
     @Test
-    fun `stops in between`() = runBlocking {
+    fun `stops in between`() {
         val device = newDevice()
         val b = byteArrayOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 0)
         val l = mutableListOf<ByteArray>()
@@ -248,7 +248,7 @@ class EventMeshReceiverTest {
     }
 
     @Test
-    fun `throws exception`(): Unit = runBlocking {
+    fun `throws exception`() {
         val device = newDevice()
         assertFails {
             EventMeshReceiver(device).scanForID(
@@ -302,6 +302,7 @@ class EventMeshReceiverTest {
         const val RX_DURATION: Long = 5_000
         // val device = MockDevice(100)
         fun newDevice() = MockDevice(100)
+        fun delay(ms: Long) = Thread.sleep(ms)
 
         inline fun <reified C> callFuncFromClass(target: C, field: String) {
             C::class

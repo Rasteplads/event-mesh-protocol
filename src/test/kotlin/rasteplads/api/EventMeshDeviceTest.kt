@@ -21,7 +21,7 @@ class MockDevice(override val transmissionInterval: Long) : TransportDevice {
 
     private var tx: Job? = null
 
-    override fun beginTransmitting(message: ByteArray): Unit = runBlocking {
+    override fun beginTransmitting(message: ByteArray) {
         transmitting.set(true)
 
         tx =
@@ -57,12 +57,12 @@ class MockDevice(override val transmissionInterval: Long) : TransportDevice {
 
     override fun stopReceiving(): Unit = receiving.set(false)
 
-    fun receiveMessage(b: ByteArray) = runBlocking {
-        if (!receiving.get()) return@runBlocking
+    fun receiveMessage(b: ByteArray) {
+        if (!receiving.get()) return
         receivedMsg.set(b)
         while (receiving.get() && receivedMsg.get() != null) {
-            delay(50)
-            yield()
+            Thread.sleep(50)
+            // yield()
         }
 
         // receivedPool.get().add(b)
@@ -74,7 +74,7 @@ class EventMeshDeviceTest {
 
     @BeforeTest
     @AfterTest
-    fun clean(): Unit = runBlocking {
+    fun clean() {
         // device.stopReceiving()
         // device.stopTransmitting()
         // device.transmittedMessages.get().removeAll { true }
@@ -87,6 +87,7 @@ class EventMeshDeviceTest {
         const val T_INTERVAL: Long = 100
         //   val device = MockDevice(T_INTERVAL)
         fun newDevice() = MockDevice(T_INTERVAL)
+        fun delay(ms: Long) = Thread.sleep(ms)
 
         inline fun <reified C, reified R> getValueFromClass(target: C, field: String): R =
             C::class
@@ -97,7 +98,7 @@ class EventMeshDeviceTest {
     }
 
     @Test
-    fun `throws with small id`(): Unit = runBlocking {
+    fun `throws with small id`() {
         val device = newDevice()
         val e =
             EventMeshDevice(
@@ -112,7 +113,7 @@ class EventMeshDeviceTest {
     }
 
     @Test
-    fun `receives correctly`(): Unit = runBlocking {
+    fun `receives correctly`() {
         val device = newDevice()
         val b = byteArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
         val rx = EventMeshReceiver(device)
@@ -135,7 +136,7 @@ class EventMeshDeviceTest {
     }
 
     @Test
-    fun `transmits correctly`(): Unit = runBlocking {
+    fun `transmits correctly`() {
         val device = newDevice()
         val b = byteArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
         val rx = EventMeshReceiver(device)
@@ -163,7 +164,7 @@ class EventMeshDeviceTest {
     }
 
     @Test
-    fun `calls echo correctly`(): Unit = runBlocking {
+    fun `calls echo correctly`() {
         val device = newDevice()
         val rx = EventMeshReceiver(device)
         var echo = false
@@ -190,7 +191,7 @@ class EventMeshDeviceTest {
     }
 
     @Test
-    fun `does not call echo`(): Unit = runBlocking {
+    fun `does not call echo`() {
         val device = newDevice()
         val rx = EventMeshReceiver(device)
         var echo = false
