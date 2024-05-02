@@ -177,14 +177,15 @@ private constructor(
                         while (isActive) {
                             delay(250)
 
-                            println(relayQueue.get())
                             val iter = relayQueue.get().iterator()
                             while (iter.hasNext()) {
                                 val (ttl, id, body) = iter.next()
+                                // TODO: Currently transmits as long as normal messages, is this
+                                // desired?
                                 device.startTransmitting(ttl, id, body)
                                 iter.remove()
+                                yield()
                             }
-                            println(relayQueue.get())
                             yield()
                         }
                     }

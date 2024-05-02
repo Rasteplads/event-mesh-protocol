@@ -13,16 +13,17 @@ class EventMeshTransmitterTest {
     // @BeforeTest
     @AfterTest
     fun clean(): Unit = runBlocking {
-        device.stopReceiving()
-        device.stopTransmitting()
-        device.transmittedMessages.get().removeAll { true }
-        device.receivedMsg.set(null)
+        // device.stopReceiving()
+        // device.stopTransmitting()
+        // device.transmittedMessages.get().removeAll { true }
+        // device.receivedMsg.set(null)
         launchPool.forEach { it.cancelAndJoin() }
         launchPool.removeAll { true }
     }
 
     @Test
     fun `transmitting correct through EventMeshTransmitter`() = runBlocking {
+        val device = EventMeshReceiverTest.newDevice()
         val tx = EventMeshTransmitter(device)
         val b = byteArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
         tx.transmitTimeout = 250
@@ -56,6 +57,6 @@ class EventMeshTransmitterTest {
 
     companion object {
         const val TX_INTERVAL: Long = 50
-        val device = MockDevice(TX_INTERVAL)
+        fun newDevice() = MockDevice(TX_INTERVAL)
     }
 }

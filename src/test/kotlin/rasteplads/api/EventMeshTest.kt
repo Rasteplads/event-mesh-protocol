@@ -14,18 +14,23 @@ import rasteplads.util.*
 class EventMeshTest {
 
     companion object {
-        val testDevice = MockDevice(100)
+        // val testDevice = MockDevice(100)
 
-        fun correct() =
-            EventMesh.builder<Int, Byte>(testDevice)
-                .setDataConstant(0)
-                .setDataSize(1)
-                .setIDConstant(10)
-                .setMessageCallback { _, _ -> }
-                .setIDDecodeFunction { b -> b.toInt() }
-                .setDataDecodeFunction { b -> b.toByte() }
-                .setIDEncodeFunction { i -> i.toByteArray() }
-                .setDataEncodeFunction { b -> byteArrayOf(b) }
+        fun correct(): Pair<EventMesh.Companion.Builder<Int, Byte>, MockDevice> {
+            val dev = MockDevice(100)
+            return Pair(
+                EventMesh.builder<Int, Byte>(dev)
+                    .setDataConstant(0)
+                    .setDataSize(1)
+                    .setIDConstant(10)
+                    .setMessageCallback { _, _ -> }
+                    .setIDDecodeFunction { b -> b.toInt() }
+                    .setDataDecodeFunction { b -> b.toByte() }
+                    .setIDEncodeFunction { i -> i.toByteArray() }
+                    .setDataEncodeFunction { b -> byteArrayOf(b) },
+                dev
+            )
+        }
 
         inline fun <reified C, reified R> getValueFromClass(target: C, field: String): R =
             C::class
@@ -44,6 +49,7 @@ class EventMeshTest {
         val d: Byte = 10
         val f =
             correct()
+                .first
                 .withMsgSendInterval(Duration.ofMillis(100))
                 .withMsgSendTimeout(Duration.ofMillis(10))
                 .setMessageCallback { _, _ -> }
@@ -84,6 +90,7 @@ class EventMeshTest {
         val d: Byte = 10
         val f =
             correct()
+                .first
                 .withMsgSendInterval(Duration.ofMillis(100))
                 .withMsgSendTimeout(Duration.ofMillis(10))
                 .setMessageCallback { _, _ -> }
@@ -121,27 +128,20 @@ class EventMeshTest {
 
     @Nested
     inner class Receiving {
-        @BeforeTest
-        @AfterTest
-        fun clean(): Unit = runBlocking {
-            testDevice.stopReceiving()
-            testDevice.stopTransmitting()
-            testDevice.receivedMsg.set(null)
-            testDevice.transmitting.set(false)
-            testDevice.receiving.set(false)
-            testDevice.transmittedMessages.get().removeAll { true }
-        }
-
         @Test
         fun `messages get passed through`() = runBlocking {
             val l = mutableListOf<Int>()
-            val f =
-                correct()
-                    .withMsgScanInterval(Duration.ofMillis(50))
-                    .withMsgSendInterval(Duration.ofMillis(50))
-                    .withMsgSendTimeout(Duration.ofMillis(10))
-                    .setMessageCallback { i, _ -> l.add(i) }
-                    .build()
+            val (f, testDevice) =
+                correct().let { (f, d) ->
+                    Pair(
+                        f.withMsgScanInterval(Duration.ofMillis(50))
+                            .withMsgSendInterval(Duration.ofMillis(50))
+                            .withMsgSendTimeout(Duration.ofMillis(10))
+                            .setMessageCallback { i, _ -> l.add(i) }
+                            .build(),
+                        d
+                    )
+                }
             var b = byteArrayOf(Byte.MIN_VALUE, 2, 3, 4, 5, 6, 7)
             val id = b.slice(1..4).toByteArray().toInt()
 
@@ -171,12 +171,16 @@ class EventMeshTest {
         @Test
         fun `works with message cache`() = runBlocking {
             val l = mutableListOf<Int>()
-            val f =
-                correct()
-                    .withMsgScanInterval(Duration.ofMillis(50))
-                    .setMessageCallback { i, _ -> l.add(i) }
-                    .withMsgCacheDelete(Duration.ofSeconds(1))
-                    .build()
+            val (f, testDevice) =
+                correct().let { (f, d) ->
+                    Pair(
+                        f.withMsgScanInterval(Duration.ofMillis(50))
+                            .setMessageCallback { i, _ -> l.add(i) }
+                            .withMsgCacheDelete(Duration.ofSeconds(1))
+                            .build(),
+                        d
+                    )
+                }
             val b = byteArrayOf(Byte.MIN_VALUE, 2, 3, 4, 5, 6, 7)
             val id = b.slice(1..4).toByteArray().toInt()
 
@@ -209,17 +213,21 @@ class EventMeshTest {
         @Test
         fun `relays correctly`(): Unit = runBlocking {
             val l = mutableListOf<Int>()
-            val f =
-                correct()
-                    .setDataConstant(0)
-                    .setIDConstant(0)
-                    .withMsgTTL(0)
-                    .withMsgScanInterval(Duration.ofMillis(50))
-                    .withMsgSendInterval(Duration.ofMillis(100))
-                    .withMsgSendTimeout(Duration.ofMillis(10))
-                    .setMessageCallback { i, _ -> l.add(i) }
-                    .withMsgCacheDelete(Duration.ofSeconds(1))
-                    .build()
+            val (f, testDevice) =
+                correct().let { (f, d) ->
+                    Pair(
+                        f.setDataConstant(0)
+                            .setIDConstant(0)
+                            .withMsgTTL(0)
+                            .withMsgScanInterval(Duration.ofMillis(50))
+                            .withMsgSendInterval(Duration.ofMillis(100))
+                            .withMsgSendTimeout(Duration.ofMillis(10))
+                            .setMessageCallback { i, _ -> l.add(i) }
+                            .withMsgCacheDelete(Duration.ofSeconds(1))
+                            .build(),
+                        d
+                    )
+                }
 
             try {
                 f.start()
@@ -279,17 +287,21 @@ class EventMeshTest {
 
         @Test
         fun `relays correctly without cache`(): Unit = runBlocking {
-            val f =
-                correct()
-                    .setDataConstant(0)
-                    .setIDConstant(0)
-                    .withMsgTTL(Byte.MIN_VALUE)
-                    .withMsgScanInterval(Duration.ofMillis(50))
-                    .withMsgSendInterval(Duration.ofMillis(50))
-                    .withMsgSendTimeout(Duration.ofMillis(10))
-                    .setMessageCallback { _, _ -> }
-                    .withMsgCache(null)
-                    .build()
+            val (f, testDevice) =
+                correct().let { (f, d) ->
+                    Pair(
+                        f.setDataConstant(0)
+                            .setIDConstant(0)
+                            .withMsgTTL(Byte.MIN_VALUE)
+                            .withMsgScanInterval(Duration.ofMillis(50))
+                            .withMsgSendInterval(Duration.ofMillis(50))
+                            .withMsgSendTimeout(Duration.ofMillis(10))
+                            .setMessageCallback { _, _ -> }
+                            .withMsgCache(null)
+                            .build(),
+                        d
+                    )
+                }
 
             try {
                 f.start()
@@ -353,15 +365,19 @@ class EventMeshTest {
                 Thread.sleep(ms)
             }
             val l = mutableListOf<Int>()
-            val f =
-                correct()
-                    .setMessageCallback { i, _ -> l.add(i) }
-                    .withMsgScanInterval(Duration.ofMillis(50))
-                    .withMsgSendInterval(Duration.ofMillis(50))
-                    .withMsgSendTimeout(Duration.ofMillis(10))
-                    .addFilterFunction { i -> i % 2 == 0 } // Only even numbers
-                    .withMsgCacheDelete(Duration.ofSeconds(1))
-                    .build()
+            val (f, testDevice) =
+                correct().let { (f, d) ->
+                    Pair(
+                        f.setMessageCallback { i, _ -> l.add(i) }
+                            .withMsgScanInterval(Duration.ofMillis(50))
+                            .withMsgSendInterval(Duration.ofMillis(50))
+                            .withMsgSendTimeout(Duration.ofMillis(10))
+                            .addFilterFunction { i -> i % 2 == 0 } // Only even numbers
+                            .withMsgCacheDelete(Duration.ofSeconds(1))
+                            .build(),
+                        d
+                    )
+                }
 
             try {
                 f.start()
@@ -393,22 +409,26 @@ class EventMeshTest {
         @Test
         fun `filters correctly with multiple`(): Unit = runBlocking {
             val l = mutableListOf<Int>()
-            val f =
-                correct()
-                    .setMessageCallback { i, _ -> l.add(i) }
-                    .withMsgScanInterval(Duration.ofMillis(50))
-                    .withMsgSendInterval(Duration.ofMillis(50))
-                    .withMsgSendTimeout(Duration.ofMillis(10))
-                    .addFilterFunction(
-                        { i -> i % 2 == 0 }, // even
-                        { i -> i > 5 }, // greater than 5
-                        { i -> i < 15 } // less than 15
+            val (f, testDevice) =
+                correct().let { (f, d) ->
+                    Pair(
+                        f.setMessageCallback { i, _ -> l.add(i) }
+                            .withMsgScanInterval(Duration.ofMillis(50))
+                            .withMsgSendInterval(Duration.ofMillis(50))
+                            .withMsgSendTimeout(Duration.ofMillis(10))
+                            .addFilterFunction(
+                                { i -> i % 2 == 0 }, // even
+                                { i -> i > 5 }, // greater than 5
+                                { i -> i < 15 } // less than 15
+                            )
+                            .withMsgCacheDelete(Duration.ofSeconds(1))
+                            .setIDConstant(0)
+                            .setDataConstant(0)
+                            .withMsgTTL(Byte.MIN_VALUE)
+                            .build(),
+                        d
                     )
-                    .withMsgCacheDelete(Duration.ofSeconds(1))
-                    .setIDConstant(0)
-                    .setDataConstant(0)
-                    .withMsgTTL(Byte.MIN_VALUE)
-                    .build()
+                }
 
             try {
                 f.start()
@@ -491,30 +511,23 @@ class EventMeshTest {
 
     @Nested
     inner class Transmitting {
-        @BeforeTest
-        @AfterTest
-        fun clean() {
-            testDevice.stopReceiving()
-            testDevice.stopTransmitting()
-            testDevice.receivedMsg.set(null)
-            testDevice.transmitting.set(false)
-            testDevice.receiving.set(false)
-            testDevice.transmittedMessages.get().removeAll { true }
-        }
-
         @Test
         fun `testing data generator`(): Unit = runBlocking {
             var d: Byte = 0
-            val f =
-                correct()
-                    .withMsgSendInterval(Duration.ofMillis(100))
-                    .withMsgSendTimeout(Duration.ofMillis(10))
-                    .setMessageCallback { _, _ -> }
-                    .withMsgCacheDelete(Duration.ofSeconds(1))
-                    .setDataGenerator { d++ }
-                    .setIDConstant(0)
-                    .withMsgTTL(Byte.MIN_VALUE)
-                    .build()
+            val (f, testDevice) =
+                correct().let { (f, de) ->
+                    Pair(
+                        f.withMsgSendInterval(Duration.ofMillis(100))
+                            .withMsgSendTimeout(Duration.ofMillis(10))
+                            .setMessageCallback { _, _ -> }
+                            .withMsgCacheDelete(Duration.ofSeconds(1))
+                            .setDataGenerator { d++ }
+                            .setIDConstant(0)
+                            .withMsgTTL(Byte.MIN_VALUE)
+                            .build(),
+                        de
+                    )
+                }
 
             try {
                 f.start()
@@ -546,16 +559,20 @@ class EventMeshTest {
         @Test
         fun `testing id generator`(): Unit = runBlocking {
             var d = 0
-            val f =
-                correct()
-                    .withMsgSendInterval(Duration.ofMillis(100))
-                    .withMsgSendTimeout(Duration.ofMillis(10))
-                    .setMessageCallback { _, _ -> }
-                    .withMsgCacheDelete(Duration.ofSeconds(1))
-                    .setIDGenerator { d++ }
-                    .setDataConstant(0)
-                    .withMsgTTL(Byte.MIN_VALUE)
-                    .build()
+            val (f, testDevice) =
+                correct().let { (f, de) ->
+                    Pair(
+                        f.withMsgSendInterval(Duration.ofMillis(100))
+                            .withMsgSendTimeout(Duration.ofMillis(10))
+                            .setMessageCallback { _, _ -> }
+                            .withMsgCacheDelete(Duration.ofSeconds(1))
+                            .setIDGenerator { d++ }
+                            .setDataConstant(0)
+                            .withMsgTTL(Byte.MIN_VALUE)
+                            .build(),
+                        de
+                    )
+                }
 
             try {
                 f.start()
@@ -596,16 +613,20 @@ class EventMeshTest {
         @Test
         fun `testing data const`(): Unit = runBlocking {
             val d: Byte = 10
-            val f =
-                correct()
-                    .withMsgSendInterval(Duration.ofMillis(100))
-                    .withMsgSendTimeout(Duration.ofMillis(10))
-                    .setMessageCallback { _, _ -> }
-                    .withMsgCacheDelete(Duration.ofSeconds(1))
-                    .setDataConstant(d)
-                    .setIDConstant(0)
-                    .withMsgTTL(Byte.MIN_VALUE)
-                    .build()
+            val (f, testDevice) =
+                correct().let { (f, de) ->
+                    Pair(
+                        f.withMsgSendInterval(Duration.ofMillis(100))
+                            .withMsgSendTimeout(Duration.ofMillis(10))
+                            .setMessageCallback { _, _ -> }
+                            .withMsgCacheDelete(Duration.ofSeconds(1))
+                            .setDataConstant(d)
+                            .setIDConstant(0)
+                            .withMsgTTL(Byte.MIN_VALUE)
+                            .build(),
+                        de
+                    )
+                }
 
             try {
                 f.start()
@@ -627,16 +648,20 @@ class EventMeshTest {
         @Test
         fun `testing id const`(): Unit = runBlocking {
             val d = 10
-            val f =
-                correct()
-                    .withMsgSendInterval(Duration.ofMillis(100))
-                    .withMsgSendTimeout(Duration.ofMillis(10))
-                    .setMessageCallback { _, _ -> }
-                    .withMsgCacheDelete(Duration.ofSeconds(1))
-                    .setIDConstant(d)
-                    .setDataConstant(0)
-                    .withMsgTTL(Byte.MIN_VALUE)
-                    .build()
+            val (f, testDevice) =
+                correct().let { (f, de) ->
+                    Pair(
+                        f.withMsgSendInterval(Duration.ofMillis(100))
+                            .withMsgSendTimeout(Duration.ofMillis(10))
+                            .setMessageCallback { _, _ -> }
+                            .withMsgCacheDelete(Duration.ofSeconds(1))
+                            .setIDConstant(d)
+                            .setDataConstant(0)
+                            .withMsgTTL(Byte.MIN_VALUE)
+                            .build(),
+                        de
+                    )
+                }
 
             try {
                 f.start()
@@ -658,14 +683,18 @@ class EventMeshTest {
         @Test
         fun `testing correct ttl`(): Unit = runBlocking {
             val d: Byte = 10
-            val f =
-                correct()
-                    .withMsgSendInterval(Duration.ofMillis(100))
-                    .withMsgSendTimeout(Duration.ofMillis(10))
-                    .setMessageCallback { _, _ -> }
-                    .withMsgCacheDelete(Duration.ofSeconds(1))
-                    .withMsgTTL(d)
-                    .build()
+            val (f, testDevice) =
+                correct().let { (f, de) ->
+                    Pair(
+                        f.withMsgSendInterval(Duration.ofMillis(100))
+                            .withMsgSendTimeout(Duration.ofMillis(10))
+                            .setMessageCallback { _, _ -> }
+                            .withMsgCacheDelete(Duration.ofSeconds(1))
+                            .withMsgTTL(d)
+                            .build(),
+                        de
+                    )
+                }
 
             try {
                 f.start()
@@ -829,7 +858,7 @@ class EventMeshTest {
 
         @Test
         fun `testing optional fields`() {
-            val f = correct()
+            val f = correct().first
             var name = "msgSendInterval"
             var default = getValueFromClass<EventMesh<Int, Byte>, Duration>(f.build(), name)
             var modded =
@@ -893,7 +922,7 @@ class EventMeshTest {
             val name = "messageCache"
 
             val f =
-                EventMesh.builder<Int, Byte>(testDevice)
+                EventMesh.builder<Int, Byte>(MockDevice(100))
                     .setDataConstant(0)
                     .setIDGenerator { 10 }
                     .setDataSize(10)
@@ -914,7 +943,7 @@ class EventMeshTest {
             )
 
             val g =
-                EventMesh.builder<Int, Byte>(testDevice)
+                EventMesh.builder<Int, Byte>(MockDevice(100))
                     .setDataConstant(0)
                     .setIDGenerator { 10 }
                     .setDataSize(10)
@@ -937,7 +966,7 @@ class EventMeshTest {
             val name = "messageCache"
 
             val ms = "cacheTimeInMilliseconds"
-            val f = correct()
+            val f = correct().first
             var mc = getValueFromClass<EventMesh<Int, Byte>, MessageCache<Int>?>(f.build(), name)
             Assertions.assertNotNull(mc)
             var time = getValueFromClass<MessageCache<Int>, Long>(mc!!, ms)
@@ -969,8 +998,8 @@ class EventMeshTest {
             var b = EventMesh.builder<Int, Byte>()
             assertFails { b.build() }
             b.setDataConstant(0)
-                .setReceiver(EventMeshReceiver(testDevice))
-                .setTransmitter(EventMeshTransmitter(testDevice))
+                .setReceiver(EventMeshReceiver(MockDevice(100)))
+                .setTransmitter(EventMeshTransmitter(MockDevice(100)))
                 .setDataSize(10)
                 .setIDGenerator { 10 }
                 .setMessageCallback { _, _ -> }
@@ -983,8 +1012,8 @@ class EventMeshTest {
             b = EventMesh.builder(null)
             assertFails { b.build() }
             b.setDataConstant(0)
-                .setReceiver(EventMeshReceiver(testDevice))
-                .setTransmitter(EventMeshTransmitter(testDevice))
+                .setReceiver(EventMeshReceiver(MockDevice(100)))
+                .setTransmitter(EventMeshTransmitter(MockDevice(100)))
                 .setIDGenerator { 10 }
                 .setDataSize(10)
                 .setMessageCallback { _, _ -> }
@@ -997,8 +1026,8 @@ class EventMeshTest {
             b = EventMesh.builder(MessageCache(MESSAGE_CACHE_TIME))
             assertFails { b.build() }
             b.setDataConstant(0)
-                .setReceiver(EventMeshReceiver(testDevice))
-                .setTransmitter(EventMeshTransmitter(testDevice))
+                .setReceiver(EventMeshReceiver(MockDevice(100)))
+                .setTransmitter(EventMeshTransmitter(MockDevice(100)))
                 .setIDGenerator { 10 }
                 .setMessageCallback { _, _ -> }
                 .setDataSize(10)
@@ -1008,7 +1037,7 @@ class EventMeshTest {
                 .setDataEncodeFunction { bp -> byteArrayOf(bp) }
                 .build()
 
-            b = EventMesh.builder(testDevice)
+            b = EventMesh.builder(MockDevice(100))
             assertFails { b.build() }
             b.setDataConstant(0)
                 .setIDGenerator { 10 }
@@ -1020,7 +1049,7 @@ class EventMeshTest {
                 .setDataEncodeFunction { bp -> byteArrayOf(bp) }
                 .build()
 
-            b = EventMesh.builder(testDevice, null)
+            b = EventMesh.builder(MockDevice(100), null)
             assertFails { b.build() }
             b.setDataConstant(0)
                 .setIDGenerator { 10 }
@@ -1032,7 +1061,7 @@ class EventMeshTest {
                 .setDataEncodeFunction { bp -> byteArrayOf(bp) }
                 .build()
 
-            b = EventMesh.builder(testDevice, MessageCache(MESSAGE_CACHE_TIME))
+            b = EventMesh.builder(MockDevice(100), MessageCache(MESSAGE_CACHE_TIME))
             assertFails { b.build() }
             b.setDataConstant(0)
                 .setIDGenerator { 10 }
@@ -1044,7 +1073,11 @@ class EventMeshTest {
                 .setDataEncodeFunction { bp -> byteArrayOf(bp) }
                 .build()
 
-            b = EventMesh.builder(EventMeshReceiver(testDevice), EventMeshTransmitter(testDevice))
+            b =
+                EventMesh.builder(
+                    EventMeshReceiver(MockDevice(100)),
+                    EventMeshTransmitter(MockDevice(100))
+                )
             assertFails { b.build() }
             b.setDataConstant(0)
                 .setDataSize(10)
@@ -1058,8 +1091,8 @@ class EventMeshTest {
 
             b =
                 EventMesh.builder(
-                    EventMeshReceiver(testDevice),
-                    EventMeshTransmitter(testDevice),
+                    EventMeshReceiver(MockDevice(100)),
+                    EventMeshTransmitter(MockDevice(100)),
                     null
                 )
             assertFails { b.build() }
@@ -1075,8 +1108,8 @@ class EventMeshTest {
 
             b =
                 EventMesh.builder(
-                    EventMeshReceiver(testDevice),
-                    EventMeshTransmitter(testDevice),
+                    EventMeshReceiver(MockDevice(100)),
+                    EventMeshTransmitter(MockDevice(100)),
                     MessageCache(MESSAGE_CACHE_TIME)
                 )
             assertFails { b.build() }
