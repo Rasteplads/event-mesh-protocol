@@ -161,7 +161,6 @@ class EventMeshTest {
                         .withMsgSendTimeout(Duration.ofMillis(10))
                         .withMsgScanInterval(Duration.ofMillis(100))
                         .setMessageCallback { _, _ ->
-                            println(i)
                             i++
                         }
                         .withMsgCacheDelete(Duration.ofSeconds(1))
@@ -307,7 +306,7 @@ class EventMeshTest {
                             .withMsgScanDuration(Duration.ofMillis(100))
                             .withMsgScanInterval(Duration.ofMillis(50))
                             .withMsgSendInterval(Duration.ofMillis(100))
-                            .withMsgSendTimeout(Duration.ofMillis(10))
+                            .withMsgSendTimeout(Duration.ofMillis(50))
                             .setMessageCallback { i, _ -> l.add(i) }
                             .withMsgCacheDelete(Duration.ofSeconds(10))
                             .build(),
