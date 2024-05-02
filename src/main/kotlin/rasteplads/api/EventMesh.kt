@@ -143,7 +143,7 @@ private constructor(
         btSender.updateAndGet {
             when (it) {
                 null ->
-                    coroutineScope.launch(Dispatchers.Unconfined) {
+                    coroutineScope.launch(DISPATCHER) {
                         while (isActive) {
                             delay(msgSendInterval.toMillis())
                             val id = msgId()
@@ -160,7 +160,7 @@ private constructor(
         btScanner.updateAndGet {
             when (it) {
                 null ->
-                    coroutineScope.launch(Dispatchers.Unconfined) {
+                    coroutineScope.launch(DISPATCHER) {
                         while (isActive) {
                             delay(msgScanInterval.toMillis())
                             device.startReceiving()
@@ -174,7 +174,7 @@ private constructor(
         relayJob.updateAndGet {
             when (it) {
                 null ->
-                    coroutineScope.launch(Dispatchers.Unconfined) {
+                    coroutineScope.launch(DISPATCHER) {
                         while (isActive) {
                             delay(250)
 
@@ -228,6 +228,8 @@ private constructor(
          * The default value is 60 seconds.
          */
         const val MESSAGE_CACHE_TIME: Long = 60_000
+
+        private val DISPATCHER: CoroutineDispatcher = Dispatchers.IO
 
         /**
          * Creates a [Builder] for [EventMesh] with the default message cache ([MessageCache]) and
