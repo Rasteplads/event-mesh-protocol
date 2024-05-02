@@ -160,9 +160,7 @@ class EventMeshTest {
                     f.withMsgSendInterval(Duration.ofMillis(100))
                         .withMsgSendTimeout(Duration.ofMillis(10))
                         .withMsgScanInterval(Duration.ofMillis(100))
-                        .setMessageCallback { _, _ ->
-                            i++
-                        }
+                        .setMessageCallback { _, _ -> i++ }
                         .withMsgCacheDelete(Duration.ofSeconds(1))
                         .setDataConstant(d)
                         .setIDConstant(0)
