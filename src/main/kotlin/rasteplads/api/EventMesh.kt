@@ -143,7 +143,7 @@ private constructor(
         btSender.updateAndGet {
             when (it) {
                 null ->
-                    coroutineScope.launch(Dispatchers.Unconfined) {
+                    coroutineScope.launch(Dispatchers.Default) {
                         while (isActive) {
                             delay(msgSendInterval.toMillis())
                             val id = msgId()
@@ -160,7 +160,7 @@ private constructor(
         btScanner.updateAndGet {
             when (it) {
                 null ->
-                    coroutineScope.launch(Dispatchers.Unconfined) {
+                    coroutineScope.launch(Dispatchers.Default) {
                         while (isActive) {
                             delay(msgScanInterval.toMillis())
                             device.startReceiving()
@@ -173,7 +173,7 @@ private constructor(
         relayJob.updateAndGet {
             when (it) {
                 null ->
-                    coroutineScope.launch(Dispatchers.Unconfined) {
+                    coroutineScope.launch(Dispatchers.Default) {
                         while (isActive) {
                             delay(250)
 
