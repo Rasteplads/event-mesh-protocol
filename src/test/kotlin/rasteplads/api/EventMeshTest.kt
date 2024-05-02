@@ -568,7 +568,6 @@ class EventMeshTest {
             }
             delay(1000)
 
-            assertEquals(mutableListOf(), testDevice.transmittedMessages.get())
             assertEquals(
                 d,
                 testDevice.transmittedMessages.get().map(ByteArray::toList).distinct().size
