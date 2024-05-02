@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.*
 import rasteplads.messageCache.MessageCache
 import rasteplads.util.Either
-import rasteplads.util.plus
 import rasteplads.util.split
 
 /**
@@ -180,7 +179,7 @@ private constructor(
                             val iter = relayQueue.get().iterator()
                             while (iter.hasNext()) {
                                 val (ttl, id, body) = iter.next()
-                                // TODO: Currently transmits as long as normal messages, is this
+                                // Currently transmits as long as normal messages, is this
                                 // desired?
                                 device.startTransmitting(ttl, id, body)
                                 iter.remove()

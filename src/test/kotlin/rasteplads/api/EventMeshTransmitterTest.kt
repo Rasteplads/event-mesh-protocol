@@ -23,7 +23,7 @@ class EventMeshTransmitterTest {
 
     @Test
     fun `transmitting correct through EventMeshTransmitter`() = runBlocking {
-        val device = EventMeshReceiverTest.newDevice()
+        val device = newDevice()
         val tx = EventMeshTransmitter(device)
         val b = byteArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
         tx.transmitTimeout = 250

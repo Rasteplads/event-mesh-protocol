@@ -267,7 +267,7 @@ class EventMeshReceiverTest {
     @Test
     fun `multiple starters`() {
         val device = newDevice()
-        val rx = EventMeshReceiver(EventMeshDeviceTest.device)
+        val rx = EventMeshReceiver(device)
         val count = getValueFromClass<EventMeshReceiver, AtomicInteger>(rx, "scannerCount")
         val e = 10
 
@@ -287,7 +287,7 @@ class EventMeshReceiverTest {
     @Test
     fun `scanners can't go below zero`() {
         val device = newDevice()
-        val rx = EventMeshReceiver(EventMeshDeviceTest.device)
+        val rx = EventMeshReceiver(device)
         val count = getValueFromClass<EventMeshReceiver, AtomicInteger>(rx, "scannerCount")
         val e = 10
 
