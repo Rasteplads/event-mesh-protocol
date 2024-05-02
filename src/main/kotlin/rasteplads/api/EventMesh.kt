@@ -129,6 +129,7 @@ private constructor(
 
         // builder.msgCacheLimit?.let { msgCacheLimit = it }
     }
+    private val coroutineScope = CoroutineScope(CoroutineName("EventMeshDeviceScope"))
 
     /**
      * This function starts the device, and will launch to sub-processes; one for transmitting and
@@ -142,7 +143,7 @@ private constructor(
         btSender.updateAndGet {
             when (it) {
                 null ->
-                    GlobalScope.launch(Dispatchers.Unconfined) {
+                    coroutineScope.launch(Dispatchers.Unconfined) {
                         while (isActive) {
                             delay(msgSendInterval.toMillis())
                             val id = msgId()
@@ -159,7 +160,7 @@ private constructor(
         btScanner.updateAndGet {
             when (it) {
                 null ->
-                    GlobalScope.launch(Dispatchers.Unconfined) {
+                    coroutineScope.launch(Dispatchers.Unconfined) {
                         while (isActive) {
                             delay(msgScanInterval.toMillis())
                             device.startReceiving()
@@ -172,7 +173,7 @@ private constructor(
         relayJob.updateAndGet {
             when (it) {
                 null ->
-                    GlobalScope.launch(Dispatchers.Unconfined) {
+                    coroutineScope.launch(Dispatchers.Unconfined) {
                         while (isActive) {
                             delay(250)
 
