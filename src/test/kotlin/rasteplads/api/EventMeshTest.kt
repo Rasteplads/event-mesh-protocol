@@ -569,25 +569,21 @@ class EventMeshTest {
         @Test
         fun `testing id generator`(): Unit = runBlocking {
             var d = 0
-            val testDevice = MockDevice(100)
-            val f =
-                EventMesh.builder<Int, Byte>(testDevice)
-                    .setDataConstant(0)
-                    .setDataSize(1)
-                    .setIDConstant(10)
-                    .setMessageCallback { _, _ -> }
-                    .setIDDecodeFunction { b -> b.toInt() }
-                    .setDataDecodeFunction { b -> b.toByte() }
-                    .setIDEncodeFunction { i -> i.toByteArray() }
-                    .setDataEncodeFunction { b -> byteArrayOf(b) }
-                    .withMsgSendInterval(Duration.ofMillis(100))
-                    .withMsgSendTimeout(Duration.ofMillis(10))
-                    .setMessageCallback { _, _ -> }
-                    .withMsgCacheDelete(Duration.ofSeconds(1))
-                    .setIDGenerator { d++ }
-                    .setDataConstant(0)
-                    .withMsgTTL(Byte.MIN_VALUE)
-                    .build()
+
+            val (f, testDevice) =
+                correct().let { (f, de) ->
+                    Pair(
+                        f.withMsgSendInterval(Duration.ofMillis(100))
+                            .withMsgSendTimeout(Duration.ofMillis(10))
+                            .setMessageCallback { _, _ -> }
+                            .withMsgCacheDelete(Duration.ofSeconds(1))
+                            .setIDGenerator { d++ }
+                            .setDataConstant(0)
+                            .withMsgTTL(Byte.MIN_VALUE)
+                            .build(),
+                        de
+                    )
+                }
 
             try {
                 f.start()

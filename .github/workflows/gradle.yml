@@ -60,7 +60,7 @@ jobs:
       #  run: chmod +x gradlew
       - name: Build with Gradle
         #run: echo "no" | gradle build --scan
-        run: ./gradlew build --no-daemon
+        run: gradle build --no-daemon
       - name: Store reports
         if: failure()
         uses: actions/upload-artifact@v3
