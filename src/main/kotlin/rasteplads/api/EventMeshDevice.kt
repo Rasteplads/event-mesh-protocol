@@ -6,8 +6,8 @@ import rasteplads.api.EventMesh.Companion.ID_MAX_SIZE
 import rasteplads.util.plus
 
 class EventMeshDevice(
-    private val receiver: EventMeshReceiver,
-    private val transmitter: EventMeshTransmitter,
+    private val receiver: EventMeshReceiver<*>,
+    private val transmitter: EventMeshTransmitter<*>,
     txTimeout: Duration? = null,
     rxDuration: Duration? = null,
     private val echo: (() -> Unit)? = null
@@ -34,18 +34,18 @@ class EventMeshDevice(
     fun startReceiving() = receiver.scanForMessages()
 
     class Builder {
-        private lateinit var receiver: EventMeshReceiver
-        private lateinit var transmitter: EventMeshTransmitter
+        private lateinit var receiver: EventMeshReceiver<*>
+        private lateinit var transmitter: EventMeshTransmitter<*>
         private var txTimeout: Duration? = null
         private var rxDuration: Duration? = null
         private var echo: (() -> Unit)? = null
 
-        fun withReceiver(receiver: EventMeshReceiver): Builder {
+        fun withReceiver(receiver: EventMeshReceiver<*>): Builder {
             this.receiver = receiver
             return this
         }
 
-        fun withTransmitter(transmitter: EventMeshTransmitter): Builder {
+        fun withTransmitter(transmitter: EventMeshTransmitter<*>): Builder {
             this.transmitter = transmitter
             return this
         }
@@ -101,7 +101,7 @@ class EventMeshDevice(
             )
         }
 
-        fun withDevice(device: TransportDevice): Builder {
+        fun withDevice(device: TransportDevice<*, *>): Builder {
             receiver = EventMeshReceiver(device)
             transmitter = EventMeshTransmitter(device)
             return this

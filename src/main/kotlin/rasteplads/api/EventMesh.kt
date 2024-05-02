@@ -54,6 +54,8 @@ private constructor(
             val (idB, dataB) = msg.sliceArray(1 until msg.size).split(ID_MAX_SIZE)
             val id = decodeID(idB)
 
+            val cacheCheck = messageCache?.containsMessage(id)?.not()
+
             if (messageCache == null || !messageCache.containsMessage(id)) {
                 messageCache?.cacheMessage(id)
                 if (filterID.all { f -> f(id) })
@@ -232,7 +234,7 @@ private constructor(
          * @param Data The messages' content
          * @param device The instance of the [EventMeshDevice] (Or derivative)
          */
-        fun <ID, Data> builder(device: TransportDevice): Builder<ID, Data> =
+        fun <ID, Data> builder(device: TransportDevice<*, *>): Builder<ID, Data> =
             BuilderImpl(
                 EventMeshDevice.Builder().withDevice(device),
                 MessageCache(MESSAGE_CACHE_TIME)
@@ -248,7 +250,7 @@ private constructor(
          * @param device The instance of the [EventMeshDevice] (Or derivative)
          * @param mc The instance of the [MessageCache] (Or derivative) (set to `null` to disable)
          */
-        fun <ID, Data> builder(device: TransportDevice, mc: MessageCache<ID>?): Builder<ID, Data> =
+        fun <ID, Data> builder(device: TransportDevice<*, *>, mc: MessageCache<ID>?): Builder<ID, Data> =
             BuilderImpl(EventMeshDevice.Builder().withDevice(device), mc)
 
         /**
@@ -260,7 +262,7 @@ private constructor(
          * @param rx The [EventMeshReceiver] used
          * @param tx The [EventMeshTransmitter] used
          */
-        fun <ID, Data> builder(rx: EventMeshReceiver, tx: EventMeshTransmitter): Builder<ID, Data> =
+        fun <ID, Data> builder(rx: EventMeshReceiver<*>, tx: EventMeshTransmitter<*>): Builder<ID, Data> =
             BuilderImpl(
                 EventMeshDevice.Builder().withReceiver(rx).withTransmitter(tx),
                 MessageCache(MESSAGE_CACHE_TIME)
@@ -278,8 +280,8 @@ private constructor(
          * @param mc The instance of the [MessageCache] (Or derivative) (set to `null` to disable)
          */
         fun <ID, Data> builder(
-            rx: EventMeshReceiver,
-            tx: EventMeshTransmitter,
+            rx: EventMeshReceiver<*>,
+            tx: EventMeshTransmitter<*>,
             mc: MessageCache<ID>?
         ): Builder<ID, Data> =
             BuilderImpl(EventMeshDevice.Builder().withReceiver(rx).withTransmitter(tx), mc)
@@ -291,7 +293,7 @@ private constructor(
              * @param rx The [EventMeshReceiver]
              * @return the modified [Builder]
              */
-            fun setReceiver(rx: EventMeshReceiver): Builder<ID, Data>
+            fun setReceiver(rx: EventMeshReceiver<*>): Builder<ID, Data>
 
             /**
              * Sets the [EventMeshTransmitter] in [EventMeshDevice].
@@ -299,7 +301,7 @@ private constructor(
              * @param tx The [EventMeshTransmitter]
              * @return the modified [Builder]
              */
-            fun setTransmitter(tx: EventMeshTransmitter): Builder<ID, Data>
+            fun setTransmitter(tx: EventMeshTransmitter<*>): Builder<ID, Data>
 
             /**
              * Sets the [MessageCache] (`null` to disable).
@@ -676,12 +678,12 @@ private constructor(
                 return this
             }
 
-            override fun setReceiver(rx: EventMeshReceiver): Builder<ID, Data> {
+            override fun setReceiver(rx: EventMeshReceiver<*>): Builder<ID, Data> {
                 device.withReceiver(rx)
                 return this
             }
 
-            override fun setTransmitter(tx: EventMeshTransmitter): Builder<ID, Data> {
+            override fun setTransmitter(tx: EventMeshTransmitter<*>): Builder<ID, Data> {
                 device.withTransmitter(tx)
                 return this
             }
