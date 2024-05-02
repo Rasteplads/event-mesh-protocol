@@ -302,9 +302,9 @@ class EventMeshTest {
                             .setIDConstant(0)
                             .withMsgTTL(0)
                             .withMsgScanDuration(Duration.ofMillis(100))
-                            .withMsgScanInterval(Duration.ofMillis(50))
+                            .withMsgScanInterval(Duration.ofMillis(10))
                             .withMsgSendInterval(Duration.ofMillis(100))
-                            .withMsgSendTimeout(Duration.ofMillis(50))
+                            .withMsgSendTimeout(Duration.ofMillis(10))
                             .setMessageCallback { i, _ -> l.add(i) }
                             .withMsgCacheDelete(Duration.ofSeconds(10))
                             .build(),
@@ -316,49 +316,49 @@ class EventMeshTest {
                 f.start()
                 delay(1000)
                 assertEquals(
-                    1,
+                    0,
                     testDevice.transmittedMessages
                         .get()
                         .map(ByteArray::toList)
                         .distinct()
-                        // .filterNot { b -> b.all { i -> i == (0).toByte() } }
+                        .filterNot { b -> b.all { i -> i == (0).toByte() } }
                         .size
                 )
 
                 testDevice.receiveMessage(byteArrayOf(Byte.MIN_VALUE, 0, 0, 0, 3, 6, 7))
                 delay(500)
                 assertEquals(
+                    0,
+                    testDevice.transmittedMessages
+                        .get()
+                        .map(ByteArray::toList)
+                        .distinct()
+                        .filterNot { b -> b.all { i -> i == (0).toByte() } }
+                        .size
+                )
+
+                testDevice.receiveMessage(byteArrayOf(Byte.MIN_VALUE.inc(), 0, 0, 0, 4, 6, 7))
+                delay(500)
+                assertEquals(
                     1,
                     testDevice.transmittedMessages
                         .get()
                         .map(ByteArray::toList)
                         .distinct()
-                        // .filterNot { b -> b.all { i -> i == (0).toByte() } }
-                        .size
-                )
-
-                testDevice.receiveMessage(byteArrayOf(Byte.MIN_VALUE.inc(), 0, 0, 0, 4, 6, 7))
-                delay(500)
-                assertEquals(
-                    2,
-                    testDevice.transmittedMessages
-                        .get()
-                        .map(ByteArray::toList)
-                        .distinct()
-                        // .filterNot { b -> b.slice(1 ..< b.size).all { i -> i == (0).toByte() } }
+                        .filterNot { b -> b.slice(1 ..< b.size).all { i -> i == (0).toByte() } }
                         .size
                 )
 
                 // NO DOUBLE RELAY
-                testDevice.receiveMessage(byteArrayOf(Byte.MIN_VALUE.inc(), 0, 0, 0, 4, 6, 7))
+                testDevice.receiveMessage(byteArrayOf(Byte.MIN_VALUE.inc(), 0, 0, 0, 4, 6, 8))
                 delay(500)
                 assertEquals(
-                    2,
+                    1,
                     testDevice.transmittedMessages
                         .get()
                         .map(ByteArray::toList)
                         .distinct()
-                        //  .filterNot { b -> b.all { i -> i == (0).toByte() } }
+                        .filterNot { b -> b.all { i -> i == (0).toByte() } }
                         .size
                 )
             } finally {
