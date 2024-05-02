@@ -293,8 +293,8 @@ class EventMeshTest {
         }
 
         @Test
-        fun `relays correctly`(): Unit = runBlocking {
-            // fun delay(ms: Long) = Thread.sleep(ms)
+        fun `relays correctly`() {
+            fun delay(ms: Long) = Thread.sleep(ms)
             val l = mutableListOf<Int>()
             val (f, testDevice) =
                 correct().let { (f, d) ->
