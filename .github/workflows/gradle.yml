@@ -51,7 +51,6 @@ jobs:
         with:
           check-latest: true
           cache: 'gradle'
-          architecture: x86
           distribution: "oracle"
           java-version: 17
       - name: Setup Gradle
