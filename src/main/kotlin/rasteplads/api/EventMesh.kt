@@ -229,7 +229,7 @@ private constructor(
          */
         const val MESSAGE_CACHE_TIME: Long = 60_000
 
-        private val DISPATCHER: CoroutineDispatcher = Dispatchers.IO
+        private val DISPATCHER: CoroutineDispatcher = Dispatchers.Unconfined
 
         /**
          * Creates a [Builder] for [EventMesh] with the default message cache ([MessageCache]) and

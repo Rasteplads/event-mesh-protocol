@@ -21,42 +21,44 @@ class EventMeshReceiver(private val device: TransportDevice) {
         Pair(AtomicReference(null), AtomicReference(null))
 
     // BAD GUY
-    fun scanForID(id: ByteArray, timeout: Long, callback: suspend () -> Unit) = runBlocking {
-        val found = AtomicBoolean(false)
-        val callbackWrap: suspend (ByteArray) -> Boolean = { msg: ByteArray ->
-            if (id.zip(msg.drop(1)).all { (i, s) -> i == s }) {
-                callback()
-                found.set(true)
+    fun scanForID(id: ByteArray, timeout: Long, callback: suspend () -> Unit) =
+        runBlocking(Dispatchers.IO) {
+            val found = AtomicBoolean(false)
+            val callbackWrap: suspend (ByteArray) -> Boolean = { msg: ByteArray ->
+                if (id.zip(msg.drop(1)).all { (i, s) -> i == s }) {
+                    callback()
+                    found.set(true)
+                }
+                yield()
+                found.get()
             }
-            yield()
-            found.get()
-        }
-        try {
-            withTimeout(timeout) {
-                handle.second.set(callbackWrap)
-                startDevice()
-                while (!found.get()) yield()
+            try {
+                withTimeout(timeout) {
+                    handle.second.set(callbackWrap)
+                    startDevice()
+                    while (!found.get()) yield()
+                }
+            } // catch (_: TimeoutCancellationException) {}
+            finally {
+                stopDevice()
+                handle.second.set(null)
             }
-        } // catch (_: TimeoutCancellationException) {}
-        finally {
-            stopDevice()
-            handle.second.set(null)
         }
-    }
 
     // BAD GUY
-    fun scanForMessages() = runBlocking {
-        try {
-            handle.first.set(callback.get())
-            withTimeout(duration) {
-                startDevice()
-                while (true) yield()
+    fun scanForMessages() =
+        runBlocking(Dispatchers.IO) {
+            try {
+                handle.first.set(callback.get())
+                withTimeout(duration) {
+                    startDevice()
+                    while (true) yield()
+                }
+            } catch (_: TimeoutCancellationException) {} finally {
+                stopDevice()
+                handle.first.set(null)
             }
-        } catch (_: TimeoutCancellationException) {} finally {
-            stopDevice()
-            handle.first.set(null)
         }
-    }
 
     private fun startDevice() {
         if (scannerCount.getAndIncrement() <= 0)
