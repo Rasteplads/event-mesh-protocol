@@ -591,33 +591,13 @@ class EventMeshTest {
                 f.stop()
             }
             delay(1000)
+            assertEquals(Int.MAX_VALUE, testDevice.transmittedMessages.get().size)
+            val transmitted = testDevice.transmittedMessages.get().map(ByteArray::toList).distinct()
 
-            assertEquals(
-                d,
-                testDevice.transmittedMessages.get().map(ByteArray::toList).distinct().size
-            )
-            assertEquals(
-                d.dec(),
-                testDevice.transmittedMessages
-                    .get()
-                    .map(ByteArray::toList)
-                    .distinct()
-                    .last()
-                    .slice(1..5)
-                    .toByteArray()
-                    .toInt()
-            )
-            assertEquals(
-                0,
-                testDevice.transmittedMessages
-                    .get()
-                    .map(ByteArray::toList)
-                    .distinct()
-                    .first()
-                    .slice(1..5)
-                    .toByteArray()
-                    .toInt()
-            )
+            println(transmitted)
+            assertEquals(d, transmitted.size)
+            assertEquals(d.dec(), transmitted.last().slice(1..5).toByteArray().toInt())
+            assertEquals(0, transmitted.first().slice(1..5).toByteArray().toInt())
         }
 
         @Test
