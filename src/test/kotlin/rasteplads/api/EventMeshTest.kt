@@ -1,7 +1,6 @@
 package rasteplads.api
 
 import java.time.Duration
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.jvm.isAccessible
 import kotlin.test.*
@@ -569,7 +568,7 @@ class EventMeshTest {
 
         @Test
         fun `testing id generator`(): Unit = runBlocking {
-            val d = AtomicInteger(0)
+            var d = 0
             val (f, testDevice) =
                 correct().let { (f, de) ->
                     Pair(
@@ -577,7 +576,7 @@ class EventMeshTest {
                             .withMsgSendTimeout(Duration.ofMillis(10))
                             .setMessageCallback { _, _ -> }
                             .withMsgCacheDelete(Duration.ofSeconds(1))
-                            .setIDGenerator { d.getAndIncrement() }
+                            .setIDGenerator { d++ }
                             .setDataConstant(0)
                             .withMsgTTL(Byte.MIN_VALUE)
                             .build(),
@@ -594,11 +593,11 @@ class EventMeshTest {
             delay(1000)
 
             assertEquals(
-                d.get(),
+                d,
                 testDevice.transmittedMessages.get().map(ByteArray::toList).distinct().size
             )
             assertEquals(
-                d.get().dec(),
+                d.dec(),
                 testDevice.transmittedMessages
                     .get()
                     .map(ByteArray::toList)
