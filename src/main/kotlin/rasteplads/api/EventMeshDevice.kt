@@ -1,6 +1,7 @@
 package rasteplads.api
 
 import java.time.Duration
+import java.util.concurrent.TimeoutException
 import kotlinx.coroutines.*
 import rasteplads.api.EventMesh.Companion.ID_MAX_SIZE
 import rasteplads.util.plus
@@ -26,7 +27,7 @@ class EventMeshDevice<Rx, Tx>(
 
         try {
             receiver.scanForID(id, transmitter.transmitTimeout) { tx.cancel() }
-        } catch (e: TimeoutCancellationException) {
+        } catch (e: TimeoutException) {
             tx.cancel()
             echo?.invoke()
         }

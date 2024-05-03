@@ -1,5 +1,6 @@
 package rasteplads.api
 
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.*
@@ -16,8 +17,7 @@ class EventMeshReceiver<Rx>(private val device: TransportDevice<Rx, *>) {
         > =
         Pair(AtomicReference(null), AtomicReference(null))
 
-    // BAD GUY
-    fun scanForID(id: ByteArray, timeout: Long, callback: suspend () -> Unit) = runBlocking {
+    fun scanForID(id: ByteArray, timeout: Long, callback: suspend () -> Unit) {
         val found = AtomicBoolean(false)
         val callbackWrap: suspend (ByteArray) -> Boolean = { msg: ByteArray ->
             var f = false
@@ -32,10 +32,17 @@ class EventMeshReceiver<Rx>(private val device: TransportDevice<Rx, *>) {
         handle.second.set(callbackWrap)
         val key = startDevice(::scanForMessagesCallback)
         try {
+            val stopTime = System.currentTimeMillis() + timeout
+            while (!found.get()) {
+                if (stopTime < System.currentTimeMillis())
+                    throw TimeoutException("Timeout while scanning for ID")
+                Thread.yield()
+            }
+            /*
             withTimeout(timeout) {
-                //  handle.second.set(callbackWrap)
                 while (!found.get()) yield()
             }
+             */
         } // catch (_: TimeoutCancellationException) {}
         finally {
             stopDevice(key)

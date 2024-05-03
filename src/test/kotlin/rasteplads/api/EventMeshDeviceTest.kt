@@ -19,8 +19,6 @@ class MockDevice(override val transmissionInterval: Long) : TransportDevice<Int,
     val transmitting: AtomicBoolean = AtomicBoolean(false)
     val receiving: AtomicBoolean = AtomicBoolean(false)
 
-    private var tx: Job? = null
-    private var rx: Job? = null
     private val txPool: HashMap<Int, Job> = hashMapOf()
     private var txC = 0
     private val rxPool: HashMap<Int, Job> = hashMapOf()
@@ -91,10 +89,6 @@ class EventMeshDeviceTest {
     @BeforeTest
     @AfterTest
     fun clean() {
-        // device.stopReceiving()
-        // device.stopTransmitting()
-        // device.transmittedMessages.get().removeAll { true }
-        // device.receivedMsg.set(null)
         launchPool.forEach { it.cancel() }
         launchPool.removeAll { true }
     }
