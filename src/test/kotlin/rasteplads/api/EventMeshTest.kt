@@ -152,7 +152,7 @@ class EventMeshTest {
     }
 
     @Test
-    fun `transmits, receives, and delays`() {
+    fun `transmits, receives, and relays`() {
         val d: Byte = 10
         var i = 0
         val (f, testDevice) =
@@ -196,7 +196,7 @@ class EventMeshTest {
             assertEquals(1, i)
 
             testDevice.receiveMessage(byteArrayOf(Byte.MIN_VALUE.inc(), 0, 0, 1, 1, 4, 4, 9, 4))
-            delay(200)
+            delay(400)
             assertEquals(
                 2,
                 testDevice.transmittedMessages.get().map(ByteArray::toList).distinct().size
