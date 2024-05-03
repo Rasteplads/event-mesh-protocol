@@ -5,9 +5,9 @@ import kotlinx.coroutines.*
 import rasteplads.api.EventMesh.Companion.ID_MAX_SIZE
 import rasteplads.util.plus
 
-class EventMeshDevice(
-    private val receiver: EventMeshReceiver,
-    private val transmitter: EventMeshTransmitter,
+class EventMeshDevice<Rx, Tx>(
+    private val receiver: EventMeshReceiver<Rx>,
+    private val transmitter: EventMeshTransmitter<Tx>,
     txTimeout: Duration? = null,
     rxDuration: Duration? = null,
     private val echo: (() -> Unit)? = null
@@ -34,49 +34,58 @@ class EventMeshDevice(
 
     fun startReceiving() = receiver.scanForMessages()
 
-    class Builder {
-        private lateinit var receiver: EventMeshReceiver
-        private lateinit var transmitter: EventMeshTransmitter
+    class Builder<Rx, Tx>() {
+        private lateinit var receiver: EventMeshReceiver<Rx>
+        private lateinit var transmitter: EventMeshTransmitter<Tx>
         private var txTimeout: Duration? = null
         private var rxDuration: Duration? = null
         private var echo: (() -> Unit)? = null
 
-        fun withReceiver(receiver: EventMeshReceiver): Builder {
+        constructor(device: TransportDevice<Rx, Tx>) : this() {
+            this.withDevice(device)
+        }
+
+        constructor(rx: EventMeshReceiver<Rx>, tx: EventMeshTransmitter<Tx>) : this() {
+            receiver = rx
+            transmitter = tx
+        }
+
+        fun withReceiver(receiver: EventMeshReceiver<Rx>): Builder<Rx, Tx> {
             this.receiver = receiver
             return this
         }
 
-        fun withTransmitter(transmitter: EventMeshTransmitter): Builder {
+        fun withTransmitter(transmitter: EventMeshTransmitter<Tx>): Builder<Rx, Tx> {
             this.transmitter = transmitter
             return this
         }
 
-        fun withTransmitTimeout(d: Duration): Builder {
+        fun withTransmitTimeout(d: Duration): Builder<Rx, Tx> {
             txTimeout = d
             return this
         }
 
-        fun withTransmitTimeout(milliseconds: Long): Builder {
+        fun withTransmitTimeout(milliseconds: Long): Builder<Rx, Tx> {
             txTimeout = Duration.ofMillis(milliseconds)
             return this
         }
 
-        fun withReceiveDuration(d: Duration): Builder {
+        fun withReceiveDuration(d: Duration): Builder<Rx, Tx> {
             rxDuration = d
             return this
         }
 
-        fun withReceiveDuration(milliseconds: Long): Builder {
+        fun withReceiveDuration(milliseconds: Long): Builder<Rx, Tx> {
             rxDuration = Duration.ofMillis(milliseconds)
             return this
         }
 
-        fun withEchoCallback(e: (() -> Unit)?): Builder {
+        fun withEchoCallback(e: (() -> Unit)?): Builder<Rx, Tx> {
             echo = e
             return this
         }
 
-        fun withReceiveMsgCallback(f: suspend (ByteArray) -> Unit): Builder {
+        fun withReceiveMsgCallback(f: suspend (ByteArray) -> Unit): Builder<Rx, Tx> {
             check(::receiver.isInitialized) {
                 "A receiver must be specified when using the EventMeshDevice.Builder."
             }
@@ -84,7 +93,7 @@ class EventMeshDevice(
             return this
         }
 
-        fun build(): EventMeshDevice {
+        fun build(): EventMeshDevice<Rx, Tx> {
             check(::transmitter.isInitialized) {
                 "A transmitter must be specified when using the EventMeshDevice.Builder."
             }
@@ -102,7 +111,7 @@ class EventMeshDevice(
             )
         }
 
-        fun withDevice(device: TransportDevice): Builder {
+        fun withDevice(device: TransportDevice<Rx, Tx>): Builder<Rx, Tx> {
             receiver = EventMeshReceiver(device)
             transmitter = EventMeshTransmitter(device)
             return this

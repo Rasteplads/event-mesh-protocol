@@ -17,10 +17,10 @@ class EventMeshTest {
         fun delay(ms: Long) = Thread.sleep(ms)
         // val testDevice = MockDevice(100)
 
-        fun correct(): Pair<EventMesh.Companion.Builder<Int, Byte>, MockDevice> {
+        fun correct(): Pair<EventMesh.Companion.Builder<Int, Byte, *, *>, MockDevice> {
             val dev = MockDevice(100)
             return Pair(
-                EventMesh.builder<Int, Byte>(dev)
+                EventMesh.builder<Int, Byte, Int, Int>(dev)
                     .setDataConstant(0)
                     .setDataSize(1)
                     .setIDConstant(10)
@@ -763,13 +763,13 @@ class EventMeshTest {
 
         @Test
         fun `missing all functions`() {
-            assertFails { EventMesh.builder<Int, Byte>().build() }
+            assertFails { EventMesh.builder<Int, Byte, Int, Int>().build() }
         }
 
         @Test
         fun `missing one function`() {
             assertFails {
-                EventMesh.builder<Int, Byte>()
+                EventMesh.builder<Int, Byte, Int, Int>()
                     .setIDGenerator { 10 }
                     .setMessageCallback { _, _ -> }
                     .setDataSize(10)
@@ -781,7 +781,7 @@ class EventMeshTest {
             }
 
             assertFails {
-                EventMesh.builder<Int, Byte>()
+                EventMesh.builder<Int, Byte, Int, Int>()
                     .setDataConstant(0)
                     .setMessageCallback { _, _ -> }
                     .setIDDecodeFunction { _ -> 9 }
@@ -792,7 +792,7 @@ class EventMeshTest {
                     .build()
             }
             assertFails {
-                EventMesh.builder<Int, Byte>()
+                EventMesh.builder<Int, Byte, Int, Int>()
                     .setDataConstant(0)
                     .setIDGenerator { 10 }
                     .setIDDecodeFunction { _ -> 9 }
@@ -803,7 +803,7 @@ class EventMeshTest {
                     .build()
             }
             assertFails {
-                EventMesh.builder<Int, Byte>()
+                EventMesh.builder<Int, Byte, Int, Int>()
                     .setDataConstant(0)
                     .setIDGenerator { 10 }
                     .setIDDecodeFunction { _ -> 9 }
@@ -814,7 +814,7 @@ class EventMeshTest {
                     .build()
             }
             assertFails {
-                EventMesh.builder<Int, Byte>()
+                EventMesh.builder<Int, Byte, Int, Int>()
                     .setDataConstant(0)
                     .setIDGenerator { 10 }
                     .setDataSize(10)
@@ -825,7 +825,7 @@ class EventMeshTest {
                     .build()
             }
             assertFails {
-                EventMesh.builder<Int, Byte>()
+                EventMesh.builder<Int, Byte, Int, Int>()
                     .setDataConstant(0)
                     .setIDGenerator { 10 }
                     .setMessageCallback { _, _ -> }
@@ -836,7 +836,7 @@ class EventMeshTest {
                     .build()
             }
             assertFails {
-                EventMesh.builder<Int, Byte>()
+                EventMesh.builder<Int, Byte, Int, Int>()
                     .setDataConstant(0)
                     .setIDGenerator { 10 }
                     .setMessageCallback { _, _ -> }
@@ -847,7 +847,7 @@ class EventMeshTest {
                     .build()
             }
             assertFails {
-                EventMesh.builder<Int, Byte>()
+                EventMesh.builder<Int, Byte, Int, Int>()
                     .setDataConstant(0)
                     .setDataSize(10)
                     .setIDGenerator { 10 }
@@ -858,7 +858,7 @@ class EventMeshTest {
                     .build()
             }
             assertFails {
-                EventMesh.builder<Int, Byte>()
+                EventMesh.builder<Int, Byte, Int, Int>()
                     .setDataConstant(0)
                     .setIDGenerator { 10 }
                     .setMessageCallback { _, _ -> }
@@ -946,25 +946,33 @@ class EventMeshTest {
             Assertions.assertNotEquals(modd, deff)
 
             name = "device"
-            var device = getValueFromClass<EventMesh<Int, Byte>, EventMeshDevice>(f.build(), name)
-            var echo = getValueFromClass<EventMeshDevice, (() -> Unit)?>(device, "echo")
+            var device =
+                getValueFromClass<EventMesh<Int, Byte>, EventMeshDevice<Int, Int>>(f.build(), name)
+            var echo = getValueFromClass<EventMeshDevice<Int, Int>, (() -> Unit)?>(device, "echo")
             assertNull(echo)
             device =
-                getValueFromClass<EventMesh<Int, Byte>, EventMeshDevice>(
+                getValueFromClass<EventMesh<Int, Byte>, EventMeshDevice<Int, Int>>(
                     f.withEchoCallback {}.build(),
                     name
                 )
-            echo = getValueFromClass<EventMeshDevice, (() -> Unit)?>(device, "echo")
+            echo = getValueFromClass<EventMeshDevice<Int, Int>, (() -> Unit)?>(device, "echo")
             assertNotNull(echo)
 
             val rxDuration: Long = 50
             device =
-                getValueFromClass<EventMesh<Int, Byte>, EventMeshDevice>(
+                getValueFromClass<EventMesh<Int, Byte>, EventMeshDevice<Int, Int>>(
                     f.withMsgScanDuration(Duration.ofMillis(rxDuration)).build(),
                     name
                 )
-            val rx = getValueFromClass<EventMeshDevice, EventMeshReceiver>(device, "receiver")
-            assertEquals(rxDuration, getValueFromClass<EventMeshReceiver, Long>(rx, "duration"))
+            val rx =
+                getValueFromClass<EventMeshDevice<Int, Int>, EventMeshReceiver<Int>>(
+                    device,
+                    "receiver"
+                )
+            assertEquals(
+                rxDuration,
+                getValueFromClass<EventMeshReceiver<Int>, Long>(rx, "duration")
+            )
         }
 
         @Test
@@ -972,7 +980,7 @@ class EventMeshTest {
             val name = "messageCache"
 
             val f =
-                EventMesh.builder<Int, Byte>(MockDevice(100))
+                EventMesh.builder<Int, Byte, Int, Int>(MockDevice(100))
                     .setDataConstant(0)
                     .setIDGenerator { 10 }
                     .setDataSize(10)
@@ -993,7 +1001,7 @@ class EventMeshTest {
             )
 
             val g =
-                EventMesh.builder<Int, Byte>(MockDevice(100))
+                EventMesh.builder<Int, Byte, Int, Int>(MockDevice(100))
                     .setDataConstant(0)
                     .setIDGenerator { 10 }
                     .setDataSize(10)
@@ -1045,7 +1053,7 @@ class EventMeshTest {
 
         @Test
         fun `different builders`() {
-            var b = EventMesh.builder<Int, Byte>()
+            var b = EventMesh.builder<Int, Byte, Int, Int>()
             assertFails { b.build() }
             b.setDataConstant(0)
                 .setReceiver(EventMeshReceiver(MockDevice(100)))
