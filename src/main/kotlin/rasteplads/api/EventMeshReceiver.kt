@@ -6,10 +6,9 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.max
 import kotlinx.coroutines.*
 
-class EventMeshReceiver(private val device: TransportDevice) {
+open class EventMeshReceiver<TRx>(private val device: TransportDevice<TRx, *>) {
     var duration: Long = 10_000 // 10 sec //TODO: Default val
-    private val scannerCount: AtomicInteger = AtomicInteger(0)
-    private var runner: AtomicReference<Job?> = AtomicReference(null)
+
     // Not covered in code coverage, because it's an intermediate variable. Would need to use
     // reflection test it, if it should even be tested
     private val callback: AtomicReference<suspend (ByteArray) -> Unit> = AtomicReference {}
@@ -20,8 +19,8 @@ class EventMeshReceiver(private val device: TransportDevice) {
         > =
         Pair(AtomicReference(null), AtomicReference(null))
 
-    // BAD GUY
     fun scanForID(id: ByteArray, timeout: Long, callback: suspend () -> Unit) = runBlocking {
+        var cb: TRx? = null
         val found = AtomicBoolean(false)
         val callbackWrap: suspend (ByteArray) -> Boolean = { msg: ByteArray ->
             if (id.zip(msg.drop(1)).all { (i, s) -> i == s }) {
@@ -34,39 +33,30 @@ class EventMeshReceiver(private val device: TransportDevice) {
         try {
             withTimeout(timeout) {
                 handle.second.set(callbackWrap)
-                startDevice()
+                cb = device.beginReceiving(::scanForMessagesCallback)
                 while (!found.get()) yield()
             }
         } // catch (_: TimeoutCancellationException) {}
         finally {
-            stopDevice()
+            if (cb != null){
+                device.stopReceiving(cb!!)
+            }
             handle.second.set(null)
         }
     }
 
-    // BAD GUY
     fun scanForMessages() = runBlocking {
+        var cb: TRx? = null
         try {
             handle.first.set(callback.get())
             withTimeout(duration) {
-                startDevice()
+                cb = device.beginReceiving(::scanForMessagesCallback)
                 while (true) yield()
             }
         } catch (_: TimeoutCancellationException) {} finally {
-            stopDevice()
+            if (cb != null)
+                device.stopReceiving(cb!!)
             handle.first.set(null)
-        }
-    }
-
-    private fun startDevice() {
-        if (scannerCount.getAndIncrement() <= 0)
-            runner.set(GlobalScope.launch { device.beginReceiving(::scanForMessagesCallback) })
-    }
-
-    private fun stopDevice() {
-        if (scannerCount.updateAndGet { old -> max(old - 1, 0) } == 0) {
-            device.stopReceiving()
-            runner.getAndSet(null)?.cancel() // .set(device.stopReceiving()) ?: Unit
         }
     }
 

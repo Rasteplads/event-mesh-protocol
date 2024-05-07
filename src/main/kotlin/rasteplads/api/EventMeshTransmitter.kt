@@ -2,16 +2,18 @@ package rasteplads.api
 
 import kotlinx.coroutines.*
 
-class EventMeshTransmitter(private val device: TransportDevice) {
+class EventMeshTransmitter<TTx>(private val device: TransportDevice<*, TTx>) {
 
     var transmitTimeout: Long = 60000 // 60 sec // TODO: Default val
 
-    fun transmit(message: ByteArray) {
+    fun transmit(message: ByteArray): Unit = runBlocking {
+        var cb: TTx? = null
         try {
-            device.beginTransmitting(message)
-            Thread.sleep(transmitTimeout)
+            cb = device.beginTransmitting(message)
+            delay(transmitTimeout)
         } finally {
-            device.stopTransmitting()
+            if (cb != null)
+                device.stopTransmitting(cb)
         }
     }
 }
