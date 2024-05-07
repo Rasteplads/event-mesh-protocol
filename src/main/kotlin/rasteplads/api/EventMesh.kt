@@ -25,7 +25,7 @@ import rasteplads.util.split
 final class EventMesh<ID, Data>
 private constructor(
     deviceBuilder: EventMeshDevice.Builder<*, *>,
-    mc: MessageCache<ID>?,
+    private val messageCache: MessageCache<ID>?,
     callback: (ID, Data) -> Unit,
     decodeID: (ByteArray) -> ID,
     decodeData: (ByteArray) -> Data,
@@ -36,7 +36,6 @@ private constructor(
     filterID: List<(ID) -> Boolean>,
     dataSize: Int,
 ) {
-    private val messageCache: AtomicReference<MessageCache<ID>>? = mc?.let { AtomicReference(it) }
     private val device: EventMeshDevice<*, *>
     private val msgData: () -> Data =
         if (msgData.isLeft()) {
@@ -58,8 +57,8 @@ private constructor(
             val (idB, dataB) = msg.sliceArray(1 until msg.size).split(ID_MAX_SIZE)
             val id = decodeID(idB)
 
-            if (messageCache == null || !messageCache.get().containsMessage(id)) {
-                messageCache?.get()?.cacheMessage(id)
+            if (messageCache == null || !messageCache.containsMessage(id)) {
+                messageCache?.cacheMessage(id)
                 if (filterID.all { f -> f(id) })
                     callback(id, decodeData(dataB.take(dataSize).toByteArray()))
 
@@ -141,7 +140,7 @@ private constructor(
      * @see stop
      */
     fun start() {
-        messageCache?.get()?.clearCache()
+        messageCache?.clearCache()
         btSender.updateAndGet {
             when (it) {
                 null ->
@@ -150,7 +149,7 @@ private constructor(
                             delay(msgSendInterval.toMillis())
                             val id = msgId()
                             val data = msgData()
-                            messageCache?.get()?.cacheMessage(id)
+                            messageCache?.cacheMessage(id)
                             device.startTransmitting(msgTTL, encodeID(id), encodeData(data))
                             yield()
                         }
@@ -237,7 +236,7 @@ private constructor(
          * @param Data The messages' content
          */
         fun <ID, Data, Rx, Tx> builder(): Builder<ID, Data, Rx, Tx> =
-            BuilderImpl(EventMeshDevice.Builder<Rx, Tx>(), MessageCache(MESSAGE_CACHE_TIME))
+            BuilderImpl(EventMeshDevice.Builder(), MessageCache(MESSAGE_CACHE_TIME))
 
         /**
          * Creates a [Builder] for [EventMesh] with a provided message cache (set to `null` to
@@ -248,7 +247,7 @@ private constructor(
          * @param mc The instance of the [MessageCache] (set to `null` to disable)
          */
         fun <ID, Data, Rx, Tx> builder(mc: MessageCache<ID>?): Builder<ID, Data, Rx, Tx> =
-            BuilderImpl(EventMeshDevice.Builder<Rx, Tx>(), mc)
+            BuilderImpl(EventMeshDevice.Builder(), mc)
 
         /**
          * Creates a [Builder] for [EventMesh] with a provided [TransportDevice]. This device is

@@ -1,13 +1,14 @@
 package rasteplads.messageCache
 
 import java.util.*
+import java.util.concurrent.atomic.AtomicReference
 
 class MessageCache<T>(private var cacheTimeInMilliseconds: Long) {
-    private val cacheID: Queue<Pair<T, Long>> = ArrayDeque()
+    private val cacheID: AtomicReference<Queue<Pair<T, Long>>> = AtomicReference(ArrayDeque())
 
     fun cacheMessage(msg: T) {
-        if (!cacheID.any { it.first == msg })
-            cacheID.add(Pair(msg, System.currentTimeMillis() + cacheTimeInMilliseconds))
+        if (!cacheID.get().any { it.first == msg })
+            cacheID.get().add(Pair(msg, System.currentTimeMillis() + cacheTimeInMilliseconds))
         // cacheID.add(Pair(msg, LocalTime.now().plusSeconds(cacheTimeInSeconds)))
 
         checkForOutdatedMessages()
@@ -18,7 +19,7 @@ class MessageCache<T>(private var cacheTimeInMilliseconds: Long) {
         // While message exceeded its cacheTime remove them
         // while (cacheID.peek()?.second?.isBefore(time) == true) cacheID.remove()
         val now = System.currentTimeMillis()
-        while ((cacheID.peek()?.second ?: Long.MAX_VALUE) < now) cacheID.remove()
+        while ((cacheID.get().peek()?.second ?: Long.MAX_VALUE) < now) cacheID.get().remove()
     }
 
     fun changeCacheTime(cacheTime: Long) {
@@ -27,15 +28,15 @@ class MessageCache<T>(private var cacheTimeInMilliseconds: Long) {
 
     fun containsMessage(msg: T): Boolean {
         checkForOutdatedMessages()
-        return cacheID.any { it.first == msg }
+        return cacheID.get().any { it.first == msg }
     }
 
-    fun getSize(): Int = cacheID.size
+    fun getSize(): Int = cacheID.get().size
 
     override fun toString() =
-        cacheID.fold("[") { acc, e -> "$acc, (${e.first}: ${e.second})" } + "]"
+        cacheID.get().fold("[") { acc, e -> "$acc, (${e.first}: ${e.second})" } + "]"
 
     fun clearCache() {
-        cacheID.clear()
+        cacheID.get().clear()
     }
 }
