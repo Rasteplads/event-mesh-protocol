@@ -991,10 +991,13 @@ class EventMeshTest {
                     .setDataEncodeFunction { b -> byteArrayOf(b) }
             // .build()
             Assertions.assertNotNull(
-                getValueFromClass<EventMesh<Int, Byte>, MessageCache<Int>?>(f.build(), name)
+                getValueFromClass<EventMesh<Int, Byte>, AtomicReference<MessageCache<Int>>?>(
+                    f.build(),
+                    name
+                )
             )
             Assertions.assertNull(
-                getValueFromClass<EventMesh<Int, Byte>, MessageCache<Int>?>(
+                getValueFromClass<EventMesh<Int, Byte>, AtomicReference<MessageCache<Int>>?>(
                     f.withMsgCache(null).build(),
                     name
                 )
@@ -1025,29 +1028,33 @@ class EventMeshTest {
 
             val ms = "cacheTimeInMilliseconds"
             val f = correct().first
-            var mc = getValueFromClass<EventMesh<Int, Byte>, MessageCache<Int>?>(f.build(), name)
+            var mc =
+                getValueFromClass<EventMesh<Int, Byte>, AtomicReference<MessageCache<Int>>?>(
+                    f.build(),
+                    name
+                )
             Assertions.assertNotNull(mc)
-            var time = getValueFromClass<MessageCache<Int>, Long>(mc!!, ms)
+            var time = getValueFromClass<MessageCache<Int>, Long>(mc!!.get(), ms)
             assertEquals(MESSAGE_CACHE_TIME, time)
 
             var newTime: Long = 30_000
             mc =
-                getValueFromClass<EventMesh<Int, Byte>, MessageCache<Int>?>(
+                getValueFromClass<EventMesh<Int, Byte>, AtomicReference<MessageCache<Int>>?>(
                     f.withMsgCacheDelete(Duration.ofMillis(newTime)).build(),
                     name
                 )
             Assertions.assertNotNull(mc)
-            time = getValueFromClass<MessageCache<Int>, Long>(mc!!, ms)
+            time = getValueFromClass<MessageCache<Int>, Long>(mc!!.get(), ms)
             assertEquals(newTime, time)
 
             newTime = 15_000
             mc =
-                getValueFromClass<EventMesh<Int, Byte>, MessageCache<Int>?>(
+                getValueFromClass<EventMesh<Int, Byte>, AtomicReference<MessageCache<Int>>?>(
                     f.setMessageCache(MessageCache(newTime)).build(),
                     name
                 )
             Assertions.assertNotNull(mc)
-            time = getValueFromClass<MessageCache<Int>, Long>(mc!!, ms)
+            time = getValueFromClass<MessageCache<Int>, Long>(mc!!.get(), ms)
             assertEquals(newTime, time)
         }
 

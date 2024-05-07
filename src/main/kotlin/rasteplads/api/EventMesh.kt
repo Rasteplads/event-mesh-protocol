@@ -25,7 +25,7 @@ import rasteplads.util.split
 final class EventMesh<ID, Data>
 private constructor(
     deviceBuilder: EventMeshDevice.Builder<*, *>,
-    private val messageCache: MessageCache<ID>?,
+    mc: MessageCache<ID>?,
     callback: (ID, Data) -> Unit,
     decodeID: (ByteArray) -> ID,
     decodeData: (ByteArray) -> Data,
@@ -36,6 +36,7 @@ private constructor(
     filterID: List<(ID) -> Boolean>,
     dataSize: Int,
 ) {
+    private val messageCache: AtomicReference<MessageCache<ID>>? = mc?.let { AtomicReference(it) }
     private val device: EventMeshDevice<*, *>
     private val msgData: () -> Data =
         if (msgData.isLeft()) {
@@ -57,8 +58,8 @@ private constructor(
             val (idB, dataB) = msg.sliceArray(1 until msg.size).split(ID_MAX_SIZE)
             val id = decodeID(idB)
 
-            if (messageCache == null || !messageCache.containsMessage(id)) {
-                messageCache?.cacheMessage(id)
+            if (messageCache == null || !messageCache.get().containsMessage(id)) {
+                messageCache?.get()?.cacheMessage(id)
                 if (filterID.all { f -> f(id) })
                     callback(id, decodeData(dataB.take(dataSize).toByteArray()))
 
@@ -140,7 +141,7 @@ private constructor(
      * @see stop
      */
     fun start() {
-        messageCache?.clearCache()
+        messageCache?.get()?.clearCache()
         btSender.updateAndGet {
             when (it) {
                 null ->
@@ -149,7 +150,7 @@ private constructor(
                             delay(msgSendInterval.toMillis())
                             val id = msgId()
                             val data = msgData()
-                            messageCache?.cacheMessage(id)
+                            messageCache?.get()?.cacheMessage(id)
                             device.startTransmitting(msgTTL, encodeID(id), encodeData(data))
                             yield()
                         }
