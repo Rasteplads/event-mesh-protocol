@@ -1,14 +1,16 @@
 package rasteplads.messageCache
 
 import java.util.*
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.ConcurrentLinkedDeque
 
 class MessageCache<T>(private var cacheTimeInMilliseconds: Long) {
-    private val cacheID: AtomicReference<Queue<Pair<T, Long>>> = AtomicReference(ArrayDeque())
+    private val cacheID: ConcurrentLinkedDeque<Pair<T, Long>> =
+        ConcurrentLinkedDeque() // AtomicReference(ArrayDeque())
 
     fun cacheMessage(msg: T) {
-        if (!cacheID.get().any { it.first == msg })
-            cacheID.get().add(Pair(msg, System.currentTimeMillis() + cacheTimeInMilliseconds))
+
+        if (!cacheID.any { it.first == msg })
+            cacheID.add(Pair(msg, System.currentTimeMillis() + cacheTimeInMilliseconds))
         // cacheID.add(Pair(msg, LocalTime.now().plusSeconds(cacheTimeInSeconds)))
 
         checkForOutdatedMessages()
@@ -19,7 +21,7 @@ class MessageCache<T>(private var cacheTimeInMilliseconds: Long) {
         // While message exceeded its cacheTime remove them
         // while (cacheID.peek()?.second?.isBefore(time) == true) cacheID.remove()
         val now = System.currentTimeMillis()
-        while ((cacheID.get().peek()?.second ?: Long.MAX_VALUE) < now) cacheID.get().remove()
+        while ((cacheID.peek()?.second ?: Long.MAX_VALUE) < now) cacheID.remove()
     }
 
     fun changeCacheTime(cacheTime: Long) {
@@ -28,15 +30,15 @@ class MessageCache<T>(private var cacheTimeInMilliseconds: Long) {
 
     fun containsMessage(msg: T): Boolean {
         checkForOutdatedMessages()
-        return cacheID.get().any { it.first == msg }
+        return cacheID.any { it.first == msg }
     }
 
-    fun getSize(): Int = cacheID.get().size
+    fun getSize(): Int = cacheID.size
 
     override fun toString() =
-        cacheID.get().fold("[") { acc, e -> "$acc, (${e.first}: ${e.second})" } + "]"
+        cacheID.fold("[") { acc, e -> "$acc, (${e.first}: ${e.second})" } + "]"
 
     fun clearCache() {
-        cacheID.get().clear()
+        cacheID.clear()
     }
 }
