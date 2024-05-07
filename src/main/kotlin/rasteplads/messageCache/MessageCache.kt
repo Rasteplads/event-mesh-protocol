@@ -1,11 +1,10 @@
 package rasteplads.messageCache
 
-import java.util.*
-import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.ConcurrentLinkedQueue
 
 class MessageCache<T>(private var cacheTimeInMilliseconds: Long) {
-    private val cacheID: ConcurrentLinkedDeque<Pair<T, Long>> =
-        ConcurrentLinkedDeque() // AtomicReference(ArrayDeque())
+    private val cacheID: ConcurrentLinkedQueue<Pair<T, Long>> =
+        ConcurrentLinkedQueue() // AtomicReference(ArrayDeque())
 
     fun cacheMessage(msg: T) {
 
