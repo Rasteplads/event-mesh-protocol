@@ -6,7 +6,7 @@ import kotlinx.coroutines.*
 import rasteplads.api.EventMesh.Companion.ID_MAX_SIZE
 import rasteplads.util.plus
 
-class EventMeshDevice<Rx, Tx>(
+final class EventMeshDevice<Rx, Tx>(
     private val receiver: EventMeshReceiver<Rx>,
     private val transmitter: EventMeshTransmitter<Tx>,
     txTimeout: Duration? = null,
@@ -24,6 +24,19 @@ class EventMeshDevice<Rx, Tx>(
         check(id.size <= ID_MAX_SIZE) { "ID too big" }
         val combinedMsg = ttl + id + message
         val tx = coroutineScope.launch { transmitter.transmit(combinedMsg) }
+
+        try {
+            receiver.scanForID(id, transmitter.transmitTimeout) { tx.cancel() }
+        } catch (e: TimeoutException) {
+            tx.cancel()
+            echo?.invoke()
+        }
+    }
+
+    fun startTransmitting(ttl: Byte, id: ByteArray, message: ByteArray, timeout: Long) {
+        check(id.size <= ID_MAX_SIZE) { "ID too big" }
+        val combinedMsg = ttl + id + message
+        val tx = coroutineScope.launch { transmitter.transmit(combinedMsg, timeout) }
 
         try {
             receiver.scanForID(id, transmitter.transmitTimeout) { tx.cancel() }

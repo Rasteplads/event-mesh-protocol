@@ -183,7 +183,7 @@ private constructor(
                                 val (ttl, id, body) = relayQueue.get().pop()
                                 // Currently transmits as long as normal messages, is this
                                 // desired?
-                                device.startTransmitting(ttl, id, body)
+                                device.startTransmitting(ttl, id, body, 1000)
                                 yield()
                             }
                             yield()
