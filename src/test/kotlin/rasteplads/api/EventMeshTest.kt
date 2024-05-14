@@ -1,6 +1,7 @@
 package rasteplads.api
 
 import java.time.Duration
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.jvm.isAccessible
 import kotlin.test.*
@@ -362,6 +363,16 @@ class EventMeshTest {
                         // .filterNot { b -> b.all { i -> i == (0).toByte() } }
                         .size
                 )
+                delay(2000)
+                val r =
+                    getValueFromClass<
+                        EventMesh<Int, Byte>,
+                        ConcurrentLinkedQueue<Triple<Byte, ByteArray, ByteArray>>
+                    >(
+                        f,
+                        "relayQueue"
+                    )
+                assert(r.isEmpty())
             } finally {
                 f.stop()
             }

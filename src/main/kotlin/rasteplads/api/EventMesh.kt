@@ -1,7 +1,7 @@
 package rasteplads.api
 
 import java.time.Duration
-import java.util.ArrayDeque
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.*
 import rasteplads.messageCache.MessageCache
@@ -46,8 +46,8 @@ private constructor(
             { msgId.getLeft()!! }
         } else msgId.getRight()!!
 
-    private val relayQueue: AtomicReference<ArrayDeque<Triple<Byte, ByteArray, ByteArray>>> =
-        AtomicReference(ArrayDeque())
+    private val relayQueue: ConcurrentLinkedQueue<Triple<Byte, ByteArray, ByteArray>> =
+        ConcurrentLinkedQueue()
     init {
         fun scanningCallback(msg: ByteArray) {
             require(msg.size >= 1 + ID_MAX_SIZE + dataSize) {
@@ -63,7 +63,7 @@ private constructor(
                     callback(id, decodeData(dataB.take(dataSize).toByteArray()))
 
                 if (msg[0] > Byte.MIN_VALUE) {
-                    relayQueue.get().add(Triple(msg[0].dec(), idB, dataB))
+                    relayQueue.add(Triple(msg[0].dec(), idB, dataB))
                     // relay(msg[0].dec(), idB, dataB)
                 }
             }
@@ -179,8 +179,8 @@ private constructor(
                         while (isActive) {
                             delay(250)
 
-                            while (relayQueue.get().isNotEmpty()) {
-                                val (ttl, id, body) = relayQueue.get().pop()
+                            while (relayQueue.isNotEmpty()) {
+                                val (ttl, id, body) = relayQueue.poll()
                                 // Currently transmits as long as normal messages, is this
                                 // desired?
                                 device.startTransmitting(ttl, id, body, 1000)
@@ -200,7 +200,7 @@ private constructor(
      * @see start
      */
     fun stop() = runBlocking {
-        relayQueue.set(ArrayDeque())
+        relayQueue.clear()
         btSender.getAndSet(null)?.cancelAndJoin()
         btScanner.getAndSet(null)?.cancelAndJoin()
         relayJob.getAndSet(null)?.cancelAndJoin()
