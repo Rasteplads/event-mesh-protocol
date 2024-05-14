@@ -176,32 +176,20 @@ class EventMeshTest {
         try {
             f.start()
             delay(1000)
-            assertEquals(
-                1,
-                testDevice.transmittedMessages.get().map(ByteArray::toList).distinct().size
-            )
+            assertEquals(1, testDevice.transmittedMessages.map(ByteArray::toList).distinct().size)
             assertEquals(0, i)
             testDevice.receiveMessage(b)
             delay(200)
-            assertEquals(
-                1,
-                testDevice.transmittedMessages.get().map(ByteArray::toList).distinct().size
-            )
+            assertEquals(1, testDevice.transmittedMessages.map(ByteArray::toList).distinct().size)
             assertEquals(1, i)
             testDevice.receiveMessage(b)
             delay(200)
-            assertEquals(
-                1,
-                testDevice.transmittedMessages.get().map(ByteArray::toList).distinct().size
-            )
+            assertEquals(1, testDevice.transmittedMessages.map(ByteArray::toList).distinct().size)
             assertEquals(1, i)
 
             testDevice.receiveMessage(byteArrayOf(Byte.MIN_VALUE.inc(), 0, 0, 1, 1, 4, 4, 9, 4))
             delay(400)
-            assertEquals(
-                2,
-                testDevice.transmittedMessages.get().map(ByteArray::toList).distinct().size
-            )
+            assertEquals(2, testDevice.transmittedMessages.map(ByteArray::toList).distinct().size)
             assertEquals(2, i)
         } finally {
 
@@ -320,7 +308,6 @@ class EventMeshTest {
                 assertEquals(
                     1,
                     testDevice.transmittedMessages
-                        .get()
                         .map(ByteArray::toList)
                         .distinct()
                         // .filterNot { b -> b.all { i -> i == (0).toByte() } }
@@ -332,7 +319,6 @@ class EventMeshTest {
                 assertEquals(
                     1,
                     testDevice.transmittedMessages
-                        .get()
                         .map(ByteArray::toList)
                         .distinct()
                         // .filterNot { b -> b.all { i -> i == (0).toByte() } }
@@ -344,7 +330,6 @@ class EventMeshTest {
                 assertEquals(
                     2,
                     testDevice.transmittedMessages
-                        .get()
                         .map(ByteArray::toList)
                         .distinct()
                         // .filterNot { b -> b.slice(1 ..< b.size).all { i -> i == (0).toByte() } }
@@ -357,7 +342,6 @@ class EventMeshTest {
                 assertEquals(
                     2,
                     testDevice.transmittedMessages
-                        .get()
                         .map(ByteArray::toList)
                         .distinct()
                         // .filterNot { b -> b.all { i -> i == (0).toByte() } }
@@ -403,7 +387,6 @@ class EventMeshTest {
                 assertEquals(
                     0,
                     testDevice.transmittedMessages
-                        .get()
                         .map(ByteArray::toList)
                         .distinct()
                         .filterNot { b -> b.slice(1 ..< b.size).all { i -> i == (0).toByte() } }
@@ -415,7 +398,6 @@ class EventMeshTest {
                 assertEquals(
                     0,
                     testDevice.transmittedMessages
-                        .get()
                         .map(ByteArray::toList)
                         // .distinct()
                         .filterNot { b -> b.slice(1 ..< b.size).all { i -> i == (0).toByte() } }
@@ -428,7 +410,6 @@ class EventMeshTest {
                 assertEquals(
                     1,
                     testDevice.transmittedMessages
-                        .get()
                         .map(ByteArray::toList)
                         .distinct()
                         .filterNot { bp -> bp.slice(1 ..< bp.size).all { i -> i == (0).toByte() } }
@@ -442,7 +423,6 @@ class EventMeshTest {
                 delay(500)
                 assert(
                     testDevice.transmittedMessages
-                        .get()
                         .filterNot { bp -> bp.slice(1 ..< bp.size).all { i -> i == (0).toByte() } }
                         .all { l -> bEx.contentEquals(l) }
                 )
@@ -532,7 +512,6 @@ class EventMeshTest {
                 assertEquals(
                     0,
                     testDevice.transmittedMessages
-                        .get()
                         .map(ByteArray::toList)
                         .filterNot { i -> i.slice(1 ..< i.size).all { it == (0).toByte() } }
                         .size
@@ -598,7 +577,7 @@ class EventMeshTest {
                 f.stop()
                 // j.join()
             }
-            scanner.get()!!.children.forEach { println(it) }
+            scanner!!.children.forEach { println(it) }
         }
          */
     }
@@ -631,7 +610,7 @@ class EventMeshTest {
             }
             delay(1000)
 
-            val transmitted = testDevice.transmittedMessages.get().map(ByteArray::toList).distinct()
+            val transmitted = testDevice.transmittedMessages.map(ByteArray::toList).distinct()
             assertEquals(d.toInt(), transmitted.size)
             assertEquals(0, transmitted.first().last())
             assertEquals(d.dec(), transmitted.last().last())
@@ -664,7 +643,7 @@ class EventMeshTest {
             }
             delay(1000)
 
-            val transmitted = testDevice.transmittedMessages.get().map(ByteArray::toList).distinct()
+            val transmitted = testDevice.transmittedMessages.map(ByteArray::toList).distinct()
 
             assertEquals(d, transmitted.size)
             assertEquals(d.dec(), transmitted.last().slice(1..5).toByteArray().toInt())
@@ -698,12 +677,8 @@ class EventMeshTest {
             }
             delay(1000)
 
-            // assertEquals(1, testDevice.transmittedMessages.get().size)
-            assert(
-                testDevice.transmittedMessages.get().map(ByteArray::toList).all { b ->
-                    b.last() == d
-                }
-            )
+            // assertEquals(1, testDevice.transmittedMessages.size)
+            assert(testDevice.transmittedMessages.map(ByteArray::toList).all { b -> b.last() == d })
         }
 
         @Test
@@ -733,9 +708,9 @@ class EventMeshTest {
             }
             delay(1000)
 
-            // assertEquals(d, testDevice.transmittedMessages.get().size)
+            // assertEquals(d, testDevice.transmittedMessages.size)
             assert(
-                testDevice.transmittedMessages.get().map(ByteArray::toList).all { b ->
+                testDevice.transmittedMessages.map(ByteArray::toList).all { b ->
                     b.slice(1..5).toByteArray().toInt() == d
                 }
             )
@@ -765,7 +740,7 @@ class EventMeshTest {
             }
             delay(1000)
 
-            assert(testDevice.transmittedMessages.get().distinct().all { i -> i.first() == d })
+            assert(testDevice.transmittedMessages.distinct().all { i -> i.first() == d })
         }
     }
 

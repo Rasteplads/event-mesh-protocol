@@ -1,6 +1,7 @@
 package rasteplads.api
 
 import java.time.Duration
+import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.*
 import kotlin.reflect.jvm.isAccessible
 import kotlin.test.*
@@ -12,8 +13,9 @@ import rasteplads.util.byte_array_extension.generateRands
 import rasteplads.util.plus
 
 class MockDevice(override val transmissionInterval: Long) : TransportDevice<Int, Int> {
-    val transmittedMessages: AtomicReference<MutableList<ByteArray>> =
-        AtomicReference(mutableListOf())
+    val transmittedMessages: ConcurrentLinkedDeque<ByteArray> = ConcurrentLinkedDeque()
+    //     AtomicReference<MutableList<ByteArray>> =
+    // AtomicReference(mutableListOf())
     private val receivedMsg: AtomicReference<ByteArray?> = AtomicReference(null)
 
     val transmitting: AtomicBoolean = AtomicBoolean(false)
@@ -32,7 +34,7 @@ class MockDevice(override val transmissionInterval: Long) : TransportDevice<Int,
                 try {
                     while (transmitting.get()) {
                         yield()
-                        transmittedMessages.get().add(message.clone())
+                        transmittedMessages.add(message.clone())
                         yield()
                         delay(transmissionInterval)
                         yield()
@@ -166,11 +168,11 @@ class EventMeshDeviceTest {
         // 1000 / 100 = 10 (+1 cuz it does it on time 0)
         assertEquals(
             (tx.transmitTimeout.floorDiv(T_INTERVAL) + 1).toInt(),
-            device.transmittedMessages.get().size
+            device.transmittedMessages.size
         )
 
         val combined = ttl + byteArrayOf(0, 1, 2, 3) + b
-        assert(device.transmittedMessages.get().all { it.contentEquals(combined) })
+        assert(device.transmittedMessages.all { it.contentEquals(combined) })
     }
 
     @Test

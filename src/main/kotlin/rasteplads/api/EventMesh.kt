@@ -4,6 +4,7 @@ import java.time.Duration
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
 import rasteplads.messageCache.MessageCache
 import rasteplads.util.Either
 import rasteplads.util.split
@@ -106,7 +107,7 @@ private constructor(
     private val btScanner: AtomicReference<Job?> = AtomicReference(null)
     private val btSender: AtomicReference<Job?> = AtomicReference(null)
     private val relayJob: AtomicReference<Job?> = AtomicReference(null)
-
+    private val sending: Mutex = Mutex()
     private constructor(
         builder: BuilderImpl<ID, Data, *, *>
     ) : this(
@@ -150,7 +151,9 @@ private constructor(
                             val id = msgId()
                             val data = msgData()
                             messageCache?.cacheMessage(id)
+                            sending.lock()
                             device.startTransmitting(msgTTL, encodeID(id), encodeData(data))
+                            sending.unlock()
                             yield()
                         }
                     }
@@ -179,11 +182,11 @@ private constructor(
                         while (isActive) {
                             delay(250)
 
-                            while (relayQueue.isNotEmpty()) {
+                            while (relayQueue.isNotEmpty() && !sending.isLocked) {
                                 val (ttl, id, body) = relayQueue.poll()
-                                // Currently transmits as long as normal messages, is this
-                                // desired?
+                                sending.lock()
                                 device.startTransmitting(ttl, id, body, 1000)
+                                sending.unlock()
                                 yield()
                             }
                             yield()
