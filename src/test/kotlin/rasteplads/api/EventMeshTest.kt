@@ -1,7 +1,7 @@
 package rasteplads.api
 
 import java.time.Duration
-import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.jvm.isAccessible
 import kotlin.test.*
@@ -16,7 +16,6 @@ class EventMeshTest {
 
     companion object {
         fun delay(ms: Long) = Thread.sleep(ms)
-        // val testDevice = MockDevice(100)
 
         fun correct(): Pair<EventMesh.Companion.Builder<Int, Byte, *, *>, MockDevice> {
             val dev = MockDevice(100)
@@ -351,7 +350,7 @@ class EventMeshTest {
                 val r =
                     getValueFromClass<
                         EventMesh<Int, Byte>,
-                        ConcurrentLinkedQueue<Triple<Byte, ByteArray, ByteArray>>
+                        LinkedBlockingQueue<Triple<Byte, ByteArray, ByteArray>>
                     >(
                         f,
                         "relayQueue"

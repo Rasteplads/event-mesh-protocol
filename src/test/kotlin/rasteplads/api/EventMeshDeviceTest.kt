@@ -1,7 +1,7 @@
 package rasteplads.api
 
 import java.time.Duration
-import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.*
 import kotlin.reflect.jvm.isAccessible
 import kotlin.test.*
@@ -13,7 +13,7 @@ import rasteplads.util.byte_array_extension.generateRands
 import rasteplads.util.plus
 
 class MockDevice(override val transmissionInterval: Long) : TransportDevice<Int, Int> {
-    val transmittedMessages: ConcurrentLinkedDeque<ByteArray> = ConcurrentLinkedDeque()
+    val transmittedMessages: LinkedBlockingQueue<ByteArray> = LinkedBlockingQueue()
     private val receivedMsg: AtomicReference<ByteArray?> = AtomicReference(null)
 
     val transmitting: AtomicBoolean = AtomicBoolean(false)
