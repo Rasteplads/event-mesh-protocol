@@ -164,10 +164,8 @@ class EventMeshDeviceTest {
         assertFalse(device.transmitting.get())
         assertFalse(device.receiving.get())
         // 1000 / 100 = 10 (+1 cuz it does it on time 0)
-        assertEquals(
-            (tx.transmitTimeout.floorDiv(T_INTERVAL) + 1).toInt(),
-            device.transmittedMessages.size
-        )
+        val t = getValueFromClass<EventMeshDevice<Int, Int>, Long>(e, "txTimeout")
+        assertEquals((t.floorDiv(T_INTERVAL) + 1).toInt(), device.transmittedMessages.size)
 
         val combined = ttl + byteArrayOf(0, 1, 2, 3) + b
         assert(device.transmittedMessages.all { it.contentEquals(combined) })
@@ -275,21 +273,13 @@ class EventMeshDeviceTest {
             }
             run {
                 eb = e.withTransmitTimeout(Duration.ofSeconds(10)).build()
-                val t =
-                    getValueFromClass<EventMeshDevice<Int, Int>, EventMeshTransmitter<Int>>(
-                        eb,
-                        "transmitter"
-                    )
-                assertEquals(10_000, t.transmitTimeout)
+                val t = getValueFromClass<EventMeshDevice<Int, Int>, Long>(eb, "txTimeout")
+                assertEquals(10_000, t)
             }
             run {
                 eb = e.withTransmitTimeout(10).build()
-                val t =
-                    getValueFromClass<EventMeshDevice<Int, Int>, EventMeshTransmitter<Int>>(
-                        eb,
-                        "transmitter"
-                    )
-                assertEquals(10, t.transmitTimeout)
+                val t = getValueFromClass<EventMeshDevice<Int, Int>, Long>(eb, "txTimeout")
+                assertEquals(10, t)
             }
         }
     }
