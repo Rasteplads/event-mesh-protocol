@@ -5,6 +5,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import rasteplads.messageCache.MessageCache
 import rasteplads.util.Either
 import rasteplads.util.split
@@ -151,9 +152,10 @@ private constructor(
                             val id = msgId()
                             val data = msgData()
                             messageCache?.cacheMessage(id)
-                            sending.lock()
-                            device.startTransmitting(msgTTL, encodeID(id), encodeData(data))
-                            sending.unlock()
+                            sending.withLock {
+                                device.startTransmitting(msgTTL, encodeID(id), encodeData(data))
+                                yield()
+                            }
                             yield()
                         }
                     }
@@ -184,9 +186,10 @@ private constructor(
 
                             while (relayQueue.isNotEmpty() && !sending.isLocked) {
                                 val (ttl, id, body) = relayQueue.poll()
-                                sending.lock()
-                                device.startTransmitting(ttl, id, body, 1000)
-                                sending.unlock()
+                                sending.withLock {
+                                    device.startTransmitting(ttl, id, body, 1000)
+                                    yield()
+                                }
                                 yield()
                             }
                             yield()
