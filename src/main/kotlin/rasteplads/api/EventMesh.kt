@@ -149,10 +149,10 @@ private constructor(
                     coroutineScope.launch(Dispatchers.Unconfined) {
                         while (isActive) {
                             delay(msgSendInterval.toMillis())
-                            val id = msgId()
-                            val data = msgData()
-                            messageCache?.cacheMessage(id)
                             sending.withLock {
+                                val id = msgId()
+                                val data = msgData()
+                                messageCache?.cacheMessage(id)
                                 device.startTransmitting(msgTTL, encodeID(id), encodeData(data))
                                 yield()
                             }
@@ -184,9 +184,9 @@ private constructor(
                         while (isActive) {
                             delay(250)
 
-                            while (relayQueue.isNotEmpty() && !sending.isLocked) {
-                                val (ttl, id, body) = relayQueue.poll()
+                            while (relayQueue.isNotEmpty()) {
                                 sending.withLock {
+                                    val (ttl, id, body) = relayQueue.poll()
                                     device.startTransmitting(ttl, id, body, 1000)
                                     yield()
                                 }
