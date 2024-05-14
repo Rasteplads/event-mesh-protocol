@@ -14,8 +14,6 @@ import rasteplads.util.plus
 
 class MockDevice(override val transmissionInterval: Long) : TransportDevice<Int, Int> {
     val transmittedMessages: ConcurrentLinkedDeque<ByteArray> = ConcurrentLinkedDeque()
-    //     AtomicReference<MutableList<ByteArray>> =
-    // AtomicReference(mutableListOf())
     private val receivedMsg: AtomicReference<ByteArray?> = AtomicReference(null)
 
     val transmitting: AtomicBoolean = AtomicBoolean(false)
@@ -67,7 +65,7 @@ class MockDevice(override val transmissionInterval: Long) : TransportDevice<Int,
         return rxC - 1
     }
 
-    override fun stopReceiving(callback: Int): Unit {
+    override fun stopReceiving(callback: Int) {
         rxPool[callback]?.cancel()
         rxPool.remove(callback)
         receiving.set(rxPool.isNotEmpty())
