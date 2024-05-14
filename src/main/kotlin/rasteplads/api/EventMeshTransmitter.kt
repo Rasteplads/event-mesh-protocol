@@ -1,6 +1,7 @@
 package rasteplads.api
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
 
 class EventMeshTransmitter<Tx>(private val device: TransportDevice<*, Tx>) {
 

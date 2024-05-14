@@ -10,6 +10,8 @@ import rasteplads.messageCache.MessageCache
 import rasteplads.util.Either
 import rasteplads.util.split
 
+val MSG_Q_TAG = "Message-Queue"
+
 /**
  * This class handles communicating messages to the dynamic mesh network.
  *
@@ -24,6 +26,7 @@ import rasteplads.util.split
  *
  * @author t-lohse
  */
+@OptIn(ExperimentalStdlibApi::class)
 final class EventMesh<ID, Data>
 private constructor(
     deviceBuilder: EventMeshDevice.Builder<*, *>,
@@ -37,6 +40,7 @@ private constructor(
     msgId: Either<ID, () -> ID>,
     filterID: List<(ID) -> Boolean>,
     dataSize: Int,
+    private val logger: (String, String) -> Unit
 ) {
     private val device: EventMeshDevice<*, *>
     private val msgData: () -> Data =
@@ -66,6 +70,7 @@ private constructor(
 
                 if (msg[0] > Byte.MIN_VALUE) {
                     relayQueue.add(Triple(msg[0].dec(), idB, dataB))
+                    logger(MSG_Q_TAG, "Added message ${idB.toHexString()} to Relay Queue")
                     // relay(msg[0].dec(), idB, dataB)
                 }
             }
@@ -123,6 +128,7 @@ private constructor(
         builder.msgID,
         builder.filterID,
         builder.dataSize,
+        builder.logger
     ) {
         builder.msgTTL?.let { msgTTL = it }
 
@@ -142,6 +148,10 @@ private constructor(
      * @see stop
      */
     fun start() {
+        coroutineScope.launch(Dispatchers.Unconfined) {
+            device.startReceiving()
+        }
+        messageCache?.clearCache()
         sender.updateAndGet {
             when (it) {
                 null ->
@@ -162,6 +172,7 @@ private constructor(
             }
         }
 
+        /*
         scanner.updateAndGet {
             when (it) {
                 null ->
@@ -175,6 +186,8 @@ private constructor(
                 else -> it
             }
         }
+         */
+
 
         relayJob.updateAndGet {
             when (it) {
@@ -186,9 +199,11 @@ private constructor(
                             while (relayQueue.isNotEmpty()) {
                                 sending.withLock {
                                     val (ttl, id, body) = relayQueue.poll()
+                                    logger(MSG_Q_TAG, "Relaying message with id: ${id.toHexString()}")
                                     device.startTransmitting(ttl, id, body, 1000)
                                     yield()
                                 }
+                                delay(100)
                                 yield()
                             }
                             yield()
@@ -197,6 +212,7 @@ private constructor(
                 else -> it
             }
         }
+
     }
 
     /**
@@ -594,6 +610,7 @@ private constructor(
              * @throws IllegalStateException If the needed variables hasn't been set
              */
             fun build(): EventMesh<ID, Data>
+            fun withLogger(func: (String, String) -> Unit): Builder<ID, Data, Rx, Tx>
         }
 
         private class BuilderImpl<ID, Data, Rx, Tx>(
@@ -619,6 +636,9 @@ private constructor(
             // var msgSendTimeout: Duration? = null
             var msgScanInterval: Duration? = null
             // var msgCacheLimit: Long? = null
+            var logger = fun (tag: String, message: String){
+                println("$tag: $message")
+            }
 
             override fun build(): EventMesh<ID, Data> {
                 // check(device != null) { "EventMesh Device is needed" }
@@ -644,6 +664,11 @@ private constructor(
                 check(dataSize > 0) { "The size of `Data` must be set" }
 
                 return EventMesh(this)
+            }
+
+            override fun withLogger(func: (String, String) -> Unit): Builder<ID, Data, Rx, Tx> {
+                logger = func
+                return this
             }
 
             override fun withEchoCallback(f: (() -> Unit)?): Builder<ID, Data, Rx, Tx> {

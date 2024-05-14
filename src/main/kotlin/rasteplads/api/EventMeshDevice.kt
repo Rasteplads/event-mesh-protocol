@@ -25,12 +25,14 @@ final class EventMeshDevice<Rx, Tx>(
         val combinedMsg = ttl + id + message
         val tx = coroutineScope.launch { transmitter.transmit(combinedMsg, timeout) }
 
+        /*
         try {
             receiver.scanForID(id, timeout) { tx.cancel() }
         } catch (e: TimeoutException) {
             tx.cancel()
             echo?.invoke()
         }
+        */
     }
 
     fun startReceiving() = receiver.scanForMessages()
