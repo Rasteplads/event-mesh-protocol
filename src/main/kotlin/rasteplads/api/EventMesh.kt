@@ -105,8 +105,8 @@ private constructor(
     /** The maximum number of elements stored in the cache */
     // private var msgCacheLimit: Long = 32
 
-    private val btScanner: AtomicReference<Job?> = AtomicReference(null)
-    private val btSender: AtomicReference<Job?> = AtomicReference(null)
+    private val scanner: AtomicReference<Job?> = AtomicReference(null)
+    private val sender: AtomicReference<Job?> = AtomicReference(null)
     private val relayJob: AtomicReference<Job?> = AtomicReference(null)
     private val sending: Mutex = Mutex()
     private constructor(
@@ -143,7 +143,7 @@ private constructor(
      */
     fun start() {
         messageCache?.clearCache()
-        btSender.updateAndGet {
+        sender.updateAndGet {
             when (it) {
                 null ->
                     coroutineScope.launch(Dispatchers.Unconfined) {
@@ -163,7 +163,7 @@ private constructor(
             }
         }
 
-        btScanner.updateAndGet {
+        scanner.updateAndGet {
             when (it) {
                 null ->
                     coroutineScope.launch(Dispatchers.Unconfined) {
@@ -207,8 +207,8 @@ private constructor(
      */
     fun stop() = runBlocking {
         relayQueue.clear()
-        btSender.getAndSet(null)?.cancelAndJoin()
-        btScanner.getAndSet(null)?.cancelAndJoin()
+        sender.getAndSet(null)?.cancelAndJoin()
+        scanner.getAndSet(null)?.cancelAndJoin()
         relayJob.getAndSet(null)?.cancelAndJoin()
     }
 

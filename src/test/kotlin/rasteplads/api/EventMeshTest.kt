@@ -69,10 +69,10 @@ class EventMeshTest {
             f.start()
             delay(1000)
             assertNotNull(
-                getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "btSender").get()
+                getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "sender").get()
             )
             assertNotNull(
-                getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "btScanner").get()
+                getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "scanner").get()
             )
         } finally {
             f.stop()
@@ -80,10 +80,10 @@ class EventMeshTest {
         delay(1000)
 
         assertNull(
-            getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "btSender").get()
+            getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "sender").get()
         )
         assertNull(
-            getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "btScanner").get()
+            getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "scanner").get()
         )
     }
 
@@ -128,10 +128,10 @@ class EventMeshTest {
             f.start()
             delay(1000)
             assertNotNull(
-                getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "btSender").get()
+                getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "sender").get()
             )
             assertNotNull(
-                getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "btScanner").get()
+                getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "scanner").get()
             )
         } finally {
             f.stop()
@@ -145,10 +145,10 @@ class EventMeshTest {
         delay(1000)
 
         assertNull(
-            getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "btSender").get()
+            getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "sender").get()
         )
         assertNull(
-            getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "btScanner").get()
+            getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "scanner").get()
         )
     }
 
@@ -568,7 +568,7 @@ class EventMeshTest {
                     assertFails { runFunc(scan, byteArrayOf(1, 2, 3, 4)) }
             */
             val scanner =
-                getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "btScanner")
+                getValueFromClass<EventMesh<Int, Byte>, AtomicReference<Job?>>(f, "scanner")
             assertFails {
                 f.start()
                 delay(1000)
