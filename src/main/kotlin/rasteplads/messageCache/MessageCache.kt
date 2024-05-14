@@ -1,11 +1,13 @@
 package rasteplads.messageCache
 
-import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 
 class MessageCache<T>(private var cacheTimeInMilliseconds: Long) {
-    private val cacheID: Queue<Pair<T, Long>> = ArrayDeque()
+    private val cacheID: ConcurrentLinkedQueue<Pair<T, Long>> =
+        ConcurrentLinkedQueue() // AtomicReference(ArrayDeque())
 
     fun cacheMessage(msg: T) {
+
         if (!cacheID.any { it.first == msg })
             cacheID.add(Pair(msg, System.currentTimeMillis() + cacheTimeInMilliseconds))
         // cacheID.add(Pair(msg, LocalTime.now().plusSeconds(cacheTimeInSeconds)))

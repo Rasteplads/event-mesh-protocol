@@ -1,13 +1,13 @@
 package rasteplads.api
 
-interface TransportDevice {
+interface TransportDevice<TRx, TTx> {
     val transmissionInterval: Long
 
-    fun beginTransmitting(message: ByteArray)
+    fun beginTransmitting(message: ByteArray): TTx
 
-    fun stopTransmitting()
+    fun stopTransmitting(callback: TTx)
 
-    fun beginReceiving(callback: suspend (ByteArray) -> Unit)
+    fun beginReceiving(callback: suspend (ByteArray) -> Unit): TRx
 
-    fun stopReceiving()
+    fun stopReceiving(callback: TRx)
 }

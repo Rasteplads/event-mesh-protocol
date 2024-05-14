@@ -11,23 +11,26 @@ import rasteplads.api.EventMesh.Companion.ID_MAX_SIZE
 import rasteplads.util.byte_array_extension.generateRands
 import rasteplads.util.plus
 
-class MockDevice(override val transmissionInterval: Long) : TransportDevice {
+class MockDevice(override val transmissionInterval: Long) : TransportDevice<Int, Int> {
     val transmittedMessages: AtomicReference<MutableList<ByteArray>> =
         AtomicReference(mutableListOf())
-    val receivedMsg: AtomicReference<ByteArray?> = AtomicReference(null)
+    private val receivedMsg: AtomicReference<ByteArray?> = AtomicReference(null)
 
     val transmitting: AtomicBoolean = AtomicBoolean(false)
     val receiving: AtomicBoolean = AtomicBoolean(false)
 
-    private var tx: Job? = null
+    private val txPool: HashMap<Int, Job> = hashMapOf()
+    private var txC = 0
+    private val rxPool: HashMap<Int, Job> = hashMapOf()
+    private var rxC = 0
 
-    override fun beginTransmitting(message: ByteArray): Unit = runBlocking {
+    override fun beginTransmitting(message: ByteArray): Int {
         transmitting.set(true)
 
-        tx =
+        txPool[txC++] =
             GlobalScope.launch {
                 try {
-                    while (isActive) {
+                    while (transmitting.get()) {
                         yield()
                         transmittedMessages.get().add(message.clone())
                         yield()
@@ -36,33 +39,44 @@ class MockDevice(override val transmissionInterval: Long) : TransportDevice {
                     }
                 } catch (_: Exception) {}
             }
+
+        return txC - 1
     }
 
-    override fun stopTransmitting() {
-        tx?.cancel()
-        tx = null
-        transmitting.set(false)
+    override fun stopTransmitting(callback: Int) {
+        txPool[callback]?.cancel()
+        txPool.remove(callback)
+        transmitting.set(txPool.isNotEmpty())
     }
 
-    override fun beginReceiving(callback: suspend (ByteArray) -> Unit) = runBlocking {
+    override fun beginReceiving(callback: suspend (ByteArray) -> Unit): Int {
         receiving.set(true)
 
-        while (receiving.get()) {
-            receivedMsg.getAndSet(null)?.let { callback(it) }
-            yield()
-            delay(50) // 1 sec
-            yield()
-        }
+        rxPool[rxC++] =
+            GlobalScope.launch {
+                while (isActive) {
+                    receivedMsg.getAndSet(null)?.let { callback(it) }
+                    yield()
+                    delay(50) // 1 sec
+                    yield()
+                }
+            }
+
+        return rxC - 1
     }
 
-    override fun stopReceiving(): Unit = receiving.set(false)
+    override fun stopReceiving(callback: Int): Unit {
+        rxPool[callback]?.cancel()
+        rxPool.remove(callback)
+        receiving.set(rxPool.isNotEmpty())
+    }
 
-    fun receiveMessage(b: ByteArray) = runBlocking {
-        if (!receiving.get()) return@runBlocking
+    fun receiveMessage(b: ByteArray) {
+        if (!receiving.get()) return
         receivedMsg.set(b)
         while (receiving.get() && receivedMsg.get() != null) {
-            delay(50)
-            yield()
+            Thread.sleep(50)
+            // yield()
         }
 
         // receivedPool.get().add(b)
@@ -74,18 +88,16 @@ class EventMeshDeviceTest {
 
     @BeforeTest
     @AfterTest
-    fun clean(): Unit = runBlocking {
-        device.stopReceiving()
-        device.stopTransmitting()
-        device.transmittedMessages.get().removeAll { true }
-        device.receivedMsg.set(null)
+    fun clean() {
         launchPool.forEach { it.cancel() }
         launchPool.removeAll { true }
     }
 
     companion object {
         const val T_INTERVAL: Long = 100
-        val device = MockDevice(T_INTERVAL)
+        //   val device = MockDevice(T_INTERVAL)
+        fun newDevice() = MockDevice(T_INTERVAL)
+        fun delay(ms: Long) = Thread.sleep(ms)
 
         inline fun <reified C, reified R> getValueFromClass(target: C, field: String): R =
             C::class
@@ -96,7 +108,8 @@ class EventMeshDeviceTest {
     }
 
     @Test
-    fun `throws with small id`(): Unit = runBlocking {
+    fun `throws with small id`() {
+        val device = newDevice()
         val e =
             EventMeshDevice(
                 EventMeshReceiver(device),
@@ -110,7 +123,8 @@ class EventMeshDeviceTest {
     }
 
     @Test
-    fun `receives correctly`(): Unit = runBlocking {
+    fun `receives correctly`() {
+        val device = newDevice()
         val b = byteArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
         val rx = EventMeshReceiver(device)
         val l = mutableListOf<ByteArray>()
@@ -132,7 +146,8 @@ class EventMeshDeviceTest {
     }
 
     @Test
-    fun `transmits correctly`(): Unit = runBlocking {
+    fun `transmits correctly`() {
+        val device = newDevice()
         val b = byteArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
         val rx = EventMeshReceiver(device)
         val tx = EventMeshTransmitter(device)
@@ -159,7 +174,8 @@ class EventMeshDeviceTest {
     }
 
     @Test
-    fun `calls echo correctly`(): Unit = runBlocking {
+    fun `calls echo correctly`() {
+        val device = newDevice()
         val rx = EventMeshReceiver(device)
         var echo = false
         val tx = EventMeshTransmitter(device)
@@ -185,7 +201,8 @@ class EventMeshDeviceTest {
     }
 
     @Test
-    fun `does not call echo`(): Unit = runBlocking {
+    fun `does not call echo`() {
+        val device = newDevice()
         val rx = EventMeshReceiver(device)
         var echo = false
         val tx = EventMeshTransmitter(device)
@@ -211,46 +228,67 @@ class EventMeshDeviceTest {
     inner class BuilderTest {
         @Test
         fun `Missing transmitter`() {
+            val device = newDevice()
             val rx = EventMeshReceiver(device)
-            assertFails { EventMeshDevice.Builder().withReceiver(rx).build() }
+            assertFails { EventMeshDevice.Builder<Int, Int>().withReceiver(rx).build() }
         }
 
         @Test
         fun `Missing receiver`() {
+            val device = newDevice()
             val tx = EventMeshTransmitter(device)
-            assertFails { EventMeshDevice.Builder().withTransmitter(tx).build() }
-            assertFails { EventMeshDevice.Builder().withTransmitter(tx).withReceiveMsgCallback {} }
+            assertFails { EventMeshDevice.Builder<Int, Int>().withTransmitter(tx).build() }
+            assertFails {
+                EventMeshDevice.Builder<Int, Int>().withTransmitter(tx).withReceiveMsgCallback {}
+            }
         }
 
         @Test
         fun `with optional`() {
+            val device = newDevice()
             val tx = EventMeshTransmitter(device)
             val rx = EventMeshReceiver(device)
-            val e = EventMeshDevice.Builder().withTransmitter(tx).withReceiver(rx)
-            var eb: EventMeshDevice
+            val e = EventMeshDevice.Builder<Int, Int>().withTransmitter(tx).withReceiver(rx)
+            var eb: EventMeshDevice<Int, Int>
             run {
                 eb = e.withEchoCallback {}.build()
-                val echo = getValueFromClass<EventMeshDevice, (() -> Unit)?>(eb, "echo")
+                val echo = getValueFromClass<EventMeshDevice<Int, Int>, (() -> Unit)?>(eb, "echo")
                 assertNotNull(echo)
             }
             run {
                 eb = e.withReceiveDuration(Duration.ofSeconds(10)).build()
-                val r = getValueFromClass<EventMeshDevice, EventMeshReceiver>(eb, "receiver")
+                val r =
+                    getValueFromClass<EventMeshDevice<Int, Int>, EventMeshReceiver<Int>>(
+                        eb,
+                        "receiver"
+                    )
                 assertEquals(10_000, r.duration)
             }
             run {
                 eb = e.withReceiveDuration(10).build()
-                val r = getValueFromClass<EventMeshDevice, EventMeshReceiver>(eb, "receiver")
+                val r =
+                    getValueFromClass<EventMeshDevice<Int, Int>, EventMeshReceiver<Int>>(
+                        eb,
+                        "receiver"
+                    )
                 assertEquals(10, r.duration)
             }
             run {
                 eb = e.withTransmitTimeout(Duration.ofSeconds(10)).build()
-                val t = getValueFromClass<EventMeshDevice, EventMeshTransmitter>(eb, "transmitter")
+                val t =
+                    getValueFromClass<EventMeshDevice<Int, Int>, EventMeshTransmitter<Int>>(
+                        eb,
+                        "transmitter"
+                    )
                 assertEquals(10_000, t.transmitTimeout)
             }
             run {
                 eb = e.withTransmitTimeout(10).build()
-                val t = getValueFromClass<EventMeshDevice, EventMeshTransmitter>(eb, "transmitter")
+                val t =
+                    getValueFromClass<EventMeshDevice<Int, Int>, EventMeshTransmitter<Int>>(
+                        eb,
+                        "transmitter"
+                    )
                 assertEquals(10, t.transmitTimeout)
             }
         }

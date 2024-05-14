@@ -1,7 +1,6 @@
 package rasteplads.util
 
-final class Either<L, R>
-private constructor(private val left: L?, private val right: R?, private val which: LR) {
+class Either<L, R> private constructor(private val value: Any?, private val which: LR) {
     private enum class LR {
         L,
         R
@@ -11,13 +10,13 @@ private constructor(private val left: L?, private val right: R?, private val whi
 
     fun isRight(): Boolean = which == LR.R
 
-    fun getLeft(): L? = left
+    fun getLeft(): L? = if (which == LR.L) value as L else null
 
-    fun getRight(): R? = right
+    fun getRight(): R? = if (which == LR.R) value as R else null
 
     companion object {
-        fun <L, R> left(value: L): Either<L, R> = Either(value, null, LR.L)
+        fun <L, R> left(value: L): Either<L, R> = Either(value, LR.L)
 
-        fun <L, R> right(value: R): Either<L, R> = Either(null, value, LR.R)
+        fun <L, R> right(value: R): Either<L, R> = Either(value, LR.R)
     }
 }

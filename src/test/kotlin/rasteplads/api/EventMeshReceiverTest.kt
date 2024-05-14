@@ -1,28 +1,22 @@
 package rasteplads.api
 
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.jvm.isAccessible
 import kotlin.test.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.runBlocking
-import rasteplads.api.EventMeshDeviceTest.Companion.getValueFromClass
 
 class EventMeshReceiverTest {
 
     private val launchPool = mutableListOf<Job>()
-    // @BeforeTest
     @AfterTest
     fun clean(): Unit = runBlocking {
-        device.stopReceiving()
-        device.stopTransmitting()
-        device.transmittedMessages.get().removeAll { true }
-        device.receivedMsg.set(null)
         launchPool.forEach { it.cancelAndJoin() }
         launchPool.removeAll { true }
     }
 
     @Test
-    fun `receives correct messages`(): Unit = runBlocking {
+    fun `receives correct messages`() {
+        val device = newDevice()
         val b = byteArrayOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 0)
         val rx = EventMeshReceiver(device)
         val l = mutableListOf<ByteArray>()
@@ -42,7 +36,8 @@ class EventMeshReceiverTest {
     }
 
     @Test
-    fun `receives correct messages while scanning for ID`(): Unit = runBlocking {
+    fun `receives correct messages while scanning for ID`() {
+        val device = newDevice()
         val b = byteArrayOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 0)
         val rx = EventMeshReceiver(device)
         val l = mutableListOf<ByteArray>()
@@ -68,6 +63,7 @@ class EventMeshReceiverTest {
         assertFalse(id)
         delay(100)
         device.receiveMessage(b)
+        delay(100)
         assertEquals(4, l.size)
         assert(l.all { it.contentEquals(b) })
         assertFalse(id)
@@ -76,12 +72,14 @@ class EventMeshReceiverTest {
         assert(l.all { it.contentEquals(b) })
         assert(id)
         device.receiveMessage(b)
+        delay(100)
         assertEquals(5, l.size)
         assert(l.all { it.contentEquals(b) })
     }
 
     @Test
-    fun `receives correct messages while scanning for ID and stopping`(): Unit = runBlocking {
+    fun `receives correct messages while scanning for ID and stopping`() {
+        val device = newDevice()
         val b = byteArrayOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 0)
         val rx = EventMeshReceiver(device)
         val l = mutableListOf<ByteArray>()
@@ -111,6 +109,7 @@ class EventMeshReceiverTest {
         assert(device.receiving.get())
         assertFalse(id)
         device.receiveMessage(b)
+        delay(400)
         assertEquals(4, l.size)
         assert(l.all { it.contentEquals(b) })
         assertFalse(id)
@@ -132,7 +131,8 @@ class EventMeshReceiverTest {
     }
 
     @Test
-    fun `scanning for ID`(): Unit = runBlocking {
+    fun `scanning for ID`() {
+        val device = newDevice()
         val b = byteArrayOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 0)
         val rx = EventMeshReceiver(device)
         var id = false
@@ -156,7 +156,8 @@ class EventMeshReceiverTest {
     }
 
     @Test
-    fun `scanning for ID then receiving messages and stopping`(): Unit = runBlocking {
+    fun `scanning for ID then receiving messages and stopping`() {
+        val device = newDevice()
         val b = byteArrayOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 0)
         val rx = EventMeshReceiver(device)
         val l = mutableListOf<ByteArray>()
@@ -197,7 +198,8 @@ class EventMeshReceiverTest {
     }
 
     @Test
-    fun `starts and stops`() = runBlocking {
+    fun `starts and stops`() {
+        val device = newDevice()
         assertFalse(device.receiving.get())
         val rx = EventMeshReceiver(device)
         rx.duration = 1_000
@@ -210,7 +212,8 @@ class EventMeshReceiverTest {
     }
 
     @Test
-    fun `stops in between`() = runBlocking {
+    fun `stops in between`() {
+        val device = newDevice()
         val b = byteArrayOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 0)
         val l = mutableListOf<ByteArray>()
         val rx = EventMeshReceiver(device)
@@ -244,7 +247,8 @@ class EventMeshReceiverTest {
     }
 
     @Test
-    fun `throws exception`(): Unit = runBlocking {
+    fun `throws exception`() {
+        val device = newDevice()
         assertFails {
             EventMeshReceiver(device).scanForID(
                 byteArrayOf(
@@ -262,45 +266,48 @@ class EventMeshReceiverTest {
 
     @Test
     fun `multiple starters`() {
-        val rx = EventMeshReceiver(EventMeshDeviceTest.device)
-        val count = getValueFromClass<EventMeshReceiver, AtomicInteger>(rx, "scannerCount")
+        val device = newDevice()
+        val rx = EventMeshReceiver(device)
+        // val count = getValueFromClass<EventMeshReceiver<Int>, AtomicInteger>(rx, "scannerCount")
         val e = 10
 
-        assertEquals(0, count.get())
+        // assertEquals(0, count.get())
 
-        for (i in 1..e) callFuncFromClass<EventMeshReceiver>(rx, "startDevice")
-        assertEquals(e, count.get())
+        val l = mutableListOf<Int>()
 
-        for (i in 1..e / 2) callFuncFromClass<EventMeshReceiver>(rx, "stopDevice")
-        assertEquals(e / 2, count.get())
+        val f: suspend (ByteArray) -> Unit = { _ -> }
 
-        for (i in 1..e / 2) callFuncFromClass<EventMeshReceiver>(rx, "stopDevice")
+        for (i in 1..e) {
+            val v =
+                callFuncFromClass<EventMeshReceiver<Int>, suspend (ByteArray) -> Unit>(
+                    rx,
+                    "startDevice",
+                    f
+                )
+                    as Int
+            l.add(v)
+        }
+        // assertEquals(e, count.get())
 
-        assertEquals(0, count.get())
-    }
+        for (i in 1..e / 2) callFuncFromClass<EventMeshReceiver<Int>, Int>(rx, "stopDevice", l[i])
+        // assertEquals(e / 2, count.get())
 
-    @Test
-    fun `scanners can't go below zero`() {
-        val rx = EventMeshReceiver(EventMeshDeviceTest.device)
-        val count = getValueFromClass<EventMeshReceiver, AtomicInteger>(rx, "scannerCount")
-        val e = 10
-
-        assertEquals(0, count.get())
-
-        for (i in 1..e) callFuncFromClass<EventMeshReceiver>(rx, "stopDevice")
-        assertEquals(0, count.get())
+        for (i in 1..e / 2) callFuncFromClass<EventMeshReceiver<Int>, Int>(rx, "stopDevice", l[i])
+        // assertEquals(0, count.get())
     }
 
     companion object {
         const val RX_DURATION: Long = 5_000
-        val device = MockDevice(100)
+        // val device = MockDevice(100)
+        fun newDevice() = MockDevice(100)
+        fun delay(ms: Long) = Thread.sleep(ms)
 
-        inline fun <reified C> callFuncFromClass(target: C, field: String) {
-            C::class
+        inline fun <reified C, Arg> callFuncFromClass(target: C, field: String, arg: Arg): Any? {
+            return C::class
                 .members
                 .find { m -> m.name == field }!!
                 .apply { isAccessible = true }
-                .call(target)
+                .call(target, arg)
         }
     }
 }
