@@ -1,7 +1,7 @@
 package rasteplads.api
 
 import java.time.Duration
-import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
@@ -48,8 +48,8 @@ private constructor(
             { msgId.getLeft()!! }
         } else msgId.getRight()!!
 
-    private val relayQueue: ConcurrentLinkedQueue<Triple<Byte, ByteArray, ByteArray>> =
-        ConcurrentLinkedQueue()
+    private val relayQueue: LinkedBlockingQueue<Triple<Byte, ByteArray, ByteArray>> =
+        LinkedBlockingQueue()
     init {
         fun scanningCallback(msg: ByteArray) {
             require(msg.size >= 1 + ID_MAX_SIZE + dataSize) {
@@ -142,7 +142,6 @@ private constructor(
      * @see stop
      */
     fun start() {
-        messageCache?.clearCache()
         sender.updateAndGet {
             when (it) {
                 null ->
@@ -210,6 +209,7 @@ private constructor(
         sender.getAndSet(null)?.cancelAndJoin()
         scanner.getAndSet(null)?.cancelAndJoin()
         relayJob.getAndSet(null)?.cancelAndJoin()
+        messageCache?.clearCache()
     }
 
     companion object {
