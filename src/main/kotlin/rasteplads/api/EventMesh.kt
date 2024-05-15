@@ -10,7 +10,7 @@ import rasteplads.messageCache.MessageCache
 import rasteplads.util.Either
 import rasteplads.util.split
 
-val MSG_Q_TAG = "Message-Queue"
+const val MSG_Q_TAG = "Message-Queue"
 
 /**
  * This class handles communicating messages to the dynamic mesh network.
@@ -148,10 +148,8 @@ private constructor(
      * @see stop
      */
     fun start() {
-        coroutineScope.launch(Dispatchers.Unconfined) {
-            device.startReceiving()
-        }
-        messageCache?.clearCache()
+        coroutineScope.launch(Dispatchers.Unconfined) { device.startReceiving() }
+
         sender.updateAndGet {
             when (it) {
                 null ->
@@ -163,6 +161,33 @@ private constructor(
                                 val data = msgData()
                                 messageCache?.cacheMessage(id)
                                 device.startTransmitting(msgTTL, encodeID(id), encodeData(data))
+                                yield()
+                            }
+                            yield()
+                        }
+                    }
+                else -> it
+            }
+        }
+
+        relayJob.updateAndGet {
+            when (it) {
+                null ->
+                    coroutineScope.launch(Dispatchers.Unconfined) {
+                        while (isActive) {
+                            delay(250)
+
+                            while (relayQueue.isNotEmpty()) {
+                                sending.withLock {
+                                    val (ttl, id, body) = relayQueue.poll()
+                                    logger(
+                                        MSG_Q_TAG,
+                                        "Relaying message with id: ${id.toHexString()}"
+                                    )
+                                    device.startTransmitting(ttl, id, body, 1000)
+                                    yield()
+                                }
+                                delay(100)
                                 yield()
                             }
                             yield()
@@ -187,32 +212,6 @@ private constructor(
             }
         }
          */
-
-
-        relayJob.updateAndGet {
-            when (it) {
-                null ->
-                    coroutineScope.launch(Dispatchers.Unconfined) {
-                        while (isActive) {
-                            delay(250)
-
-                            while (relayQueue.isNotEmpty()) {
-                                sending.withLock {
-                                    val (ttl, id, body) = relayQueue.poll()
-                                    logger(MSG_Q_TAG, "Relaying message with id: ${id.toHexString()}")
-                                    device.startTransmitting(ttl, id, body, 1000)
-                                    yield()
-                                }
-                                delay(100)
-                                yield()
-                            }
-                            yield()
-                        }
-                    }
-                else -> it
-            }
-        }
-
     }
 
     /**
@@ -636,9 +635,7 @@ private constructor(
             // var msgSendTimeout: Duration? = null
             var msgScanInterval: Duration? = null
             // var msgCacheLimit: Long? = null
-            var logger = fun (tag: String, message: String){
-                println("$tag: $message")
-            }
+            var logger: (String, String) -> Unit = { t, m -> System.err.println("$t: $m") }
 
             override fun build(): EventMesh<ID, Data> {
                 // check(device != null) { "EventMesh Device is needed" }

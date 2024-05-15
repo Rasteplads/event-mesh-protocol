@@ -1,7 +1,6 @@
 package rasteplads.api
 
 import java.time.Duration
-import java.util.concurrent.TimeoutException
 import kotlinx.coroutines.*
 import rasteplads.api.EventMesh.Companion.ID_MAX_SIZE
 import rasteplads.util.plus
