@@ -148,7 +148,12 @@ private constructor(
      * @see stop
      */
     fun start() {
-        coroutineScope.launch(Dispatchers.Unconfined) { device.startReceiving() }
+        scanner.updateAndGet {
+            when (it) {
+                null -> coroutineScope.launch(Dispatchers.Unconfined) { device.startReceiving() }
+                else -> it
+            }
+        }
 
         sender.updateAndGet {
             when (it) {
