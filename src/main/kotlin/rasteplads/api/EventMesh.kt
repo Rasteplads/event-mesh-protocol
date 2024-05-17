@@ -70,7 +70,10 @@ private constructor(
 
                 if (msg[0] > Byte.MIN_VALUE) {
                     relayQueue.add(Triple(msg[0].dec(), idB, dataB))
-                    logger(MSG_Q_TAG, "Added message ${idB.toHexString()} to Relay Queue")
+                    logger(
+                        MSG_Q_TAG,
+                        "Added message ${idB.toHexString()} to Relay Queue. Size: ${relayQueue.size}"
+                    )
                     // relay(msg[0].dec(), idB, dataB)
                 }
             }
@@ -608,13 +611,25 @@ private constructor(
             fun withEchoCallback(f: (() -> Unit)?): Builder<ID, Data, Rx, Tx>
 
             /**
+             * Adds a logger which can be called inside EventMesh. Useful for debugging Android
+             * Projects.
+             *
+             * @param func The debug function that will be called with
+             * ```
+             *        func(tag: String, message: String)
+             * @return
+             * ```
+             * The modified [Builder]
+             */
+            fun withLogger(func: (String, String) -> Unit): Builder<ID, Data, Rx, Tx>
+
+            /**
              * Builds the [Builder]
              *
              * @return [EventMesh] with the needed properties
              * @throws IllegalStateException If the needed variables hasn't been set
              */
             fun build(): EventMesh<ID, Data>
-            fun withLogger(func: (String, String) -> Unit): Builder<ID, Data, Rx, Tx>
         }
 
         private class BuilderImpl<ID, Data, Rx, Tx>(
