@@ -1,12 +1,16 @@
 package rasteplads.api
 
 import java.time.Duration
-import java.util.ArrayDeque
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import rasteplads.messageCache.MessageCache
 import rasteplads.util.Either
 import rasteplads.util.split
+
+const val MSG_Q_TAG = "Message-Queue"
 
 /**
  * This class handles communicating messages to the dynamic mesh network.
@@ -22,6 +26,7 @@ import rasteplads.util.split
  *
  * @author t-lohse
  */
+@OptIn(ExperimentalStdlibApi::class)
 final class EventMesh<ID, Data>
 private constructor(
     deviceBuilder: EventMeshDevice.Builder<*, *>,
@@ -35,6 +40,7 @@ private constructor(
     msgId: Either<ID, () -> ID>,
     filterID: List<(ID) -> Boolean>,
     dataSize: Int,
+    private val logger: (String, String) -> Unit
 ) {
     private val device: EventMeshDevice<*, *>
     private val msgData: () -> Data =
@@ -46,8 +52,8 @@ private constructor(
             { msgId.getLeft()!! }
         } else msgId.getRight()!!
 
-    private val relayQueue: AtomicReference<ArrayDeque<Triple<Byte, ByteArray, ByteArray>>> =
-        AtomicReference(ArrayDeque())
+    private val relayQueue: LinkedBlockingQueue<Triple<Byte, ByteArray, ByteArray>> =
+        LinkedBlockingQueue()
     init {
         fun scanningCallback(msg: ByteArray) {
             require(msg.size >= 1 + ID_MAX_SIZE + dataSize) {
@@ -63,7 +69,11 @@ private constructor(
                     callback(id, decodeData(dataB.take(dataSize).toByteArray()))
 
                 if (msg[0] > Byte.MIN_VALUE) {
-                    relayQueue.get().add(Triple(msg[0].dec(), idB, dataB))
+                    relayQueue.add(Triple(msg[0].dec(), idB, dataB))
+                    logger(
+                        MSG_Q_TAG,
+                        "Added message ${idB.toHexString()} to Relay Queue. Size: ${relayQueue.size}"
+                    )
                     // relay(msg[0].dec(), idB, dataB)
                 }
             }
@@ -103,10 +113,10 @@ private constructor(
     /** The maximum number of elements stored in the cache */
     // private var msgCacheLimit: Long = 32
 
-    private val btScanner: AtomicReference<Job?> = AtomicReference(null)
-    private val btSender: AtomicReference<Job?> = AtomicReference(null)
+    private val scanner: AtomicReference<Job?> = AtomicReference(null)
+    private val sender: AtomicReference<Job?> = AtomicReference(null)
     private val relayJob: AtomicReference<Job?> = AtomicReference(null)
-
+    private val sending: Mutex = Mutex()
     private constructor(
         builder: BuilderImpl<ID, Data, *, *>
     ) : this(
@@ -121,6 +131,7 @@ private constructor(
         builder.msgID,
         builder.filterID,
         builder.dataSize,
+        builder.logger
     ) {
         builder.msgTTL?.let { msgTTL = it }
 
@@ -140,31 +151,26 @@ private constructor(
      * @see stop
      */
     fun start() {
-        messageCache?.clearCache()
-        btSender.updateAndGet {
+        scanner.updateAndGet {
+            when (it) {
+                null -> coroutineScope.launch(Dispatchers.Unconfined) { device.startReceiving() }
+                else -> it
+            }
+        }
+
+        sender.updateAndGet {
             when (it) {
                 null ->
                     coroutineScope.launch(Dispatchers.Unconfined) {
                         while (isActive) {
                             delay(msgSendInterval.toMillis())
-                            val id = msgId()
-                            val data = msgData()
-                            messageCache?.cacheMessage(id)
-                            device.startTransmitting(msgTTL, encodeID(id), encodeData(data))
-                            yield()
-                        }
-                    }
-                else -> it
-            }
-        }
-
-        btScanner.updateAndGet {
-            when (it) {
-                null ->
-                    coroutineScope.launch(Dispatchers.Unconfined) {
-                        while (isActive) {
-                            delay(msgScanInterval.toMillis())
-                            device.startReceiving()
+                            sending.withLock {
+                                val id = msgId()
+                                val data = msgData()
+                                messageCache?.cacheMessage(id)
+                                device.startTransmitting(msgTTL, encodeID(id), encodeData(data))
+                                yield()
+                            }
                             yield()
                         }
                     }
@@ -179,11 +185,17 @@ private constructor(
                         while (isActive) {
                             delay(250)
 
-                            while (relayQueue.get().isNotEmpty()) {
-                                val (ttl, id, body) = relayQueue.get().pop()
-                                // Currently transmits as long as normal messages, is this
-                                // desired?
-                                device.startTransmitting(ttl, id, body, 1000)
+                            while (relayQueue.isNotEmpty()) {
+                                sending.withLock {
+                                    val (ttl, id, body) = relayQueue.poll()
+                                    logger(
+                                        MSG_Q_TAG,
+                                        "Relaying message with id: ${id.toHexString()}"
+                                    )
+                                    device.startTransmitting(ttl, id, body, 1000)
+                                    yield()
+                                }
+                                delay(100)
                                 yield()
                             }
                             yield()
@@ -192,6 +204,22 @@ private constructor(
                 else -> it
             }
         }
+
+        /*
+        scanner.updateAndGet {
+            when (it) {
+                null ->
+                    coroutineScope.launch(Dispatchers.Unconfined) {
+                        while (isActive) {
+                            delay(msgScanInterval.toMillis())
+                            device.startReceiving()
+                            yield()
+                        }
+                    }
+                else -> it
+            }
+        }
+         */
     }
 
     /**
@@ -200,10 +228,11 @@ private constructor(
      * @see start
      */
     fun stop() = runBlocking {
-        relayQueue.set(ArrayDeque())
-        btSender.getAndSet(null)?.cancelAndJoin()
-        btScanner.getAndSet(null)?.cancelAndJoin()
+        relayQueue.clear()
+        sender.getAndSet(null)?.cancelAndJoin()
+        scanner.getAndSet(null)?.cancelAndJoin()
         relayJob.getAndSet(null)?.cancelAndJoin()
+        messageCache?.clearCache()
     }
 
     companion object {
@@ -582,6 +611,19 @@ private constructor(
             fun withEchoCallback(f: (() -> Unit)?): Builder<ID, Data, Rx, Tx>
 
             /**
+             * Adds a logger which can be called inside EventMesh. Useful for debugging Android
+             * Projects.
+             *
+             * @param func The debug function that will be called with
+             * ```
+             *        func(tag: String, message: String)
+             * @return
+             * ```
+             * The modified [Builder]
+             */
+            fun withLogger(func: (String, String) -> Unit): Builder<ID, Data, Rx, Tx>
+
+            /**
              * Builds the [Builder]
              *
              * @return [EventMesh] with the needed properties
@@ -613,6 +655,7 @@ private constructor(
             // var msgSendTimeout: Duration? = null
             var msgScanInterval: Duration? = null
             // var msgCacheLimit: Long? = null
+            var logger: (String, String) -> Unit = { t, m -> System.err.println("$t: $m") }
 
             override fun build(): EventMesh<ID, Data> {
                 // check(device != null) { "EventMesh Device is needed" }
@@ -638,6 +681,11 @@ private constructor(
                 check(dataSize > 0) { "The size of `Data` must be set" }
 
                 return EventMesh(this)
+            }
+
+            override fun withLogger(func: (String, String) -> Unit): Builder<ID, Data, Rx, Tx> {
+                logger = func
+                return this
             }
 
             override fun withEchoCallback(f: (() -> Unit)?): Builder<ID, Data, Rx, Tx> {

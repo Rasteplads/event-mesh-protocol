@@ -1,6 +1,7 @@
 package rasteplads.api
 
 import java.time.Duration
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.*
 import kotlin.reflect.jvm.isAccessible
 import kotlin.test.*
@@ -12,8 +13,7 @@ import rasteplads.util.byte_array_extension.generateRands
 import rasteplads.util.plus
 
 class MockDevice(override val transmissionInterval: Long) : TransportDevice<Int, Int> {
-    val transmittedMessages: AtomicReference<MutableList<ByteArray>> =
-        AtomicReference(mutableListOf())
+    val transmittedMessages: LinkedBlockingQueue<ByteArray> = LinkedBlockingQueue()
     private val receivedMsg: AtomicReference<ByteArray?> = AtomicReference(null)
 
     val transmitting: AtomicBoolean = AtomicBoolean(false)
@@ -32,7 +32,7 @@ class MockDevice(override val transmissionInterval: Long) : TransportDevice<Int,
                 try {
                     while (transmitting.get()) {
                         yield()
-                        transmittedMessages.get().add(message.clone())
+                        transmittedMessages.add(message.clone())
                         yield()
                         delay(transmissionInterval)
                         yield()
@@ -65,7 +65,7 @@ class MockDevice(override val transmissionInterval: Long) : TransportDevice<Int,
         return rxC - 1
     }
 
-    override fun stopReceiving(callback: Int): Unit {
+    override fun stopReceiving(callback: Int) {
         rxPool[callback]?.cancel()
         rxPool.remove(callback)
         receiving.set(rxPool.isNotEmpty())
@@ -164,13 +164,11 @@ class EventMeshDeviceTest {
         assertFalse(device.transmitting.get())
         assertFalse(device.receiving.get())
         // 1000 / 100 = 10 (+1 cuz it does it on time 0)
-        assertEquals(
-            (tx.transmitTimeout.floorDiv(T_INTERVAL) + 1).toInt(),
-            device.transmittedMessages.get().size
-        )
+        val t = getValueFromClass<EventMeshDevice<Int, Int>, Long>(e, "txTimeout")
+        assertEquals((t.floorDiv(T_INTERVAL) + 1).toInt(), device.transmittedMessages.size)
 
         val combined = ttl + byteArrayOf(0, 1, 2, 3) + b
-        assert(device.transmittedMessages.get().all { it.contentEquals(combined) })
+        assert(device.transmittedMessages.all { it.contentEquals(combined) })
     }
 
     @Test
@@ -275,21 +273,13 @@ class EventMeshDeviceTest {
             }
             run {
                 eb = e.withTransmitTimeout(Duration.ofSeconds(10)).build()
-                val t =
-                    getValueFromClass<EventMeshDevice<Int, Int>, EventMeshTransmitter<Int>>(
-                        eb,
-                        "transmitter"
-                    )
-                assertEquals(10_000, t.transmitTimeout)
+                val t = getValueFromClass<EventMeshDevice<Int, Int>, Long>(eb, "txTimeout")
+                assertEquals(10_000, t)
             }
             run {
                 eb = e.withTransmitTimeout(10).build()
-                val t =
-                    getValueFromClass<EventMeshDevice<Int, Int>, EventMeshTransmitter<Int>>(
-                        eb,
-                        "transmitter"
-                    )
-                assertEquals(10, t.transmitTimeout)
+                val t = getValueFromClass<EventMeshDevice<Int, Int>, Long>(eb, "txTimeout")
+                assertEquals(10, t)
             }
         }
     }

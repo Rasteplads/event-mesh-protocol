@@ -54,13 +54,15 @@ class EventMeshReceiver<Rx>(private val device: TransportDevice<Rx, *>) {
     fun scanForMessages() = runBlocking {
         handle.first.set(callback.get())
         val key = startDevice(::scanForMessagesCallback)
-        try {
+        /*
+             try {
             // handle.first.set(callback.get())
             withTimeout(duration) { while (true) yield() }
         } catch (_: TimeoutCancellationException) {} finally {
             stopDevice(key)
             handle.first.set(null)
         }
+         */
     }
 
     private fun startDevice(callback: suspend (ByteArray) -> Unit): Rx =

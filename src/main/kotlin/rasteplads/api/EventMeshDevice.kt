@@ -1,7 +1,6 @@
 package rasteplads.api
 
 import java.time.Duration
-import java.util.concurrent.TimeoutException
 import kotlinx.coroutines.*
 import rasteplads.api.EventMesh.Companion.ID_MAX_SIZE
 import rasteplads.util.plus
@@ -14,36 +13,25 @@ final class EventMeshDevice<Rx, Tx>(
     private val echo: (() -> Unit)? = null
 ) {
     private val coroutineScope = CoroutineScope(CoroutineName("EventMeshDeviceScope"))
+    private val txTimeout: Long = txTimeout?.toMillis() ?: 60_000 // 60 sec // TODO: Default val
 
     init {
-        txTimeout?.let { transmitter.transmitTimeout = it.toMillis() }
         rxDuration?.let { receiver.duration = it.toMillis() }
     }
 
-    fun startTransmitting(ttl: Byte, id: ByteArray, message: ByteArray) {
-        check(id.size <= ID_MAX_SIZE) { "ID too big" }
-        val combinedMsg = ttl + id + message
-        val tx = coroutineScope.launch { transmitter.transmit(combinedMsg) }
-
-        try {
-            receiver.scanForID(id, transmitter.transmitTimeout) { tx.cancel() }
-        } catch (e: TimeoutException) {
-            tx.cancel()
-            echo?.invoke()
-        }
-    }
-
-    fun startTransmitting(ttl: Byte, id: ByteArray, message: ByteArray, timeout: Long) {
-        check(id.size <= ID_MAX_SIZE) { "ID too big" }
+    fun startTransmitting(ttl: Byte, id: ByteArray, message: ByteArray, timeout: Long = txTimeout) {
+        check(id.size == ID_MAX_SIZE) { "ID incorrect size" }
         val combinedMsg = ttl + id + message
         val tx = coroutineScope.launch { transmitter.transmit(combinedMsg, timeout) }
 
+        /*
         try {
-            receiver.scanForID(id, transmitter.transmitTimeout) { tx.cancel() }
+            receiver.scanForID(id, timeout) { tx.cancel() }
         } catch (e: TimeoutException) {
             tx.cancel()
             echo?.invoke()
         }
+        */
     }
 
     fun startReceiving() = receiver.scanForMessages()
